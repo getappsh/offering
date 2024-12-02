@@ -9,6 +9,8 @@ import { MSType, MicroserviceName, MicroserviceType, getClientConfig } from '@ap
 import { CustomRpcExceptionFilter } from './rpc-exception.filter';
 import { GET_APP_LOGGER } from '@app/common/logger/logger.module';
 
+require('dotenv').config()
+
 
 async function bootstrap() {  
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(

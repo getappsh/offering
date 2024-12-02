@@ -2,15 +2,9 @@ import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { join } from 'path';
 import { readFileSync } from 'fs'
-import { DeliveryEntity, DeliveryItemEntity } from '../entities';
-import { CacheConfigEntity } from '../entities/cache-config.entity';
-import { JobsEntity } from '../../database/entities/map-updatesCronJob'
+import { DeliveryEntity } from '../../database/entities/delivery.entity';
 
 const region = process.env.REGION ? `_${process.env.REGION}` : '';
-let migrationsRun: boolean = true
-if (process.env.MIGRATION_RUN){
-  migrationsRun = process.env.MIGRATION_RUN === 'true'
-}
 
 const ormConfig = new DataSource({
   type: 'postgres',
@@ -21,16 +15,12 @@ const ormConfig = new DataSource({
 
   ...getDBAuthParams(),
   entities: [
-    DeliveryEntity, 
-    DeliveryItemEntity,
-    CacheConfigEntity,
-    JobsEntity
+    DeliveryEntity
   ],
   migrations: [join(__dirname, '../migration/*.ts')],
   logging: false,
   synchronize: false,
-  migrationsRun: migrationsRun,
-  migrationsTableName: "migrations",
+  migrationsTableName: "history",
 });
 
 function getDBAuthParams() {

@@ -1,5 +1,4 @@
 import { IsValidStringFor } from "@app/common/validators"
-import { Pattern } from "@app/common/validators/regex.validator";
 import { ApiProperty } from "@nestjs/swagger"
 import { IsNotEmpty, IsOptional, IsString } from "class-validator"
 
@@ -27,7 +26,7 @@ export class UploadArtifactDto{
     @ApiProperty({required: false})
     OS: string
 
-    @IsValidStringFor(Pattern.VERSION)
+    @IsValidStringFor("version")
     @IsNotEmpty()
     @ApiProperty({required: false})
     version: string

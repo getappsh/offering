@@ -1,81 +1,64 @@
 import { OS } from "@app/common/database/entities";
-import { Deprecated } from "@app/common/decorators";
 import { IsValidStringFor } from "@app/common/validators";
-import { Pattern } from "@app/common/validators/regex.validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import { IsBoolean, IsDate, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsString, Max, Min, ValidateNested } from "class-validator";
 
 export class PersonalDiscoveryDto {
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsString()
   name: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsString()
   idNumber: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsString()
   personalNumber: string
 }
 
 
-export class GeoLocationDto {
+export class GeoLocationDto{
 
-  @ApiProperty()
+  @ApiProperty({required: false})
   @IsString()
   lat: string;
 
-  @ApiProperty()
+  @ApiProperty({required: false})
   @IsString()
   long: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsString()
   alt: string;
 }
 
 export class SituationalDiscoveryDto {
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsNumber()
   weather: number;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsNumber()
   bandwidth: number;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsDateString()
   time: Date;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsBoolean()
   operativeState: boolean;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @Min(0)
   @Max(100)
   power: number;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  availableStorage: string
-
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({required: false})
   @ValidateNested()
   @Type(() => GeoLocationDto)
   location: GeoLocationDto;
@@ -85,43 +68,34 @@ export class SituationalDiscoveryDto {
 export class PhysicalDiscoveryDto {
 
   @ApiProperty({required: false})
-  @IsOptional()
-  @IsValidStringFor(Pattern.MAC)
+  @IsNotEmpty()
+  @IsValidStringFor("MAC")
   MAC: string;
 
   @ApiProperty({required: false})
-  @IsOptional()
-  @IsValidStringFor(Pattern.IP)
+  @IsNotEmpty()
+  @IsValidStringFor("IP")
   IP: string;
 
-  @ApiProperty({required: true})
+  @ApiProperty({required: false})
   @IsNotEmpty()
   @IsString()
   ID: string;
 
-  @ApiProperty({ enum: OS, required: false })
-  @IsOptional()
+  @ApiProperty({enum: OS})
   @IsNotEmpty()
   @IsEnum(OS)
   OS: OS;
 
   @ApiProperty({required: false})
-  @IsOptional()
   @IsString()
   serialNumber: string;
 
   @ApiProperty({required: false})
-  @IsOptional()
   @IsString()
   possibleBandwidth: string;
 
-  
-  /**
-    * @deprecated This field is deprecated and will be removed in the future. use instead SituationalDiscoveryDto.availableStorage
-    */
-  @ApiProperty({ required: false, deprecated: true })
-  @Deprecated()
-  @IsOptional()
+  @ApiProperty({required: false})
   @IsString()
   availableStorage: string
 
@@ -131,21 +105,19 @@ export class PhysicalDiscoveryDto {
 export class GeneralDiscoveryDto {
 
   @ApiProperty({required: false})
-  @IsOptional()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PersonalDiscoveryDto)
   personalDevice: PersonalDiscoveryDto;
 
   @ApiProperty({required: false})
-  @IsOptional()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => SituationalDiscoveryDto)
   situationalDevice: SituationalDiscoveryDto;
 
+
   @ApiProperty({required: false})
-  @IsOptional()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PhysicalDiscoveryDto)

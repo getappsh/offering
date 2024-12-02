@@ -10,8 +10,6 @@ export const OFFERING = "offering";
 export const DISCOVERY = "discovery";
 export const PROJECT_MANAGEMENT = "projectManagement";
 export const DEVICE = "device";
-export const DEVICE_GROUP = "group";
-
 export const GET_MAP = "map";
 export const BUG_REPORT = "bug-report"
 
@@ -56,7 +54,5 @@ export const STATUS = "/import/status/"
 export const DeliveryEndpoints = {
   updateDownloadStatus: 'delivery/updateDownloadStatus',
   preparedDelivery: 'delivery/prepareDelivery',
-  getPreparedByCatalogId: 'delivery/preparedDelivery/',
-  cacheConfig: 'delivery/cache/config',
-  cacheDelete: 'delivery/cache/delete',
+  getPreparedByCatalogId: 'delivery/preparedDelivery/:catalogId',
 }

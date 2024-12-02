@@ -6,6 +6,7 @@ export const GET_APP_LOGGER = 'GET_APP_LOGGER'
 
 @Module({})
 export class LoggerModule {
+
   static forRoot(options: LoggerModuleOptions): DynamicModule{
 
     return {

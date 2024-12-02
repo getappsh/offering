@@ -75,47 +75,10 @@ export class Validators {
     return Validators.isValidPolygon(polygon) ? polygon : false
   }
 
-  // MultiPolygon validators
-
-  static stringToMultiPolygon(pointsString: string): number[][][] {
-    const points: number[] = Validators.pointsStringToArray(pointsString);
-    const multiPolygon: number[][][] = [];
-    let currentPolygon: number[][] = [];
-
-    if (points !== null && points.length % 2 === 0) {
-      for (let i = 0; i < points.length; i += 2) {
-        const point = [points[i], points[i + 1]];
-        currentPolygon.push(point);
-
-        // Assume each polygon is closed, check and start a new one if needed
-        if (currentPolygon.length >= 4 &&
-          currentPolygon[0][0] === point[0] &&
-          currentPolygon[0][1] === point[1]) {
-          multiPolygon.push(currentPolygon);
-          currentPolygon = [];
-        }
-      }
-    }
-    return multiPolygon.length > 0 ? multiPolygon : [];
-  }
-
-  static isValidMultiPolygon(multiPolygon: number[][][]): false | number[][][] {
-    const isValid = multiPolygon != null &&
-      multiPolygon.length > 0 &&
-      multiPolygon.every(poly => Validators.isValidPolygon(poly));
-
-    return isValid ? multiPolygon : false
-  }
-
-  static isValidStringForMultiPolygon(multiPolyStr: string): false | number[][][] {
-    const multiPolygon = Validators.stringToMultiPolygon(multiPolyStr);
-    return Validators.isValidMultiPolygon(multiPolygon) ? multiPolygon : false;
-  }
-
   static isPolygonAreaValid(poly: Feature, maxSize?: number): boolean {
     const polyArea = area(poly) / 1000000
     const maxArea = maxSize ?? 100
     return polyArea < 0 || polyArea <= maxArea
   }
-
+  
 }

@@ -11,7 +11,7 @@ export enum MapOfferingStatus {
   ERROR = 'Error'
 }
 
-export class OfferingMapProductsResDto {
+export class OfferingMapResDto {
   @ApiProperty({required: false, type: MapProductResDto, isArray: true})
   @IsArray()
   @ValidateNested({each: true})

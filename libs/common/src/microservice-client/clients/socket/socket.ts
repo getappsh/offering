@@ -2,7 +2,7 @@ import { ClientProvider, Transport } from "@nestjs/microservices";
 import { MicroserviceType } from "../../microservice-client.interface";
 
 export function getSocketClientConfig(type: MicroserviceType): ClientProvider {
-  switch (type) {
+  switch (type){
     case MicroserviceType.DELIVERY:
       return socketDeliveryConfig()
     case MicroserviceType.DEPLOY:
@@ -23,7 +23,7 @@ export function getSocketClientConfig(type: MicroserviceType): ClientProvider {
     case MicroserviceType.MICRO_DISCOVERY:
       // Using the offering microservice
       return socketOfferingConfig()
-
+    
   }
 }
 
@@ -99,7 +99,7 @@ const socketGetMapConfig = (): ClientProvider => {
 
 // const socketDeviceConfig = (): ClientProvider => {
 //   return {
-//     transport: Transport.TCP ,
+//     transport: Transport.TCP , 
 //     options: {port: 3008}
 //   }
 // }

@@ -1,8 +1,7 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { UploadVersionEntity } from "./upload-version.entity";
+import { DevicesGroupEntity } from "./devices-group.entity";
 import { DeviceMapStateEntity } from "./device-map-state.entity";
-import { OrgUIDEntity } from "./org-uid.entity";
-import { DeviceComponentEntity } from "./device-component-state.entity";
 
 @Entity("device")
 export class DeviceEntity {
@@ -10,16 +9,16 @@ export class DeviceEntity {
   @PrimaryColumn({ name: 'ID' })
   ID: string;
 
-  @CreateDateColumn({ name: 'create_date', type: "timestamptz" })
+  @CreateDateColumn({name: 'create_date', type: "timestamptz"})
   createdDate: Date;
 
-  @UpdateDateColumn({ name: 'last_update_date', type: "timestamptz" })
+  @UpdateDateColumn({name: 'last_update_date', type: "timestamptz"})
   lastUpdatedDate: Date;
-
-  @Column({ name: 'last_connection_date', type: "timestamptz", nullable: true })
+  
+  @Column({name: 'last_connection_date', type: "timestamptz", nullable: true})
   lastConnectionDate: Date;
-
-  @Column({ nullable: true })
+  
+  @Column({nullable: true})
   name: string
 
   @Column({ name: 'MAC', nullable: true })
@@ -43,14 +42,25 @@ export class DeviceEntity {
   @ManyToMany(() => UploadVersionEntity, uploadVersionEntity => uploadVersionEntity.devices, {
     cascade: true
   })
+  @JoinTable({
+    name: "device_component",
+    joinColumn: {
+      name: 'device_ID',
+      referencedColumnName: 'ID'
+    },
+    inverseJoinColumn: {
+      name: "component_catalog_id",
+      referencedColumnName: "catalogId"
+    },
 
-  @OneToMany(() => DeviceComponentEntity, deviceComp => deviceComp.device, { cascade: true })
-  components: DeviceComponentEntity[];
+  })
+  components: UploadVersionEntity[];
 
   @OneToMany(() => DeviceMapStateEntity, deviceMapState => deviceMapState.device, { cascade: true })
   maps: DeviceMapStateEntity[];
 
-  @OneToOne(type => OrgUIDEntity, org => org.device, { nullable: true })
-  orgUID: OrgUIDEntity
+
+  @ManyToOne(type => DevicesGroupEntity, { nullable: true })
+  groups: DevicesGroupEntity
 
 }

@@ -84,34 +84,10 @@ export class ImportResPayload extends ImportPayload {
 
     return importRes
   }
-  
-  static fromImportPayload(data: ImportPayload) {
-
-    const importRes = new ImportResPayload()
-
-    importRes.catalogRecordID = data.catalogRecordID
-    importRes.domain = data.domain
-    importRes.artifactCRS = data.artifactCRS
-    importRes.webhook = data.webhook
-    importRes.ROI = data.ROI
-    importRes.description = data.description
-    importRes.keywords = data.keywords
-    importRes.parameters = data.parameters
-
-    return importRes
-  }
-
-  
 
   toString(): string {
     return JSON.stringify(this);
   }
-}
-
-export class ImportResPayloadDto  {
-
-  @ApiProperty({ required: true, type: ImportResPayload })
-  data: ImportResPayload;
 }
 
 

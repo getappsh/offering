@@ -1,6 +1,7 @@
-import { DeviceEntity, DiscoveryMessageEntity } from "@app/common/database/entities";
+import { DeviceEntity, DeviceMapStateEntity, DiscoveryMessageEntity } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsString, Max, Min } from "class-validator";
+import { timeout } from 'rxjs';
 
 export class DeviceDto {
 
@@ -43,23 +44,6 @@ export class DeviceDto {
   operativeState: true
 
 
-  @ApiProperty({required: false})
-  @IsString()
-  @IsOptional()
-  groupName: string
-
-
-  @ApiProperty({required: false})
-  @IsNumber()
-  @IsOptional()
-  groupId: number
-
-
-  @ApiProperty({required: false})
-  @IsNumber()
-  @IsOptional()
-  uid: number
-
 
   static fromDeviceEntity(deviceE: DeviceEntity, discoveryE: DiscoveryMessageEntity): DeviceDto {
     let device = new DeviceDto()
@@ -72,10 +56,6 @@ export class DeviceDto {
     device.power = discoveryE?.situationalDevice.power;
     device.bandwidth = discoveryE?.situationalDevice.bandwidth;
     device.operativeState = discoveryE?.situationalDevice.operativeState;
-
-    device.uid = deviceE?.orgUID?.UID;
-    device.groupId = deviceE?.orgUID?.group?.id;
-    device.groupName = deviceE?.orgUID?.group?.name;
 
     return device
   }

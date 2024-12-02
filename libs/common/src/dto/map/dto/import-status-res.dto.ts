@@ -30,8 +30,6 @@ export class ImportStatusResDto extends ImportResDto {
     res.metaData.fileName = mE.fileName
     res.metaData.packageUrl = mE.packageUrl
     res.metaData.size = mE.size
-    res.metaData.area = mE.area
-    res.metaData.footprint = mE.footprint
 
     return res
   }

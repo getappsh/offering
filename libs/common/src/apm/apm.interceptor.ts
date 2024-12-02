@@ -17,9 +17,6 @@ export class ApmInterceptor implements NestInterceptor {
   constructor(private readonly apm: ElasticApmService){}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    if (process.env.ELASTIC_APM_ACTIVATE !== 'true'){
-      return next.handle()
-    }
     if (context.getType() === 'http') {
       return next.handle()
     }else{

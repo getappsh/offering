@@ -1,9 +1,8 @@
 import { UploadVersionEntity } from "@app/common/database/entities";
 import { IsValidStringFor } from "@app/common/validators";
-import { Pattern } from "@app/common/validators/regex.validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 
 export class ComponentDto {
 
@@ -18,7 +17,7 @@ export class ComponentDto {
 
   @ApiProperty({required: false})
   @IsNotEmpty()
-  @IsValidStringFor(Pattern.VERSION)
+  @IsValidStringFor("version")
   versionNumber: string;
 
   @ApiProperty({required: false})
@@ -37,23 +36,14 @@ export class ComponentDto {
   category: string;
 
   @ApiProperty({required: false})
-  @IsValidStringFor(Pattern.VERSION)
+  @IsValidStringFor("version")
   @IsOptional()
   baseVersion: string;
 
   @ApiProperty({required: false})
   @IsOptional()
-  @IsValidStringFor(Pattern.VERSION)
+  @IsValidStringFor("version")
   prevVersion: string;
-
-  @ApiProperty({required: false})
-  @IsOptional()
-  @IsBoolean()
-  latest: boolean;
-
-  @ApiProperty({required: false})
-  @IsOptional()
-  uploadDate: Date;
 
   @ApiProperty({required: false, type: [ComponentDto]})
   @IsOptional()
@@ -74,8 +64,6 @@ export class ComponentDto {
     
     comp.category = entity.metadata?.category;
     comp.releaseNotes = entity.metadata?.releaseNote;
-    comp.latest = entity.latest;
-    comp.uploadDate = entity.createdDate;
 
     return comp
   }
@@ -111,7 +99,7 @@ export class PlatformDto {
 
 export class DiscoverySoftwareDto {
   @ApiProperty({required: false})
-  @IsOptional()
+  @IsNotEmpty()
   formation: string
 
   @ApiProperty({required: false, type: PlatformDto})

@@ -3,25 +3,20 @@ import { OfferingController } from './offering.controller';
 import { OfferingService } from './offering.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@app/common';
-import { ComponentOfferingEntity, DeviceEntity, MapOfferingEntity, MemberEntity, MemberProjectEntity, ProjectEntity, UploadVersionEntity, VersionPackagesEntity } from '@app/common/database/entities';
+import { MemberEntity, MemberProjectEntity, ProjectEntity, UploadVersionEntity, VersionPackagesEntity } from '@app/common/database/entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { S3Service } from '@app/common/AWS/s3.service';
 import { LoggerModule } from '@app/common/logger/logger.module';
 import { ApmModule } from '@app/common/apm/apm.module';
-import { MicroserviceModule, MicroserviceName, MicroserviceType } from '@app/common/microservice-client';
-import { SafeCronModule } from '@app/common/safe-cron';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     LoggerModule.forRoot({httpCls: false, jsonLogger: process.env.LOGGER_FORMAT === 'JSON', name: "Offering"}),
-    MicroserviceModule.register({
-      name: MicroserviceName.DISCOVERY_SERVICE,
-      type: MicroserviceType.DISCOVERY,
-    }),
     ApmModule,
     DatabaseModule,
-    TypeOrmModule.forFeature([UploadVersionEntity, VersionPackagesEntity, ProjectEntity, MemberProjectEntity, MemberEntity, ComponentOfferingEntity, MapOfferingEntity, DeviceEntity]),
-    SafeCronModule,
+    TypeOrmModule.forFeature([UploadVersionEntity, VersionPackagesEntity, ProjectEntity, MemberProjectEntity, MemberEntity]) 
   ],
   controllers: [OfferingController],
   providers: [OfferingService],

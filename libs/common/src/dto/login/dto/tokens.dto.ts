@@ -1,15 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger"
 
 export class TokensDto{
-  @ApiProperty({required: true})
+  @ApiProperty({required: false})
   accessToken: string
 
-  @ApiProperty({required: false})
-  expireAt: Date
 
-  @ApiProperty({required: true})
+  @ApiProperty({required: false})
   refreshToken: string
-
-  @ApiProperty({required: false})
-  refreshExpireAt: Date
 }

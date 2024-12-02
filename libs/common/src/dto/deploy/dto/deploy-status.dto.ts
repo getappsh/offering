@@ -6,11 +6,11 @@ import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from "cla
 export class DeployStatusDto {
 
 
-  @ApiProperty({required: true})
+  @ApiProperty({required: false})
   @IsNotEmpty()
   deviceId: string;
 
-  @ApiProperty({required: true})
+  @ApiProperty({required: false})
   @IsString()
   @IsNotEmpty()
   catalogId: string;
@@ -37,7 +37,7 @@ export class DeployStatusDto {
   @IsOptional()
   deployEstimateTime: number;
 
-  @ApiProperty({required: true})
+  @ApiProperty({required: false})
   @IsOptional()    
   @Type(() => Date)
   @IsDate()

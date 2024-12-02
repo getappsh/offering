@@ -61,9 +61,8 @@ export enum PrepareStatusEnum {
     IN_PROGRESS = "inProgress",
     DONE = "done",
     ERROR = "error",
-    DELETE = "delete",
-}
-
+  }
+  
 export enum DeployStatusEnum {
     START = 'Start',
     DONE = 'Done',
@@ -105,32 +104,16 @@ export enum LibotExportStatusEnum {
 }
 
 export enum DeviceMapStateEnum {
-    OFFERING = "offering",
-    PUSH = "push",
     IMPORT = "import",
     DELIVERY = "delivery",
-    DELETED = "deleted",
     INSTALLED = "installed",
     UNINSTALLED = "uninstalled"
 }
 
-export enum DeviceComponentStateEnum{
-    OFFERING = "offering",
-    PUSH = "push",
-    DELIVERY = "delivery",
-    DELETED = "deleted",
-    DEPLOY = "deploy",
-    INSTALLED = "installed",
-    UNINSTALLED = "uninstalled",
-}
-
-export enum OfferingActionEnum{
-    OFFERING = "offering",
-    PUSH = "push"
-}
-
-export enum HashAlgorithmEnum {
-    SHA256Hex = "SHA256Hex",
-    SHA256Base64 = "SHA256Base64",
+export enum TargetStoragePolicy {
+    SD_ONLY = "SDOnly",
+    FLASH_THEN_SD = "FlashThenSD",
+    SD_THEN_FLASH = "SDThenFlash",
+    FLASH_ONLY = "FlashOnly"
 }
 

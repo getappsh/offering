@@ -18,5 +18,5 @@ export const deliveryStatusDtoStub = (): DeliveryStatusDto => {
     downloadSpeed: eStub.downloadSpeed,
     downloadEstimateTime: eStub.downloadEstimateTime,
     currentTime: eStub.currentTime,
-  } as DeliveryStatusDto
+  }
 }

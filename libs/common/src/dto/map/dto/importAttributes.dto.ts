@@ -1,6 +1,6 @@
 import { CreateImportDto } from "@app/common/dto/map"
 import { Validators } from "../utils/validators"
-import { Feature, Polygon, area, bbox, bboxPolygon, multiPolygon, polygon } from "@turf/turf"
+import { Feature, Polygon, area, bbox, bboxPolygon, polygon } from "@turf/turf"
 import { MapEntity } from "@app/common/database/entities"
 import { MapProductResDto } from "./map-product-res.dto"
 
@@ -33,13 +33,13 @@ export class ImportAttributes {
   public get Points() {
     return this._pointsString
   }
-
+  
   public get Area() {
     return this._area
   }
 
   public set Points(bBox: string) {
-    let poly: number[][] | number[][][] | false
+    let poly: number[][] | false
     if (Validators.isValidStringForBBox(bBox)) {
       this._pointsString = bBox
       this.setBBoxString(bBox)
@@ -53,13 +53,6 @@ export class ImportAttributes {
       this._area = parseInt(area(this._polygon).toFixed())
       this._bBox = bbox(fePoly) as [number, number, number, number]
       this.pattern = "polygon"
-    } else if ((poly = Validators.isValidStringForMultiPolygon(bBox))) {
-      this._pointsString = bBox;
-      const feMultiPoly = polygon([poly[0]]);
-      this._polygon = feMultiPoly;
-      this._area = parseInt(area(this._polygon).toFixed());
-      this._bBox = bbox(feMultiPoly) as [number, number, number, number];
-      this.pattern = "polygon";
     } else {
       throw new Error("Points box values are invalid.");
     }
@@ -80,7 +73,7 @@ export class ImportAttributes {
     attr.Points = importDto.mapProperties.boundingBox
     return attr
   }
-
+  
   static fromFootprint(mE: MapEntity): ImportAttributes {
     const attr = new ImportAttributes()
     attr.Points = mE.footprint

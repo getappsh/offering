@@ -12,30 +12,19 @@ export const UploadTopics = {
 export const DeliveryTopics = {
     PREPARE_DELIVERY: `getapp-delivery.prepare${region}`,
     PREPARED_DELIVERY_STATUS: `getapp-delivery.prepared-status${region}`,
-    GET_CACHE_CONFIG: `getapp-delivery.get-cache-config${region}`,
-    SET_CACHE_CONFIG: `getapp-delivery.set-cache-config${region}`,
     CHECK_HEALTH: `getapp-delivery.check-health${region}`
 } as const
 
 export const DeliveryTopicsEmit = {
     UPDATE_DOWNLOAD_STATUS: `getapp-delivery.update-download-status${region}`,
-    DELETE_CACHE_ITEMS: `getapp-delivery.delete-cache-items${region}`,
 }
 
 export const OfferingTopics = {
     CHECK_UPDATES: `getapp-offering.check-updates${region}`,
-    DEVICE_COMPONENT_OFFERING: `getapp-offering.device-components${region}`,
-    DEVICE_MAP_OFFERING: `getapp-offering.device-map${region}`,
     GET_OFFER_OF_COMP: `getapp-offering.get-offering-of-comp${region}`,
     CHECK_HEALTH: `getapp-offering.check-health${region}`
 } as const
 
-export const OfferingTopicsEmit = {
-    COMPONENT_UPLOAD_EVENT: `getapp-offering.component-upload-event${region}`,
-    OFFERING_PUSH: `getapp-offering.push${region}`,
-    DEVICE_SOFTWARE_EVENT: `getapp-offering.device.software-event${region}`,
-    DEVICE_MAP_EVENT: `getapp-offering.device.map-event${region}`,
-}
 export const DeployTopics = {
     CHECK_HEALTH: `getapp-deploy.check-health${region}`
 } as const
@@ -73,6 +62,9 @@ export const GetMapTopics = {
     EXPORT_NOTIFICATION: `getapp-map.export.notify${region}`,
     // Inventory
     GET_INVENTORY_UPDATES: `getapp-map.inventory.updates${region}`,
+    // Config
+    GET_MAP_CONFIG: `getapp-map.config.get${region}`,
+    SET_MAP_CONFIG: `getapp-map.config.set${region}`,
     // admin
     MAP_PUT: `getapp-map.put${region}`,
     // Device
@@ -90,9 +82,6 @@ export const GetMapTopicsEmit = {
 
 export const DeviceTopics = {
     All_DEVICES: `getapp-device.all${region}`,
-    DEVICE_SOFTWARES: `getapp-device.device.softwares${region}`,
-    DEVICES_SOFTWARE_STATISTIC_INFO: `getapp-device.device.software.statistic.info${region}`,
-    DEVICES_MAP_STATISTIC_INFO: `getapp-device.device.map.statistic.info${region}`,
     DEVICES_PUT: `getapp-device.put${region}`,
     DEVICE_MAPS: `getapp-device.device.maps${region}`,
     All_MAPS: `getapp-map.maps${region}`,
@@ -101,22 +90,15 @@ export const DeviceTopics = {
     DEVICE_CONTENT: `getapp-device.content.installed${region}`,
     DISCOVERY_SOFTWARE: `getapp-device.discover.software.catalog${region}`,
     IM_PULL_DISCOVERY: `getapp-device.im.pull.discovery${region}`,
-     // Config
-     GET_DEVICE_CONFIG: `getapp-device.config.get${region}`,
-     SET_DEVICE_CONFIG: `getapp-device.config.set${region}`,
     CHECK_HEALTH: `getapp-device.check-health${region}`
 } as const
 
 export const DeviceTopicsEmit = {
-    DISCOVER_DEVICE_CONTEXT: `getapp-device.discover.device-context${region}`,
-    UPDATE_DEVICE_SOFTWARE_STATE: `getapp-device.device.update-software-state${region}`,
-    UPDATE_DEVICE_MAP_STATE: `getapp-device.device.update-map-state${region}`,
     REGISTER_MAP_TO_DEVICE: `getapp-device.map.register-to-device${region}`,
     REGISTER_MAP_INVENTORY: `getapp-device.map.register-inventory${region}`,
     MAP_UPDATES_JOB_START: `getapp-device.map.job.updates.start${region}`,
     UPDATE_TLS_STATUS: `getapp-device.update.tls.status${region}`,
     IM_PUSH_DISCOVERY: `getapp-device.im.push.discovery${region}`,
-    COMPONENT_EVENT: `getapp-device.component.event`,
 } as const
 
 

@@ -8,5 +8,4 @@ export * from './member.repo.mock'
 export * from './member-project.repo.mock'
 export * from './project-types.repo.mocks'
 export * from './map.repo.mock'
-export * from './device-config.repo.mock'
 
