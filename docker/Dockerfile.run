@@ -1,0 +1,13 @@
+FROM getapp-build as build
+FROM getapp-prod as prod
+ARG SERVICE_NAME
+WORKDIR /usr/src/app
+COPY --from=build /usr/src/app/dist/apps/${SERVICE_NAME}/* .
+CMD ["node", "main.js"]
+
+
+# Commends
+# 1. docker build -t getapp-build -f docker/Dockerfile.build .
+# 2. docker build -t getapp-prod -f docker/Dockerfile.prod . 
+# 3. docker build --build-arg SERVICE_NAME={microsevice-name} -t getapp-{micorserivce-name} -f docker/Dockerfile.run . 
+# 4. docker run --name getapp --env-file ./.env.dev getapp-{microsevice-name}

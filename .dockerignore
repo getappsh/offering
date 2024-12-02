@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+.env.dev
+cicd.sh
+cicd2.sh
+docker-compose*
+dist
+docker
+

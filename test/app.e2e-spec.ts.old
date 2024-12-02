@@ -1,0 +1,141 @@
+import { INestApplication, INestMicroservice } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { Transport } from '@nestjs/microservices';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as request from 'supertest';
+import { ApiModule } from '../apps/api/src/api.module';
+import { UploadModule } from '../apps/upload/src/upload.module';
+import { OfferingModule } from '../apps/offering/src/offering.module';
+
+
+jest.setTimeout(5000*10)
+// in testing load env with connection to dev DB
+async function createApiApp() {
+  const fixture: TestingModule = await Test.createTestingModule({
+    imports: [ConfigModule.forRoot({ isGlobal: true }), ApiModule],
+
+  }).compile();
+
+  const app = fixture.createNestApplication();
+
+  await app.startAllMicroservices();
+
+  await app.init();
+
+  return app;
+}
+
+async function createUploadApp() {
+  const fixture: TestingModule = await Test.createTestingModule({
+    imports: [ConfigModule.forRoot({ isGlobal: true }), UploadModule]
+  }).compile();
+
+  const app = fixture.createNestMicroservice({
+    transport: Transport.KAFKA,
+    options: {
+      client:{
+        brokers: [process.env.KAFKA_BROKER_URL]
+      },
+      consumer: {
+        groupId: process.env.KAFKA_UPLOAD_GROUP_ID,
+      },
+    },
+  });
+
+  await app.listen();
+  return app;
+}
+
+async function createOfferingApp() {
+  const fixture: TestingModule = await Test.createTestingModule({
+    imports: [ConfigModule.forRoot({ isGlobal: true }), OfferingModule]
+  }).compile();
+
+  const app = fixture.createNestMicroservice({
+    transport: Transport.KAFKA,
+    options: {
+      client:{
+        brokers: [process.env.KAFKA_BROKER_URL]
+      },
+      consumer: {
+        groupId: process.env.KAFKA_OFFERING_GROUP_ID,
+      },
+    },
+  });
+
+  await app.listen();
+
+  return app;
+}
+
+describe('Microservices (e2e)', () => {
+  let apiApp: INestApplication;
+  let uploadApp: INestMicroservice;
+  let offeringApp : INestMicroservice;
+  let accessToken: string;
+
+  beforeEach(async () => {
+    [apiApp, uploadApp, offeringApp] = await Promise.all([
+      createApiApp(),
+      createUploadApp(),
+      createOfferingApp(),
+    ]);
+  });
+
+  afterEach(async () => {
+    await Promise.all([apiApp.close(), uploadApp.close(), offeringApp.close()]);
+  });
+
+  test('test login', async () => {
+    const payload = {"username": "test@example.com", "password": ";as938cxa3d2mo"}
+
+    const httpServer = apiApp.getHttpServer();
+    const response = await request(httpServer)
+      .post('/login')
+      .send(payload)
+      .expect(201)
+      .then((res) => res.body);
+    accessToken = response.accessToken;
+    
+  })
+
+  test('test new version upload works', async () => {
+    const payload = {
+      "component": "linux", "formation": "yaat", "baseVersion": "test_" + Math.random(), 
+      "previousVersion": "0.1.18", "url": "https://google.com"
+    }
+    const httpServer = apiApp.getHttpServer();
+
+    const response = await request(httpServer)
+      .post('/upload')
+      .set('Authorization', 'bearer ' + accessToken)
+      .send(payload)
+      .expect(201)
+      .set('Accept', 'application/json')
+      .then((res) => res.body);
+
+    // expect(response).toMatchInlineSnapshot(`
+    //   {
+    //     "result": {
+    //       "success": true,
+    //     },
+    //   }
+    // `);
+
+    // wait a while to allow subscriber to receive message
+    await new Promise((fulfill) => setTimeout(fulfill, 250));
+  });
+
+  test('test discovery call', async () => {
+    const payload = {"identify": {"mac":"123", "id": "jflks8r89n23#89kff", "ip": "123.44.55.234"}, "OS": "windows", "formation": "yaat","versions": [{"name": "yatush","version":"21.2.57", "subComponenst": [] }]}
+
+    const httpServer = apiApp.getHttpServer();
+
+    const response = await request(httpServer)
+      .post('/discovery')
+      .set('Authorization', 'bearer ' + accessToken)
+      .send(payload)
+      .expect(201)
+
+  })
+});

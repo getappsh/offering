@@ -1,0 +1,199 @@
+version: '3.6'
+services:
+  # node-app-api:
+  #   #image: harbor.getapp.sh/getapp-dev/api:latest
+  #   build:
+  #     context: .
+  #     args:
+  #       - SERVICE_NAME=api
+  #     dockerfile: Dockerfile.prod
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   networks:
+  #     - getapp
+  #   ports:
+  #     - 3000:3000
+  #   # command: npm run start:dev
+
+  # node-app-upload:
+  #   #image: harbor.getapp.sh/getapp-dev/api:latest
+  #   build:
+  #     context: .
+  #     args:
+  #       - SERVICE_NAME=upload
+  #     dockerfile: Dockerfile.prod
+  #   restart: always
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - //var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #     - getapp
+  #   # command: npm run start:dev upload
+
+  # node-app-discovery:
+  #   #image: harbor.getapp.sh/getapp-dev/api:latest
+  #   build:
+  #     context: .
+  #     args:
+  #       - SERVICE_NAME=discovery
+  #     dockerfile: Dockerfile.prod
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   networks:
+  #     - getapp
+  #   # command: npm run start:dev discovery
+
+  # node-app-offering:
+  #   #image: harbor.getapp.sh/getapp-dev/api:latest
+  #   build:
+  #     context: .
+  #     args:
+  #       - SERVICE_NAME=offering
+  #     dockerfile: Dockerfile.prod
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   networks:
+  #     - getapp
+  #   # command: npm run start:dev offering
+
+  # node-app-delivery:
+  #   #image: harbor.getapp.sh/getapp-dev/api:latest
+  #   build:
+  #     context: .
+  #     args:
+  #       - SERVICE_NAME=delivery
+  #     dockerfile: Dockerfile.prod
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   networks:
+  #     - getapp
+  #   # command: npm run start:dev delivery
+
+  # node-app-deploy:
+  #   build:
+  #     context: .
+  #     args:
+  #       - SERVICE_NAME=deploy
+  #     dockerfile: Dockerfile.prod
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   networks:
+  #     - getapp
+  #   # command: npm run start:dev deploy
+  
+  # node-app-project-management:
+  #   build:
+  #     context: .
+  #     args:
+  #       - SERVICE_NAME=project-management
+  #     dockerfile: Dockerfile.prod
+  #   restart: always
+  #   env_file:
+  #     - .env.dev
+  #   networks:
+  #     - getapp
+  #   # command: npm run start:dev project-management
+  
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    restart: "always"
+    ports:
+      - 9001:9000
+    networks:
+      - getapp
+
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    depends_on:
+      - "kafka"
+
+  kafka:
+    container_name: kafka_container
+    image: obsidiandynamics/kafka
+    restart: "always"
+    ports:
+      - 2181:2181
+      - 9092:9092
+    networks:
+      - getapp
+
+    environment:
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT: "6000"
+      KAFKA_RESTART_ATTEMPTS: "10"
+      KAFKA_RESTART_DELAY: "5"
+      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: "0"
+
+
+  db:
+    container_name: pg_container
+    image: postgres:14.1
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: get_app
+    ports:
+      - 5432:5432
+    networks:
+      - getapp
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 5050:80
+    networks:
+      - getapp
+
+  artifactory:
+    image: releases-docker.jfrog.io/jfrog/artifactory-oss:latest
+    container_name: artifactory
+    ports:
+     - 8081:8081
+     - 8082:8082
+    volumes:
+     - data-artifactory:/var/opt/jfrog/artifactory
+    networks:
+      - getapp
+  
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - 8081:8080
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - AFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+
+
+networks:
+  getapp:
+    driver: bridge
+    
+volumes:
+  db:
+    driver: local
+  keycloak:
+    driver: local
+  data-artifactory:
+    driver: local
+  ignore:
