@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Ensure all tags are fetched
-
+        
       - name: Docker login
         uses: docker/login-action@v3
         with:
@@ -69,6 +69,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           # path to the Dockerfile
+          file: Dockerfile-cts
           context: .
           tags: ${{ secrets.REGISTRY_URL }}/getapp-dev/offering:${{ needs.calculate_new_tag.outputs.tag }}
           push: true
