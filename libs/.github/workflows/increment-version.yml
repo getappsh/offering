@@ -1,0 +1,66 @@
+name: Increment Version
+
+on:
+  push:
+    branches:
+      - develop
+      - even-2
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Git
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+
+    - name: Read and Bump Version
+      id: bump-version
+      run: |
+        # Read the current version from the file
+        CURRENT_VERSION=$(cat common/version.txt)
+        
+        # Split version into base version and suffix
+        if [[ $CURRENT_VERSION =~ ^([0-9.]+)(-.*)?$ ]]; then
+          BASE_VERSION="${BASH_REMATCH[1]}"
+          SUFFIX="${BASH_REMATCH[2]}"
+          
+          # Split base version into parts
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+          
+          # Bump patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_BASE_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          
+          # Combine base version with original suffix
+          NEW_VERSION="${NEW_BASE_VERSION}${SUFFIX}"
+          
+          # Write new version back to file
+          echo "$NEW_VERSION" > common/version.txt
+          
+          # Set output for later steps
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Version bumped from $CURRENT_VERSION to $NEW_VERSION"
+        else
+          echo "Error: Invalid version format"
+          exit 1
+        fi
+
+    - name: Commit and Tag
+      env:
+        NEW_VERSION: ${{ steps.bump-version.outputs.new_version }}
+        CURRENT_BRANCH: ${{ github.ref_name }}
+      run: |
+        git add common/version.txt
+        git commit -m "Bump version to $NEW_VERSION"
+        git tag "v$NEW_VERSION"
+        git push origin "$CURRENT_BRANCH" --tags
