@@ -74,3 +74,57 @@ jobs:
           tags: ${{ secrets.REGISTRY_URL }}/getapp-dev/offering:${{ needs.calculate_new_tag.outputs.tag }}
           push: true
           build-args: IMG_TAG=${{ needs.calculate_new_tag.outputs.tag }}
+
+  upload-to-server:
+    needs: 
+      - build_and_push_image
+      - calculate_new_tag
+
+    runs-on: ubuntu-latest
+    env:
+      NEW_VERSION: ${{needs.calculate_new_tag.outputs.tag}}
+      IMAGE_URL: ${{ secrets.REGISTRY_URL }}/getapp-dev/offering:${{ needs.calculate_new_tag.outputs.tag }}
+
+    steps:
+      - name: Print Version from GitHub environment
+        run: |
+          echo "New version: $NEW_VERSION"
+          echo "Image registry url: $IMAGE_URL"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install CLI tool
+        run: npm i -g git+https://github.com/getappsh/cli.git
+
+      - name: Verify installation
+        run: gac -V
+
+      - name: Create manifest file
+        run: |
+          echo '{
+            "product": "merkava",
+            "name": "GetApp-Offering",
+            "version":"'"$NEW_VERSION"'",
+            "agentTags": "Tags of possible agent",
+            "prevVersion": "0.1.0",
+            "formation": "yatush",
+            "baseVersion": "0.1.0",
+            "installType": "None",
+            "registryUrl": "'"$IMAGE_URL"'",
+            "assetType": "docker_image",
+            "properties": {
+              "releaseNotes": "Release of the GetApp offering docker image"
+            }
+          }' > manifest.json
+
+      - name: Upload build artifacts
+        run: |
+          gac upload manifest.json "empty/for/now"  ${{ secrets.UPLOAD_TOKEN }}
+          echo $?
+        env:
+          BASE_PATH: ${{ secrets.BASE_PATH }}  # Example: Use GitHub secrets for sensitive data
+          UPLOAD_TOKEN: ${{ secrets.UPLOAD_TOKEN }}  # Add the secret token here
+
