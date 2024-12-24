@@ -3,7 +3,7 @@ import { OfferingController } from './offering.controller';
 import { OfferingService } from './offering.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@app/common';
-import { ComponentOfferingEntity, DeviceEntity, MapOfferingEntity, MemberEntity, MemberProjectEntity, ProjectEntity, UploadVersionEntity, VersionPackagesEntity } from '@app/common/database/entities';
+import { ComponentOfferingEntity, DeviceEntity, MapOfferingEntity, UploadVersionEntity } from '@app/common/database/entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from '@app/common/logger/logger.module';
 import { ApmModule } from '@app/common/apm/apm.module';
@@ -20,7 +20,7 @@ import { SafeCronModule } from '@app/common/safe-cron';
     }),
     ApmModule,
     DatabaseModule,
-    TypeOrmModule.forFeature([UploadVersionEntity, VersionPackagesEntity, ProjectEntity, MemberProjectEntity, MemberEntity, ComponentOfferingEntity, MapOfferingEntity, DeviceEntity]),
+    TypeOrmModule.forFeature([UploadVersionEntity, ComponentOfferingEntity, MapOfferingEntity, DeviceEntity]),
     SafeCronModule,
   ],
   controllers: [OfferingController],
