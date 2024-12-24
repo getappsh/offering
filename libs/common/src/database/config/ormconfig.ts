@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import { UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, VersionPackagesEntity, DiscoveryMessageEntity, DeployStatusEntity, PlatformEntity, FormationEntity, CategoryEntity, OperationSystemEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity } from '../entities';
+import { UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, DiscoveryMessageEntity, DeployStatusEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity, RegulationEntity, RegulationTypeEntity} from '../entities';
 import { join } from 'path';
 import { readFileSync } from 'fs'
 import { JobsEntity } from '../entities/map-updatesCronJob';
@@ -28,13 +28,8 @@ const ormConfig = new DataSource({
     MemberProjectEntity,
     MemberEntity,
     DiscoveryMessageEntity,
-    VersionPackagesEntity,
     DeliveryStatusEntity,
     DeployStatusEntity,
-    PlatformEntity,
-    FormationEntity,
-    CategoryEntity,
-    OperationSystemEntity,
     DeviceEntity,
     OrgGroupEntity,
     OrgUIDEntity,
@@ -50,6 +45,8 @@ const ormConfig = new DataSource({
     DeviceComponentEntity,
     ComponentOfferingEntity,
     MapOfferingEntity,
+    RegulationEntity,
+    RegulationTypeEntity,
   ],
   migrations: [join(__dirname, '../migration/*.{js,ts}')],
   logging: false,

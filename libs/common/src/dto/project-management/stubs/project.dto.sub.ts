@@ -1,17 +1,11 @@
 import { projectEntityStub } from "@app/common/database/test/support/stubs"
-import { ProjectDto } from "../dto/project.dto"
+import { CreateProjectDto } from "../dto/project.dto"
 
-export const projectDtoStub = (): ProjectDto => {
+export const projectDtoStub = (): CreateProjectDto => {
   const eStub = projectEntityStub()
 
   return {
-    componentName: eStub.componentName,
-    OS: eStub.OS.name,
-    platformType: eStub.platformType.name,
-    formation: eStub.formation.name,
-    artifactType: eStub.artifactType,
-    category: eStub.category.name,
-    description: eStub.description,
-
+    name: eStub.name,
+    description: eStub.description
   }
 }

@@ -46,8 +46,6 @@ export const DeployTopicsEmit = {
 
 export const ProjectManagementTopics = {
     GET_USER_PROJECTS: `getapp-project-management.get-user-projects${region}`,
-    GET_PROJECT_CONFIG_OPTION: `getapp-project-management.get-project-config-option${region}`,
-    SET_PROJECT_CONFIG_OPTION: `getapp-project-management.set-project-config-option${region}`,
     CREATE_PROJECT: `getapp-project-management.create-project${region}`,
     CREATE_TOKEN: `getapp-project-management.create-token${region}`,
     ADD_NEW_MEMBER: `getapp-project-management.add-new-member${region}`,
@@ -58,6 +56,13 @@ export const ProjectManagementTopics = {
     GET_DEVICES_BY_CATALOG_ID: `getapp-project-management.get-devices-by-catalog-id${region}`,
     GET_DEVICES_BY_PROJECT: `getapp-project-management.get-devices-by-project${region}`,
     GET_DEVICES_BY_PLATFORM: `getapp-project-management.get-devices-by-platform${region}`,
+
+    GET_REGULATION_TYPES: `getapp-project-management.get-regulation-types${region}`,
+    GET_PROJECT_REGULATIONS: `getapp-project-management.get-project-regulations${region}`,
+    CREATE_REGULATION: `getapp-project-management.create-regulation${region}`,
+    UPDATE_REGULATION: `getapp-project-management.update-regulation${region}`,
+    DELETE_REGULATION: `getapp-project-management.delete-regulation${region}`,
+    GET_REGULATION_BY_ID: `getapp-project-management.get-regulation-by-id${region}`,
 
     CHECK_HEALTH: `getapp-project-management.check-health${region}`
 } as const

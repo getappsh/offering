@@ -1,34 +1,14 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, Index, OneToMany } from "typeorm";
 import { BaseEntity } from "./base.entity";
 import { MemberProjectEntity } from "./member_project.entity";
-import { CategoryEntity, FormationEntity, OperationSystemEntity, PlatformEntity } from "./project-types";
-
+import { RegulationEntity } from "./regulation.entity";
 
 @Entity("project")
 export class ProjectEntity extends BaseEntity{
     
-    @Index("project_component_name_unique_constraint", {unique: true})
-    @Column({name: "component_name"})
-    componentName: string;
-
-    @ManyToOne(() => OperationSystemEntity, OS => OS.name)
-    @JoinColumn({name: "OS"})
-    OS: OperationSystemEntity;
-
-    @ManyToOne(() => PlatformEntity, platformType => platformType.name)
-    @JoinColumn({name: "platform_type"})
-    platformType: PlatformEntity;
-
-    @ManyToOne(() => FormationEntity, formation => formation.name)
-    @JoinColumn({name: "formation"})
-    formation: FormationEntity;
-
-    @Column({name: "artifact_type", default: null})
-    artifactType: string;
-
-    @ManyToOne(() => CategoryEntity, category => category.name)
-    @JoinColumn({name: "category"})
-    category: CategoryEntity;
+    @Index("project_name_unique_constraint", {unique: true})
+    @Column({name: "name"})
+    name: string;
 
     @Column({name: "description"})
     description: string
@@ -36,6 +16,9 @@ export class ProjectEntity extends BaseEntity{
     @Column('simple-array', {name: "tokens", nullable: true})
     tokens: string[]
    
+    @OneToMany(() => RegulationEntity, regulation => regulation.project)
+    regulations: RegulationEntity[]
+    
     @OneToMany(() => MemberProjectEntity, memberProject => memberProject)
     memberProject: MemberProjectEntity[];
 

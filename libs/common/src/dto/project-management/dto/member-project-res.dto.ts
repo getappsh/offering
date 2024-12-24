@@ -1,5 +1,6 @@
-import { MemberEntity, MemberProjectEntity, OperationSystemEntity, ProjectEntity, RoleInProject } from "@app/common/database/entities";
+import { MemberEntity, MemberProjectEntity, RoleInProject } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
+import { ProjectDto } from "./project.dto";
 
 export class MemberResDto {
 
@@ -38,69 +39,18 @@ export class MemberResDto {
 }
 
 
-export class ProjectResDto {
-
-  @ApiProperty({required: false})
-  id: number;
-
-  @ApiProperty({required: false})
-  componentName: string;
-
-  @ApiProperty({required: false})
-  OS: string;
-
-  @ApiProperty({required: false})
-  platformType: string;
-
-  @ApiProperty({required: false})
-  formation: string;
-  
-  @ApiProperty({required: false})
-  category: string;
-
-  @ApiProperty({required: false})
-  artifactType: string;
-
-  @ApiProperty({required: false})
-  tokens: string[]
-
-  @ApiProperty({required: false})
-  description: string;
-
-  @ApiProperty({required: false, type: MemberResDto, isArray: true})
-  members: MemberResDto[]
-
-  fromProjectEntity(project: ProjectEntity){
-    this.id = project.id;
-    this.componentName = project.componentName;
-    this.OS = project.OS?.name;
-    this.platformType = project.platformType?.name;
-    this.formation = project.formation?.name;
-    this.category = project.category?.name;
-    this.artifactType = project.artifactType;
-    this.tokens = project.tokens;
-    this.description = project.description;
-
-    return this;
-  }
-
-  toString(){
-    return JSON.stringify(this);
-  }
-}
-
 export class MemberProjectResDto{
 
   @ApiProperty({required: false})
   member: MemberResDto;
 
   @ApiProperty({required: false})
-  project: ProjectResDto;
+  project: ProjectDto;
 
 
   fromMemberProjectEntity(memberProject: MemberProjectEntity){
     this.member = new MemberResDto().fromMemberEntity(memberProject.member, memberProject.role);
-    this.project = new ProjectResDto().fromProjectEntity(memberProject.project);
+    this.project = new ProjectDto().fromProjectEntity(memberProject.project);
     return this;
   }
 
@@ -116,8 +66,8 @@ export class MemberProjectsResDto {
   @ApiProperty({required: false})
   member: MemberResDto;
 
-  @ApiProperty({required: false, type: ProjectResDto, isArray: true})
-  projects: ProjectResDto[];
+  @ApiProperty({required: false, type: ProjectDto, isArray: true})
+  projects: ProjectDto[];
 
   toString(){
     return JSON.stringify(this);

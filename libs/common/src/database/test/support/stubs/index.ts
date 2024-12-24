@@ -3,7 +3,6 @@ export * from './delivery-status.stub';
 export * from './upload-version.stub';
 export * from './discovery-message.stub';
 export * from './device.stub';
-export * from './project-types.stubs'
 export * from './project.stub'
 export * from './member.stub'
 export * from './member-project.stub'
