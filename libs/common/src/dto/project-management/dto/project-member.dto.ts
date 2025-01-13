@@ -1,29 +1,43 @@
 import { RoleInProject } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsOptional, IsNumber, IsEmail, IsNotEmpty, IsEnum } from "class-validator";
+import { Type } from "class-transformer";
+import { IsOptional, IsEmail, IsEnum, IsNumber } from "class-validator";
 
-export class ProjectMemberDto{
+export class AddMemberToProjectDto{
+    projectId: number;
+
+    @ApiProperty()
+    @IsEmail()
+    email: string;
+
+
+    @ApiProperty({enum: RoleInProject, default: RoleInProject.PROJECT_MEMBER})
+    @IsOptional()    
+    @IsEnum(RoleInProject)
+    role: RoleInProject = RoleInProject.PROJECT_MEMBER;
+}
+
+export class EditProjectMemberDto{
     
     projectId: number;
 
-    @IsEmail()
-    @ApiProperty({required: false})
-    email: string;
+    memberId: number;
 
-    @IsString()
-    @IsOptional()    
-    @ApiProperty({required: false})
-    firstName: string;
-
-    @IsString()
-    @IsOptional()    
-    @ApiProperty({required: false})
-    lastName: string;
-
-
-    @IsOptional()    
     @IsEnum(RoleInProject)
     @ApiProperty({enum: RoleInProject, default: RoleInProject.PROJECT_MEMBER})
-    role: string
+    role: RoleInProject = RoleInProject.PROJECT_MEMBER;
 
+}
+
+export class ProjectMemberParams{
+    @ApiProperty()
+    @IsNumber()
+    @Type(() => Number)
+    projectId: number;
+
+
+    @ApiProperty()
+    @IsNumber()
+    @Type(() => Number)
+    memberId: number;
 }

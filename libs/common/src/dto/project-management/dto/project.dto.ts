@@ -7,52 +7,54 @@ import { RegulationDto } from "./regulation.dto";
 
 export class ProjectDto {
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   id: number;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   name: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   description: string;
-  
-  @ApiProperty({required: false})
+
+  @ApiProperty({ required: false, type: String, isArray: true })
   tokens: string[]
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false, type: RegulationDto, isArray: true })
   regulation: RegulationDto[]
 
-  @ApiProperty({required: false, type: MemberResDto, isArray: true})
+  @ApiProperty({ required: false, type: MemberResDto, isArray: true })
   members: MemberResDto[]
 
-  fromProjectEntity(project: ProjectEntity){
+  fromProjectEntity(project: ProjectEntity) {
     this.id = project.id;
     this.name = project.name;
     this.description = project.description;
     this.tokens = project.tokens;
-    
-    if(project.regulations){
+
+    if (project.regulations) {
       this.regulation = project.regulations.map(regulation => new RegulationDto().fromRegulationEntity(regulation))
     }
-  
+
     return this;
   }
 
-  toString(){
+  toString() {
     return JSON.stringify(this);
   }
 }
 
 
-export class CreateProjectDto{
+export class CreateProjectDto {
 
-    @IsString()
-    @IsNotEmpty()
-    @ApiProperty({required: false})
-    name: string;
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ required: false })
+  name: string;
 
-    @IsString()
-    @IsOptional()    
-    @ApiProperty({required: false})
-    description: string;
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ required: false })
+  description: string;
+
+  username: string;
 }

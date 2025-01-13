@@ -1,18 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationShutdown, OnModuleDestroy } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { JobsEntity } from '@app/common/database/entities/map-updatesCronJob';
+import { last } from 'rxjs';
 
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 @Injectable()
-export class SafeCronService {
+export class SafeCronService implements OnModuleDestroy {
   private readonly logger = new Logger(SafeCronService.name);
+  private acquiredLocks: Map<string, boolean> = new Map();
+
 
   constructor(
     @InjectRepository(JobsEntity)
     private readonly jobRepository: Repository<JobsEntity>,
-  ) {}
+  ) {
+    this.registerShutdownHandler();
+  }
 
   /**
    * Attempts to acquire a lock for a specific job
@@ -22,7 +27,11 @@ export class SafeCronService {
   async acquireLock(jobName: string): Promise<boolean> {
     try {
       this.logger.debug(`Attempting to acquire lock for job: ${jobName}`);
-      return await this.tryAcquireJobLock(jobName);
+      const lockAcquired = await this.tryAcquireJobLock(jobName);
+      if (lockAcquired) {
+        this.acquiredLocks.set(jobName, true);
+      }
+      return lockAcquired;
     } catch (error) {
       this.logger.error(
         `Failed to acquire lock for job ${jobName}: ${error.message}`,
@@ -40,6 +49,8 @@ export class SafeCronService {
     try {
       this.logger.debug(`Attempting to release lock for job: ${jobName}`);
       await this.releaseJobLock(jobName);
+      this.acquiredLocks.delete(jobName);
+
     } catch (error) {
       this.logger.error(
         `Failed to release lock for job ${jobName}: ${error.message}`,
@@ -67,7 +78,6 @@ export class SafeCronService {
       return false;
     }
 
-    this.logger.warn(`Job ${jobName} is already running`);
     return true;
   }
 
@@ -80,6 +90,7 @@ export class SafeCronService {
     const isRunning = await this.isJobRunning(jobName);
 
     if (isRunning) {
+      this.logger.warn(`Job ${jobName} is already running`);
       return false;
     }
 
@@ -101,6 +112,25 @@ export class SafeCronService {
     }
   }
 
+  async updateJobStartTime(jobName: string): Promise<void> {
+    const isRunning = await this.isJobRunning(jobName);
+    if (!isRunning){
+      return;
+    }
+    try{
+      const lastJob = await this.findLastJob(jobName);
+      if (!lastJob.endTime){
+        lastJob.startTime = new Date();
+        await this.jobRepository.save(lastJob);
+      }else{
+        this.logger.warn(`No running job found to update start time for: ${jobName}`);
+      }
+    
+    }catch(error){ 
+      this.logger.error(`Failed to update start time for job ${jobName}: ${error.message}`, error.stack);
+    }
+  }
+  
   /**
    * Releases a job's lock by setting its end time
    * @param jobName Name of the job
@@ -137,5 +167,28 @@ export class SafeCronService {
    */
   private isLockExpired(startTime: Date): boolean {
     return Date.now() - startTime.getTime() > LOCK_TIMEOUT_MS;
+  }
+
+
+  private async handleShutdown(): Promise<void> {
+    for (const taskId of this.acquiredLocks.keys()) {
+      await this.releaseLock(taskId);
+    }
+  }
+
+  private registerShutdownHandler(): void {
+    process.on('exit', async () => await this.handleShutdown());
+    process.on('SIGINT', async () => {
+      await this.handleShutdown();
+      process.exit();
+    });
+    process.on('SIGTERM', async () => {
+      await this.handleShutdown();
+      process.exit();
+    });
+  }
+
+  async onModuleDestroy() {
+    await this.handleShutdown();
   }
 }

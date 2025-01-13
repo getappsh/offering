@@ -2,13 +2,19 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RegulationEntity } from '@app/common/database/entities';
 import { RegulationTypeDto } from './regulation-type.dto';
 import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsValidStringFor } from '@app/common/validators';
+import { Pattern } from '@app/common/validators/regex.validator';
 
 export class RegulationDto {
     @ApiProperty({ description: 'ID of the regulation' })
-    id: number;
+    regulationId: number;
 
     @ApiProperty({ description: 'Name of the regulation' })
     name: string;
+
+    @ApiProperty({ description: 'Display name of the regulation' })
+    displayName: string;
 
     @ApiProperty({ description: 'Description of the regulation' })
     description: string;
@@ -26,8 +32,9 @@ export class RegulationDto {
     order: number;
 
     fromRegulationEntity(regulation: RegulationEntity) {
-        this.id = regulation.id;
+        this.regulationId = regulation.id;
         this.name = regulation.name;
+        this.displayName = regulation?.displayName;
         this.description = regulation.description;
         this.type = regulation.type;
         this.projectId = regulation?.project?.id;
@@ -42,10 +49,17 @@ export class RegulationDto {
 }
 
 export class CreateRegulationDto {
+    projectId: number;
+
     @ApiProperty({ description: 'Name of the regulation' })
     @IsNotEmpty()
     @IsString()
+    @IsValidStringFor(Pattern.SINGLE_WORD)
     name: string;
+
+    @ApiProperty({required: false, description: 'Display name of the regulation' })
+    @IsString()
+    displayName?: string;
 
     @ApiProperty({ description: 'Description of the regulation', required: false })
     @IsString()
@@ -56,11 +70,6 @@ export class CreateRegulationDto {
     @IsNotEmpty()
     @IsNumber()
     typeId: number;
-
-    @ApiProperty({ description: 'ID of the project' })
-    @IsNotEmpty()
-    @IsNumber()
-    projectId: number;
 
     @ApiProperty({ description: 'Configuration of the regulation', required: false })
     @IsOptional()
@@ -76,12 +85,19 @@ export class CreateRegulationDto {
 
 export class UpdateRegulationDto {
 
-    id: number;
+    projectId: number;
+
+    regulationId: number;
 
     @ApiProperty({ description: 'Name of the regulation', required: false })
     @IsOptional()
     @IsString()
+    @IsValidStringFor(Pattern.SINGLE_WORD)
     name?: string;
+
+    @ApiProperty({required: false, description: 'Display name of the regulation' })
+    @IsString()
+    displayName?: string;
 
     @ApiProperty({ description: 'Description of the regulation', required: false })
     @IsOptional()
@@ -102,4 +118,21 @@ export class UpdateRegulationDto {
     @IsOptional()
     @IsNumber()
     order?: number;
+}
+
+
+export class RegulationParams{
+    @ApiProperty({ description: 'ID of the project' })
+    @IsNumber()
+    @Type(() => Number)
+    projectId: number;
+
+    @ApiProperty({ description: 'ID of the regulation' })
+    @IsNumber()
+    @Type(() => Number)
+    regulationId: number;
+
+    toString() {
+        return JSON.stringify(this);
+    }
 }

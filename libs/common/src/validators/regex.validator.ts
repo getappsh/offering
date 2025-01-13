@@ -5,7 +5,8 @@ export enum Pattern {
   MAC = "MAC",
   IP = "IP",
   B_BOX = "bbox",
-  Date = "date"
+  Date = "date",
+  SINGLE_WORD = "singleWord"
 }
 
 @ValidatorConstraint({ name: 'regex-validator', async: false })
@@ -36,6 +37,9 @@ export class RegexValidation implements ValidatorConstraintInterface {
         break;
       case Pattern.Date:
         this.regexPattern = new RegExp(/^\d{1,2}([/\\\.])\d{1,2}\1\d{2}(\d{2,4})?$/)
+        break;
+      case Pattern.SINGLE_WORD:
+        this.regexPattern = new RegExp(/^[^\s]+$/)
         break;
 
       default:
@@ -74,6 +78,8 @@ export class RegexValidation implements ValidatorConstraintInterface {
           return args.property + " is not a valid pattern for bbox, it must be number separate with one coma - 34,32,34,31"
         case Pattern.Date:
           return args.property + ` is not a valid pattern for DAte, it must be MM/DD/YY separate with one / or ${"\\"} or .`
+        case Pattern.SINGLE_WORD:
+          return args.property + " is not a valid pattern, Value must be a single word without spaces"
 
         default:
           return 'Not valid!';

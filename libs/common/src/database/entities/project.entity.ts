@@ -2,6 +2,7 @@ import { Column, Entity, Index, OneToMany } from "typeorm";
 import { BaseEntity } from "./base.entity";
 import { MemberProjectEntity } from "./member_project.entity";
 import { RegulationEntity } from "./regulation.entity";
+import { ReleaseEntity } from "./release.entity";
 
 @Entity("project")
 export class ProjectEntity extends BaseEntity{
@@ -21,6 +22,9 @@ export class ProjectEntity extends BaseEntity{
     
     @OneToMany(() => MemberProjectEntity, memberProject => memberProject)
     memberProject: MemberProjectEntity[];
+
+    @OneToMany(() => ReleaseEntity, release => release.project)
+    releases: ReleaseEntity[];
 
     toString(){
         return JSON.stringify(this)

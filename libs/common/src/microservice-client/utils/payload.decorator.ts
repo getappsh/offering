@@ -1,21 +1,15 @@
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 import {Payload, TcpContext } from "@nestjs/microservices";
+import { extractRequest } from "./context-helpers";
 
 export const V2Payload = createParamDecorator(
   (key: string, ctx: ExecutionContext) => {
-    const input = ctx.switchToRpc();
-    const msgContext = input.getContext();
-    
-    let value = input.getData();
-
-    if (msgContext instanceof TcpContext) {
-      value = value?.value;
-    }
+    const request = extractRequest(ctx);
     
     if (key === "stringValue"){
       key = undefined
     }
-    return key ? value?.[key] : value;
+    return key ? request?.[key] : request;
   },
 );
 

@@ -8,9 +8,11 @@ export const DELIVERY = "delivery";
 export const DEPLOY = "deploy";
 export const OFFERING = "offering";
 export const DISCOVERY = "discovery";
-export const PROJECT_MANAGEMENT = "projectManagement";
+export const PROJECT_MANAGEMENT = "project";
+export const USERS = "users";
 export const DEVICE = "device";
 export const DEVICE_GROUP = "group";
+export const UPLOAD_RELEASES = 'releases';
 
 export const GET_MAP = "map";
 export const BUG_REPORT = "bug-report"
@@ -53,10 +55,14 @@ export const CREATE = "/import/create"
 export const STATUS = "/import/status/"
 
 
+export const ApiEndpoints = {
+  checkHealth: 'checkHealth',
+}
 export const DeliveryEndpoints = {
   updateDownloadStatus: 'delivery/updateDownloadStatus',
   preparedDelivery: 'delivery/prepareDelivery',
   getPreparedByCatalogId: 'delivery/preparedDelivery/',
   cacheConfig: 'delivery/cache/config',
   cacheDelete: 'delivery/cache/delete',
+  checkHealth: 'delivery/checkHealth',
 }
