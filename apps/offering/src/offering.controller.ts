@@ -1,4 +1,4 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingService } from './offering.service';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
@@ -8,12 +8,13 @@ import { ItemTypeEnum } from '@app/common/database/entities';
 import { UploadEventDto } from '@app/common/dto/upload';
 import { DeviceSoftwareStateDto } from '@app/common/dto/device/dto/device-software.dto';
 import { DeviceMapStateDto } from '@app/common/dto/device';
-import { RpcPayload } from '@app/common/microservice-client';
+import { KafkaHealthService, RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
 
 @Controller()
 export class OfferingController {
 
+  private readonly kafkaHealthService = KafkaHealthService.getInstance();
   private readonly logger = new Logger(OfferingController.name);
 
   constructor(private readonly offeringService: OfferingService) {}
@@ -76,6 +77,17 @@ export class OfferingController {
     const version = this.readImageVersion()
     this.logger.log(`Offering service - Health checking, Version: ${version}`)
     return "Offering service is running successfully. Version: " + version
+  }
+
+  @Get('/health/ready')
+  healthReady() {
+    return this.kafkaHealthService.isReady();
+  }
+
+
+  @Get('/health/live')
+  healthLive() {
+    return this.kafkaHealthService.isAlive();
   }
 
   private readImageVersion(){

@@ -11,19 +11,26 @@ import { GET_APP_LOGGER } from '@app/common/logger/logger.module';
 
 
 async function bootstrap() {  
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    OfferingModule,
-    {...getClientConfig(
-      {
-        type: MicroserviceType.OFFERING, 
-        name: MicroserviceName.OFFERING_SERVICE
-      }, 
-      MSType[process.env.MICRO_SERVICE_TYPE]),
-      bufferLogs: true
-    }
-  );
+  const app = await NestFactory.create(OfferingModule, {
+    bufferLogs: true
+  });
+  app.connectMicroservice(getClientConfig({type: MicroserviceType.OFFERING, name: MicroserviceName.OFFERING_SERVICE}, MSType[process.env.MICRO_SERVICE_TYPE]));
+
+
+  // const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+  //   OfferingModule,
+  //   {...getClientConfig(
+  //     {
+  //       type: MicroserviceType.OFFERING, 
+  //       name: MicroserviceName.OFFERING_SERVICE
+  //     }, 
+  //     MSType[process.env.MICRO_SERVICE_TYPE]),
+  //     bufferLogs: true
+  //   }
+  // );
   app.useLogger(app.get(GET_APP_LOGGER))
   app.useGlobalFilters(new CustomRpcExceptionFilter())
-  app.listen()
+  app.startAllMicroservices()
+  app.listen(2999)
 }
 bootstrap();
