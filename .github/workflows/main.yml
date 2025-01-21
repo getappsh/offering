@@ -73,7 +73,7 @@ jobs:
           context: .
           tags: ${{ secrets.REGISTRY_URL }}/getapp-dev/offering:${{ needs.calculate_new_tag.outputs.tag }}
           push: true
-          build-args: IMG_TAG=${{ needs.calculate_new_tag.outputs.tag }}
+          build-args: offering_version_tag=${{ needs.calculate_new_tag.outputs.tag }}
 
   upload-to-server:
     needs: 
