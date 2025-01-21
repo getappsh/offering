@@ -58,8 +58,6 @@ RUN npm run build
 
 
 FROM cts as deploy
-ARG offering_version_tag
-ENV offering_version_tag=$offering_version_tag
 ENV NODE_ENV=production
 
 ARG uid=1004370000
@@ -73,8 +71,10 @@ COPY --chown=${uid}:${uid} --from=build /node-app/dist/ .
 RUN echo "$offering_version_tag" > NEW_TAG.txt 
 
 # a file that contains the image version
-# COPY docker_image_version.txt /docker_image_version.txt
-# RUN cat docker_image_version.txt
+ARG offering_version_tag
+ENV offering_version_tag=$offering_version_tag
+RUN echo "$offering_version_tag" > offering_image_version.txt
+RUN cat offering_image_version.txt
 
 USER ${username}
 CMD ["node", "apps/offering/main.js"]
