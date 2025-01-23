@@ -68,6 +68,9 @@ export class MemberProjectsResDto {
 
   @ApiProperty({required: false, type: ProjectDto, isArray: true})
   projects: ProjectDto[];
+  
+  @ApiProperty({required: false, type: ProjectDto , isArray: true})
+  invitedProjects: ProjectDto[];
 
   toString(){
     return JSON.stringify(this);

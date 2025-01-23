@@ -2,10 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RegulationEntity } from '@app/common/database/entities';
 import { RegulationTypeDto } from './regulation-type.dto';
 import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class RegulationDto {
     @ApiProperty({ description: 'ID of the regulation' })
-    id: number;
+    regulationId: number;
 
     @ApiProperty({ description: 'Name of the regulation' })
     name: string;
@@ -26,7 +27,7 @@ export class RegulationDto {
     order: number;
 
     fromRegulationEntity(regulation: RegulationEntity) {
-        this.id = regulation.id;
+        this.regulationId = regulation.id;
         this.name = regulation.name;
         this.description = regulation.description;
         this.type = regulation.type;
@@ -42,6 +43,8 @@ export class RegulationDto {
 }
 
 export class CreateRegulationDto {
+    projectId: number;
+
     @ApiProperty({ description: 'Name of the regulation' })
     @IsNotEmpty()
     @IsString()
@@ -57,11 +60,6 @@ export class CreateRegulationDto {
     @IsNumber()
     typeId: number;
 
-    @ApiProperty({ description: 'ID of the project' })
-    @IsNotEmpty()
-    @IsNumber()
-    projectId: number;
-
     @ApiProperty({ description: 'Configuration of the regulation', required: false })
     @IsOptional()
     @IsString()
@@ -76,7 +74,9 @@ export class CreateRegulationDto {
 
 export class UpdateRegulationDto {
 
-    id: number;
+    projectId: number;
+
+    regulationId: number;
 
     @ApiProperty({ description: 'Name of the regulation', required: false })
     @IsOptional()
@@ -102,4 +102,21 @@ export class UpdateRegulationDto {
     @IsOptional()
     @IsNumber()
     order?: number;
+}
+
+
+export class RegulationParams{
+    @ApiProperty({ description: 'ID of the project' })
+    @IsNumber()
+    @Type(() => Number)
+    projectId: number;
+
+    @ApiProperty({ description: 'ID of the regulation' })
+    @IsNumber()
+    @Type(() => Number)
+    regulationId: number;
+
+    toString() {
+        return JSON.stringify(this);
+    }
 }

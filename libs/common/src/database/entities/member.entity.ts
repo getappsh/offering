@@ -5,26 +5,26 @@ import { ProjectEntity } from "./project.entity";
 
 
 @Entity("member")
-export class MemberEntity extends BaseEntity{
-    
-    @Column({name: "first_name"})
-    firstName: string;
+export class MemberEntity extends BaseEntity {
 
-    @Column({name: "last_name"})
-    lastName: string;
+    @Column({ name: "first_name", nullable: true })
+    firstName?: string;
 
-    @Index("member_email_unique_constraint", {unique: true})
-    @Column({name: "email"})
+    @Column({ name: "last_name", nullable: true })
+    lastName?: string;
+
+    @Index("member_email_unique_constraint", { unique: true })
+    @Column({ name: "email" })
     email: string;
 
     @OneToMany(() => MemberProjectEntity, memberProject => memberProject)
     memberProjects: MemberProjectEntity[];
 
     @ManyToOne(() => ProjectEntity)
-    @JoinColumn({name: "default_project"})
+    @JoinColumn({ name: "default_project" })
     defaultProject: ProjectEntity
 
-    toString(){
+    toString() {
         return JSON.stringify(this)
     }
 

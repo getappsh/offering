@@ -139,3 +139,9 @@ export enum AssetTypeEnum {
     ARTIFACT = "artifact",
     DOCKER_IMAGE = "docker_image"
 }
+
+export enum FileUPloadStatusEnum {
+    UPLOADED = "uploaded",
+    PENDING = "pending",
+    REMOVED = "removed"
+}

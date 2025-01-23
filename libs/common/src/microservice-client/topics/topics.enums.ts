@@ -6,7 +6,8 @@ export const UploadTopics = {
     UPLOAD_MANIFEST: `getapp-upload.manifest${region}`,
     UPDATE_UPLOAD_STATUS: `getapp-upload.update-upload-status${region}`,
     LAST_VERSION: `getapp-upload.last-version${region}`,
-    CHECK_HEALTH: `getapp-upload.check-health${region}`
+    CHECK_HEALTH: `getapp-upload.check-health${region}`,
+    CREATE_FILE_UPLOAD_URL: `getapp-upload.create-file-upload-url${region}`
 } as const
 
 export const DeliveryTopics = {
@@ -47,10 +48,11 @@ export const DeployTopicsEmit = {
 export const ProjectManagementTopics = {
     GET_USER_PROJECTS: `getapp-project-management.get-user-projects${region}`,
     CREATE_PROJECT: `getapp-project-management.create-project${region}`,
-    CREATE_TOKEN: `getapp-project-management.create-token${region}`,
-    ADD_NEW_MEMBER: `getapp-project-management.add-new-member${region}`,
-    EDIT_MEMBER: `getapp-project-management.edit-member${region}`,
-    REMOVE_MEMBER: `getapp-project-management.remove-member${region}`,
+    CREATE_PROJECT_TOKEN: `getapp-project-management.create-project-token${region}`,
+    ADD_PROJECT_NEW_MEMBER: `getapp-project-management.add-project-new-member${region}`,
+    CONFIRM_PROJECT_MEMBER: `getapp-project-management.confirm-project-member${region}`,
+    EDIT_PROJECT_MEMBER: `getapp-project-management.edit-project-member${region}`,
+    REMOVE_PROJECT_MEMBER: `getapp-project-management.remove-project-member${region}`,
     GET_PROJECT_RELEASES: `getapp-project-management.get-project-releases${region}`,
 
     GET_DEVICES_BY_CATALOG_ID: `getapp-project-management.get-devices-by-catalog-id${region}`,
@@ -59,10 +61,16 @@ export const ProjectManagementTopics = {
 
     GET_REGULATION_TYPES: `getapp-project-management.get-regulation-types${region}`,
     GET_PROJECT_REGULATIONS: `getapp-project-management.get-project-regulations${region}`,
-    CREATE_REGULATION: `getapp-project-management.create-regulation${region}`,
-    UPDATE_REGULATION: `getapp-project-management.update-regulation${region}`,
-    DELETE_REGULATION: `getapp-project-management.delete-regulation${region}`,
-    GET_REGULATION_BY_ID: `getapp-project-management.get-regulation-by-id${region}`,
+    GET_PROJECT_REGULATION_BY_ID: `getapp-project-management.get-project-regulation-by-id${region}`,
+    CREATE_PROJECT_REGULATION: `getapp-project-management.create-project-regulation${region}`,
+    UPDATE_PROJECT_REGULATION: `getapp-project-management.update-project-regulation${region}`,
+    DELETE_PROJECT_REGULATION: `getapp-project-management.delete-project-regulation${region}`,
+
+    GET_VERSION_REGULATIONS_STATUSES: `getapp-project-management.get-version-regulation-statuses${region}`,
+    GET_VERSION_REGULATION_STATUS_BY_ID: `getapp-project-management.get-version-regulation-status-by-id${region}`,
+    SET_VERSION_REGULATION_STATUS: `getapp-project-management.set-version-regulation-status${region}`,
+    SET_VERSION_REGULATION_COMPLIANCE: `getapp-project-management.set-version-regulation-compliance${region}`,
+    DELETE_VERSION_REGULATION_STATUS: `getapp-project-management.delete-version-regulation-status${region}`,
 
     CHECK_HEALTH: `getapp-project-management.check-health${region}`
 } as const

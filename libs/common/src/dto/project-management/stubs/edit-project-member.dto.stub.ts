@@ -1,5 +1,5 @@
 import { memberProjectEntityStub } from "@app/common/database/test/support/stubs"
-import { EditProjectMemberDto } from "../dto/edit-project-member.dto"
+import { EditProjectMemberDto } from "../dto/project-member.dto"
 
 export const editProjectMemberDtoStub = (): EditProjectMemberDto => {
   const eStub = memberProjectEntityStub()
@@ -7,8 +7,6 @@ export const editProjectMemberDtoStub = (): EditProjectMemberDto => {
   return {
     projectId: eStub.project.id,
     memberId: eStub.member.id,
-    firstName: eStub.member.firstName,
-    lastName: eStub.member.lastName,
     role: eStub.role
   }
 }

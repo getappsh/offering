@@ -1,6 +1,7 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { RegulationTypeEntity } from "./regulation-type.entity";
 import { ProjectEntity } from "./project.entity";
+import { RegulationStatusEntity } from "./regulation-status.entity";
 
 @Entity('regulation')
 export class RegulationEntity {
@@ -24,4 +25,7 @@ export class RegulationEntity {
 
     @Column({ default: 0 })
     order: number;
+
+    @OneToMany(() => RegulationStatusEntity, status => status.regulation)
+    statuses: RegulationStatusEntity[];
 }
