@@ -6,7 +6,8 @@ export enum Pattern {
   IP = "IP",
   B_BOX = "bbox",
   Date = "date",
-  SINGLE_WORD = "singleWord"
+  SINGLE_WORD = "singleWord",
+  NOT_ONLY_NUMBERS = "notOnlyNumbers"
 }
 
 @ValidatorConstraint({ name: 'regex-validator', async: false })
@@ -41,6 +42,9 @@ export class RegexValidation implements ValidatorConstraintInterface {
       case Pattern.SINGLE_WORD:
         this.regexPattern = new RegExp(/^[^\s]+$/)
         break;
+      case Pattern.NOT_ONLY_NUMBERS:
+        this.regexPattern = new RegExp(/^(?!^\d+$).*$/)
+        break
 
       default:
         break;
@@ -80,6 +84,8 @@ export class RegexValidation implements ValidatorConstraintInterface {
           return args.property + ` is not a valid pattern for DAte, it must be MM/DD/YY separate with one / or ${"\\"} or .`
         case Pattern.SINGLE_WORD:
           return args.property + " is not a valid pattern, Value must be a single word without spaces"
+        case Pattern.NOT_ONLY_NUMBERS:
+          return args.property + " is not a valid pattern, Value must not contain only numbers"
 
         default:
           return 'Not valid!';

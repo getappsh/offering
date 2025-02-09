@@ -7,6 +7,7 @@ export const projectDtoStub = (): CreateProjectDto => {
   return {
     name: eStub.name,
     description: eStub.description,
-    username: "alice@gmail.com"
+    username: "alice@gmail.com",
+    projectType: eStub.projectType
   }
 }

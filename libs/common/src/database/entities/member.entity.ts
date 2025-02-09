@@ -17,7 +17,7 @@ export class MemberEntity extends BaseEntity {
     @Column({ name: "email" })
     email: string;
 
-    @OneToMany(() => MemberProjectEntity, memberProject => memberProject)
+    @OneToMany(() => MemberProjectEntity, memberProject => memberProject.project)
     memberProjects: MemberProjectEntity[];
 
     @ManyToOne(() => ProjectEntity)

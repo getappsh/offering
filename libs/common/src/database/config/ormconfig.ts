@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import { FileUploadEntity,UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, DiscoveryMessageEntity, DeployStatusEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity, RegulationEntity, RegulationTypeEntity, RegulationStatusEntity, ReleaseEntity, ReleaseArtifactEntity} from '../entities';
+import { PlatformEntity, DocEntity, FileUploadEntity, UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, DiscoveryMessageEntity, DeployStatusEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity, RegulationEntity, RegulationTypeEntity, RegulationStatusEntity, ReleaseEntity, ReleaseArtifactEntity, ProjectTokenEntity} from '../entities';
 import { join } from 'path';
 import { readFileSync } from 'fs'
 import { JobsEntity } from '../entities/map-updatesCronJob';
@@ -50,7 +50,10 @@ const ormConfig = new DataSource({
     RegulationStatusEntity,
     FileUploadEntity,
     ReleaseEntity,
-    ReleaseArtifactEntity
+    ReleaseArtifactEntity,
+    ProjectTokenEntity,
+    DocEntity,
+    PlatformEntity,
   ],
   migrations: [join(__dirname, '../migration/*.{js,ts}')],
   logging: false,

@@ -5,6 +5,7 @@ export const addMemberToProjectDtoStub = (): AddMemberToProjectDto => {
   const eStub = memberProjectEntityStub()
 
   return {
+    projectIdentifier: eStub.project.id,
     projectId: eStub.project.id,
     email: eStub.member.email,
     role: eStub.role

@@ -2,12 +2,9 @@ import { RegulationStatusEntity } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { ProjectIdentifierParams } from "../../project-management";
 
-export class RegulationStatusParams {
-  @ApiProperty({ description: 'ID of the Project' })
-  @IsNumber()
-  @Type(() => Number)
-  projectId: number
+export class RegulationStatusParams extends ProjectIdentifierParams {
 
   @ApiProperty({ description: 'Component Version of the regulation' })
   @IsString()
@@ -15,35 +12,23 @@ export class RegulationStatusParams {
   @Type(() => String)
   version: string
 
-
-  @ApiProperty({ description: 'ID of the regulation' })
+  @ApiProperty({ description: 'Name of the regulation' })
   @IsString()
   @IsNotEmpty()
   @Type(() => String)
   regulation: string
-}
-
-export class VersionRegulationStatusParams {
-  @ApiProperty({ description: 'ID of the Project' })
-  @IsNumber()
-  @Type(() => Number)
-  projectId: number
-
-  @ApiProperty({ description: 'Component Version of the regulation' })
-  @IsString()
-  @IsNotEmpty()
-  @Type(() => String)
-  version: string
-
 }
 
 export class SetRegulationStatusDto{
 
-  projectId: number
+  projectIdentifier: string |  number
 
   regulation: string
 
   version: string
+
+  projectId: number
+
 
   @ApiProperty({ description: 'Value of the regulation' })
   @IsString()
@@ -59,17 +44,33 @@ export class SetRegulationStatusDto{
 
 export class  SetRegulationCompliancyDto {
 
-  projectId: number
+  projectIdentifier: string |  number
 
   regulation: string
 
   version: string
+
+  projectId: number
 
   @ApiProperty({ description: 'Compliancy of the regulation' })
   @IsBoolean()
   isCompliant: boolean
 }
 
+export class RegulationSnapshotDto{
+
+  @ApiProperty({ description: 'Name of the regulation' })
+  name: string
+
+  @ApiProperty({required: false, description: 'Description of the regulation' })
+  description?: string
+
+  @ApiProperty({ description: 'Configuration of the regulation', required: false })
+  config?: string;
+
+  @ApiProperty({ description: 'Type Id of the regulation'})
+  typeId: number
+}
 
 export class RegulationStatusDto  extends RegulationStatusParams{
 
@@ -88,16 +89,26 @@ export class RegulationStatusDto  extends RegulationStatusParams{
   @ApiProperty({ description: 'Update date of the regulation status' })
   updatedAt: Date
 
+  @ApiProperty({required: false, description: 'Regulation snapshot', type: RegulationSnapshotDto})
+  regulationSnapshot?: RegulationSnapshotDto
+
   fromRegulationStatusEntity(regulationStatus: RegulationStatusEntity) {
     this.value = regulationStatus.value
     this.reportDetails = regulationStatus.reportDetails
     this.isCompliant = regulationStatus.isCompliant
     this.version = regulationStatus?.version?.version
-    this.regulation = regulationStatus?.regulation?.name
+    this.regulation = regulationStatus?.regulation?.name ?? regulationStatus.regulationSnapshot?.name
     this.projectId = regulationStatus?.regulation?.project?.id
     this.createdAt = regulationStatus.createdAt
     this.updatedAt = regulationStatus.updatedAt
 
+    if (!regulationStatus.regulation && regulationStatus.regulationSnapshot) {
+      this.regulationSnapshot = new RegulationSnapshotDto()
+      this.regulationSnapshot.name = regulationStatus.regulationSnapshot?.name
+      this.regulationSnapshot.description = regulationStatus.regulationSnapshot?.description
+      this.regulationSnapshot.config = regulationStatus.regulationSnapshot?.config
+      this.regulationSnapshot.typeId = regulationStatus.regulationSnapshot?.typeId
+    }
     return this
 
   }

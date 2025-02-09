@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, OneToMany, JoinColumn, BeforeInsert, CreateDateColumn, PrimaryColumn, UpdateDateColumn, Index, } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn, BeforeInsert, CreateDateColumn, PrimaryColumn, UpdateDateColumn, Index, ManyToMany, JoinTable, } from 'typeorm';
 import { ProjectEntity } from './project.entity';
 import { ReleaseArtifactEntity } from './release-artifact.entity';
 import { ReleaseStatusEnum } from './enums.entity';
@@ -37,9 +37,29 @@ export class ReleaseEntity {
   @OneToMany(() => ReleaseArtifactEntity, (artifact) => artifact.release)
   artifacts: ReleaseArtifactEntity[];
 
+  @Column({ name: 'required_regulations_count', type: 'int', default: 0 })
+  requiredRegulationsCount: number;
+
+  @Column({ name: 'compliant_regulations_count', type: 'int', default: 0 })
+  compliantRegulationsCount: number;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+
+  @ManyToMany(() => ReleaseEntity, (release) => release.dependentReleases, { cascade: true })
+  @JoinTable({
+    name: 'release_dependencies',
+    joinColumn: { name: 'release_id', referencedColumnName: 'catalogId' },
+    inverseJoinColumn: { name: 'dependency_release_id', referencedColumnName: 'catalogId' },
+  })
+  dependencies: ReleaseEntity[];
+
+
+  @ManyToMany(() => ReleaseEntity, (release) => release.dependencies)
+  dependentReleases: ReleaseEntity[];
+
 }

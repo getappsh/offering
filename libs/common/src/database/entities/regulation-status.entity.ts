@@ -3,7 +3,7 @@ import { RegulationEntity } from "./regulation.entity";
 import { ReleaseEntity } from "./release.entity";
 
 @Entity("regulation_status")
-@Unique("regulation_version_unique_constraint",['regulation', 'version'])
+@Unique("regulation_version_unique_constraint", ['regulation', 'version'])
 export class RegulationStatusEntity {
     @PrimaryGeneratedColumn()
     id: number;
@@ -12,11 +12,17 @@ export class RegulationStatusEntity {
     @JoinColumn({name: "version_id"})
     version: ReleaseEntity
 
-    @ManyToOne(() => RegulationEntity, (regulation) => regulation, {nullable: false})
-    @JoinColumn({name: "regulation_id"})
+    @ManyToOne(() => RegulationEntity, (regulation) => regulation.statuses, {
+        nullable: true,
+        onDelete: 'SET NULL'
+    })
+    @JoinColumn({ name: "regulation_id" })
     regulation: RegulationEntity;
 
-    @Column({name: "is_compliant", default: false})
+    @Column({ name: 'regulation_snapshot', type: 'jsonb', default: null })
+    regulationSnapshot: Record<string, any>;
+
+    @Column({ name: "is_compliant", default: false })
     isCompliant: boolean;
 
     @Column({ name: "value", default: null })

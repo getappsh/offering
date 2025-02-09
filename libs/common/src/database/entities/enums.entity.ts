@@ -159,3 +159,8 @@ export enum ArtifactTypeEnum {
     FILE = 'file',
     DOCKER_IMAGE = 'docker_image',
 }
+
+export enum ProjectType {
+    PRODUCT = "product",
+    FORMATION = "formation",
+  }
