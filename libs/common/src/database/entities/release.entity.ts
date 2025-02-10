@@ -59,6 +59,10 @@ export class ReleaseEntity {
   dependencies: ReleaseEntity[];
 
 
+  @Column({ name: 'sort_order', type: 'int', default: 0 })
+  sortOrder: number;
+
+
   @ManyToMany(() => ReleaseEntity, (release) => release.dependencies)
   dependentReleases: ReleaseEntity[];
 

@@ -5,6 +5,7 @@ import { join } from 'path';
 import { readFileSync } from 'fs'
 import { JobsEntity } from '../entities/map-updatesCronJob';
 import { DeliveryEntity, DeliveryItemEntity, CacheConfigEntity } from '../../database-tng/entities';
+import { ReleaseSubscriber } from '../subscribers';
 
 const region = process.env.REGION ? `_${process.env.REGION}` : '';
 let migrationsRun: boolean = true
@@ -22,6 +23,8 @@ const ormConfig = new DataSource({
 
 
   ...getDBAuthParams(),
+
+  subscribers: [ReleaseSubscriber],
   entities: [
     UploadVersionEntity,
     ProjectEntity,
