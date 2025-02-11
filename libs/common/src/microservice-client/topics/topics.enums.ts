@@ -47,6 +47,7 @@ export const DeliveryTopicsEmit = {
 export const OfferingTopics = {
     CHECK_UPDATES: `getapp-offering.check-updates${region}`,
     DEVICE_COMPONENT_OFFERING: `getapp-offering.device-components${region}`,
+    DEVICE_COMPONENT_OFFERING_V2: `getapp-offering.device-components-v2${region}`,
     DEVICE_MAP_OFFERING: `getapp-offering.device-map${region}`,
     GET_OFFER_OF_COMP: `getapp-offering.get-offering-of-comp${region}`,
     CHECK_HEALTH: `getapp-offering.check-health${region}`
@@ -167,6 +168,7 @@ export const DeviceTopics = {
 
 export const DeviceTopicsEmit = {
     DISCOVER_DEVICE_CONTEXT: `getapp-device.discover.device-context${region}`,
+    DISCOVER_DEVICE_CONTEXT_V2: `getapp-device.discover.device-context${region}`,
     UPDATE_DEVICE_SOFTWARE_STATE: `getapp-device.device.update-software-state${region}`,
     UPDATE_DEVICE_MAP_STATE: `getapp-device.device.update-map-state${region}`,
     REGISTER_MAP_TO_DEVICE: `getapp-device.map.register-to-device${region}`,

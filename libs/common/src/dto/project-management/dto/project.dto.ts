@@ -15,16 +15,16 @@ export class BaseProjectDto {
   @ApiProperty({ description: 'Unique identifier of the project' })
   id: number;
 
-  @ApiProperty({ description: 'Name of the project'})
+  @ApiProperty({ description: 'Name of the project' })
   name: string;
 
   @ApiProperty({ required: false })
   description?: string;
 
-  @ApiProperty({enum: ProjectType})
+  @ApiProperty({ enum: ProjectType })
   projectType: ProjectType
 
-  @ApiProperty({ required: false,  description: 'Status of the project (active, completed, on-hold)'})
+  @ApiProperty({ required: false, description: 'Status of the project (active, completed, on-hold)' })
   status?: string; // Needs to be an enum
 
   fromProjectEntity(project: ProjectEntity) {
@@ -35,7 +35,7 @@ export class BaseProjectDto {
     // this.status = project.status;
     return this;
   }
-  
+
 }
 
 export class ProjectMemberContextDto {
@@ -55,16 +55,16 @@ export class ProjectMemberContextDto {
 export class MinimalReleaseDto {
   @ApiProperty()
   id: string;
-  
+
   @ApiProperty()
   version: string;
-  
-  @ApiProperty({required: false})
+
+  @ApiProperty({ required: false })
   name?: string;
- 
+
   @ApiProperty()
   requiredRegulationsCount: number;
-  
+
   @ApiProperty()
   compliantRegulationsCount: number;
 
@@ -90,7 +90,7 @@ export class ProjectReleasesChangedEvent {
 }
 
 
-export class ProjectSummaryDto{ 
+export class ProjectSummaryDto {
 
   @ApiProperty({ required: false, description: 'Latest release of the project' })
   latestRelease?: MinimalReleaseDto
@@ -104,7 +104,7 @@ export class ProjectDto extends BaseProjectDto {
   @ApiProperty({ description: 'Owner of the project' })
   owner: string;
 
-  @ApiProperty({ required: false, description: 'Platforms supported by the project', isArray: true })
+  @ApiProperty({ required: false, description: 'Platforms supported by the project', type: String, isArray: true })
   platforms: string[];
 
   @ApiProperty({ required: false, description: "Number of members in the project" })
@@ -128,10 +128,10 @@ export class ProjectDto extends BaseProjectDto {
     this.platforms = project.platforms?.map(platform => platform.name);
 
     const ownerEntity = project.memberProject?.find(mp => mp.role === RoleInProject.PROJECT_OWNER);
-    if(ownerEntity){
+    if (ownerEntity) {
       this.owner = new MemberResDto().fromMemberProjectEntity(ownerEntity)?.getName();
     }
-    
+
     return this;
   }
 
@@ -142,13 +142,13 @@ export class ProjectDto extends BaseProjectDto {
 
 export class DetailedProjectDto extends ProjectDto {
 
-  @ApiProperty({type: Date, })
+  @ApiProperty({ type: Date, })
   createdAt: Date
 
   @ApiProperty({ required: false, type: MemberResDto, isArray: true })
   members?: MemberResDto[]
 
-  
+
   @ApiProperty({ required: false, type: ProjectTokenDto, isArray: true })
   tokens?: ProjectTokenDto[]
 
@@ -184,15 +184,15 @@ export class CreateProjectDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @IsNotEmpty({each: true})
-  @Transform(({ value }) => 
-    Array.isArray(value) 
-      ? value.map(v => v.toLowerCase().trim().replace(/\s+/g, "-")) 
+  @IsNotEmpty({ each: true })
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map(v => v.toLowerCase().trim().replace(/\s+/g, "-"))
       : value
   )
   platforms?: string[];
 
-  @ApiProperty({enum: ProjectType, required: false, default: ProjectType.PRODUCT})
+  @ApiProperty({ enum: ProjectType, required: false, default: ProjectType.PRODUCT })
   @IsEnum(ProjectType)
   @IsOptional()
   projectType: ProjectType = ProjectType.PRODUCT;

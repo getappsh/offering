@@ -1,6 +1,6 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import * as semver from 'semver';
-import { ReleaseEntity } from '../entities';
+import { ProjectEntity, ReleaseEntity } from '../entities';
 import { Logger } from '@nestjs/common';
 
 @EventSubscriber()
@@ -11,8 +11,18 @@ export class ReleaseSubscriber implements EntitySubscriberInterface<ReleaseEntit
     return ReleaseEntity;
   }
 
+  async beforeInsert(event: InsertEvent<ReleaseEntity>){
+    this.logger.verbose(`Before insert release for project: ${event.entity.project.id}, version: ${event.entity.version}`);
+    const release = event.entity;
+
+    // Fetch project name from database using the project ID
+    const projectRepo = event.manager.getRepository(ProjectEntity);
+    const project = await projectRepo.findOne({ where: { id: release.project.id }});
+
+    release.catalogId = `${release.project.id}.${project.name}@${release.version}`;  
+  }
   async afterInsert(event: InsertEvent<ReleaseEntity>) {
-    this.logger.debug(`After insert release for project: ${event.entity.project.id}, version: ${event.entity.version}`);
+    this.logger.verbose(`After insert release for project: ${event.entity.project.id}, version: ${event.entity.version}`);
 
     const release = event.entity;
 
@@ -26,7 +36,7 @@ export class ReleaseSubscriber implements EntitySubscriberInterface<ReleaseEntit
     // Get all releases for the same project, sorted by version
     const releases = await releaseRepo.find({
       select: ['version', 'sortOrder'],
-      where: { project: release.project },
+      where: { project: {id: release.project.id} },
       order: { sortOrder: 'ASC' },
     });
 
@@ -37,7 +47,7 @@ export class ReleaseSubscriber implements EntitySubscriberInterface<ReleaseEntit
     const currentIndex = semverReleases.findIndex(r => r.version === release.version);
     const newSortOrder = currentIndex > 0 ? semverReleases[currentIndex - 1].sortOrder + 1 : 1;
 
-    this.logger.debug(`New sort order: ${newSortOrder}`);
+    this.logger.verbose(`New sort order: ${newSortOrder}`);
 
     // Shift existing releases forward if needed
     await releaseRepo

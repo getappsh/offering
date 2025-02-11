@@ -1,4 +1,4 @@
-import { ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
+import { ProjectType, ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional, IsSemVer, IsString, IsBoolean} from "class-validator";
 import { ReleaseArtifactDto } from "./release-artifact.dto";
@@ -51,6 +51,9 @@ export class ReleaseDto {
   @ApiProperty()
   version: string;
 
+  @ApiProperty()
+  projectName: string;
+  
   @ApiProperty({ required: false })
   projectId?: number;
 
@@ -83,6 +86,7 @@ export class ReleaseDto {
     dto.version = release.version;
     dto.id = release.catalogId;
     dto.projectId = release?.project?.id;
+    dto.projectName = release?.project?.name;
     dto.name = release.name;
     dto.releaseNotes = release.releaseNotes;
     dto.metadata = release.metadata;
@@ -115,6 +119,57 @@ export class DetailedReleaseDto extends ReleaseDto {
 
     return dto
 
+  }
+}
+
+export class ComponentV2Dto{
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  version: string;
+
+  @ApiProperty()
+  projectName: string;
+
+  @ApiProperty()
+  releaseNotes: string;
+
+  @ApiProperty()
+  metadata: Record<string, any>;
+
+  @ApiProperty({ type: 'enum', enum: ReleaseStatusEnum })
+  status: ReleaseStatusEnum;
+
+  @ApiProperty({ type: 'enum', enum: ProjectType })
+  type: ProjectType
+
+  @ApiProperty({type: 'integer'})
+  size: number
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+
+
+  static fromEntity(release: ReleaseEntity): ComponentV2Dto {
+    const dto = new ComponentV2Dto();
+    dto.version = release.version;
+    dto.id = release.catalogId;
+    dto.releaseNotes = release.releaseNotes;
+    dto.metadata = release.metadata;
+    dto.status = release.status;
+    dto.createdAt = release.createdAt;
+    dto.updatedAt = release.updatedAt;
+    dto.projectName = release.project.name;
+    dto.type = release.project.projectType;
+    dto.size = release?.artifacts
+    .filter(a => a.isInstallationFile)
+    ?.map(a => a?.fileUpload?.size)
+    ?.reduce((size, a) => size + a, 0);
+    return dto;
   }
 }
 

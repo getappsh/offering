@@ -10,11 +10,6 @@ export class ReleaseEntity {
   @PrimaryColumn({ name: 'catalog_id' })
   catalogId: string;
 
-  @BeforeInsert()
-  generateUUID() {
-    this.catalogId = nanoid();
-  }
-
   @Column({ name: 'version' })
   version: string;
 
