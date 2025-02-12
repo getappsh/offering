@@ -3,20 +3,24 @@ import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingService } from './offering.service';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
 import { DiscoveryMessageDto } from '@app/common/dto/discovery';
-import { PushOfferingDto } from '@app/common/dto/offering';
+import { ComponentOfferingRequestDto, PushOfferingDto } from '@app/common/dto/offering';
 import { ItemTypeEnum } from '@app/common/database/entities';
 import { UploadEventDto } from '@app/common/dto/upload';
 import { DeviceSoftwareStateDto } from '@app/common/dto/device/dto/device-software.dto';
 import { DeviceMapStateDto } from '@app/common/dto/device';
 import { RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
+import { OfferingV2Service } from './offering-v2.service';
 
 @Controller()
 export class OfferingController {
 
   private readonly logger = new Logger(OfferingController.name);
 
-  constructor(private readonly offeringService: OfferingService) {}
+  constructor(
+    private readonly offeringService: OfferingService,
+    private readonly offeringV2Service: OfferingV2Service
+  ) {}
   
 
   @MessagePattern(OfferingTopics.GET_OFFER_OF_COMP)
@@ -35,6 +39,11 @@ export class OfferingController {
   getDeviceComponentOffering(@RpcPayload("stringValue") deviceId: string){  
     this.logger.debug(`get component offering for device: ${deviceId}`)  
     return this.offeringService.getDeviceComponentOffering(deviceId)
+  }
+
+  @MessagePattern(OfferingTopics.DEVICE_COMPONENT_OFFERING_V2)
+  getDeviceComponentOfferingV2(@RpcPayload() dto: ComponentOfferingRequestDto){
+    return this.offeringV2Service.getDeviceComponentOffering(dto);
   }
 
   @MessagePattern(OfferingTopics.DEVICE_MAP_OFFERING)
