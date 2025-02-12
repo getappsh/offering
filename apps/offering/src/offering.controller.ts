@@ -49,16 +49,16 @@ export class OfferingController {
   @MessagePattern(OfferingTopics.DEVICE_MAP_OFFERING)
   getDeviceMapOffering(@RpcPayload("stringValue") deviceId: string){  
     this.logger.debug(`get map offering for device: ${deviceId}`)  
-    return this.offeringService.getDeviceMapOffering(deviceId)
+    return this.offeringV2Service.getDeviceMapOffering(deviceId)
   }
 
   @EventPattern(OfferingTopicsEmit.OFFERING_PUSH)
   pushOffering(@RpcPayload() po: PushOfferingDto){
     this.logger.log(`Push offering of catalogId: ${po.catalogId}, type: ${po.itemType}`);
     if(po.itemType == ItemTypeEnum.SOFTWARE){
-      this.offeringService.pushSoftwareOffering(po);
+      this.offeringV2Service.pushSoftwareOffering(po);
     }else if (po.itemType == ItemTypeEnum.MAP){
-      this.offeringService.pushMapOffering(po);
+      this.offeringV2Service.pushMapOffering(po);
     }
   }
 
@@ -71,13 +71,13 @@ export class OfferingController {
   @EventPattern(OfferingTopicsEmit.DEVICE_SOFTWARE_EVENT)
   deviceSoftwareEvent(@RpcPayload() event: DeviceSoftwareStateDto){
     this.logger.log(`Device software event`);
-    this.offeringService.deviceSoftwareEvent(event);
+    this.offeringV2Service.deviceSoftwareEvent(event);
   }
 
   @EventPattern(OfferingTopicsEmit.DEVICE_MAP_EVENT)
   deviceMapEvent(@RpcPayload() event: DeviceMapStateDto){
     this.logger.log(`Device map event`);
-    this.offeringService.deviceMapEvent(event);
+    this.offeringV2Service.deviceMapEvent(event);
   }
 
   @MessagePattern(OfferingTopics.CHECK_HEALTH)
