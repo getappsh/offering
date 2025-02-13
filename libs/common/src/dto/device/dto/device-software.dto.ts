@@ -1,8 +1,8 @@
-import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsDate, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { DeviceDto } from "./device.dto";
 import { ApiProperty } from "@nestjs/swagger";
-import { ComponentDto } from "../../discovery";
-import { DeviceComponentEntity, DeviceComponentStateEnum, DeviceEntity, DiscoveryMessageEntity } from "@app/common/database/entities";
+import { ComponentDto, ComponentStateDto } from "../../discovery";
+import { DeviceComponentEntity, DeviceComponentStateEnum } from "@app/common/database/entities";
 import { Type } from "class-transformer";
 
 
@@ -72,21 +72,20 @@ export class DeviceSoftwareDto extends DeviceDto {
   }
 }
 
-export class DeviceSoftwareStateDto{
+export class DeviceComponentStateDto extends ComponentStateDto{
   
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   deviceId: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  catalogId: string;
 
-  @ApiProperty({enum: DeviceComponentStateEnum })
-  @IsEnum(DeviceComponentStateEnum)
-  state: DeviceComponentStateEnum;
+  static fromParent(parent: ComponentStateDto, deviceId: string){
+    let dto = new DeviceComponentStateDto();
+    Object.assign(dto, parent);
+    dto.deviceId = deviceId
+    return dto
+  }
 
   toString(){
     return JSON.stringify(this);
