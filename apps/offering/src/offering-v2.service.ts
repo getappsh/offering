@@ -60,7 +60,8 @@ export class OfferingV2Service implements OnModuleInit {
 
     this.logger.log(`Get offering for device: ${dto.deviceId}, offer count: ${res.offer?.length}, push count: ${res.push?.length}`);
 
-    this.setDevicesSoftwaresOffering(dto.deviceId, res.offer.map(o => o.id), OfferingActionEnum.OFFERING)
+    this.setDeviceSoftwaresOffering(dto.deviceId, res.offer.map(o => o.id), OfferingActionEnum.OFFERING)
+    this.sendDeviceSoftwaresState(dto.deviceId, res.offer.map(o => o.id), DeviceComponentStateEnum.OFFERING);
     return res
   }
 
@@ -181,7 +182,7 @@ export class OfferingV2Service implements OnModuleInit {
     this.deviceClient.emit(DeviceTopicsEmit.UPDATE_DEVICE_MAP_STATE, devicesState);
   }
 
-  private async setDevicesSoftwaresOffering(deviceId: string, catalogIds: string[], action: OfferingActionEnum){
+  private async setDeviceSoftwaresOffering(deviceId: string, catalogIds: string[], action: OfferingActionEnum){
     this.logger.debug(`Set device software offering deviceId: ${deviceId}, catalogIds: ${catalogIds}, action: ${action}`);
     const entities = []
 
@@ -216,6 +217,27 @@ export class OfferingV2Service implements OnModuleInit {
     })
     .catch(err => this.logger.error(`Failed to set device software offering: ${err}`));
  
+  }
+
+  private async sendDeviceSoftwaresState(deviceId: string, catalogIds: string[], state: DeviceComponentStateEnum){
+    this.logger.debug(`Send device software state deviceId: ${deviceId}, catalogIds: ${catalogIds}, state: ${state}`);
+    let devicesState = []
+
+    for(const catalogId of catalogIds){
+      let deviceState = new DeviceSoftwareStateDto();
+      deviceState.state = state;
+      deviceState.catalogId = catalogId;
+      deviceState.deviceId = deviceId;
+      devicesState.push(deviceState);
+    }
+
+    const batchSize = 15;
+    for (let i = 0; i < devicesState.length; i += batchSize) {
+      const batch = devicesState.slice(i, i + batchSize);
+      this.logger.debug(`Send device software state from index ${i} to ${i + batchSize - 1}:`);
+      this.deviceClient.emit(DeviceTopicsEmit.UPDATE_DEVICE_SOFTWARE_STATE, batch);
+    }
+
   }
 
   async setSoftwareOffering(devices: string[], catalogId: string, action: OfferingActionEnum){
@@ -261,7 +283,7 @@ export class OfferingV2Service implements OnModuleInit {
     const batchSize = 15;
     for (let i = 0; i < devicesState.length; i += batchSize) {
       const batch = devicesState.slice(i, i + batchSize);
-      this.logger.debug(`Send device software state from index ${i} to ${i + batchSize - 1}:`);
+      this.logger.debug(`Send devices software state from index ${i} to ${i + batchSize - 1}:`);
       this.deviceClient.emit(DeviceTopicsEmit.UPDATE_DEVICE_SOFTWARE_STATE, batch);
     }
   }
