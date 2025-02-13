@@ -166,7 +166,7 @@ export class ComponentV2Dto{
     dto.projectName = release.project.name;
     dto.type = release.project.projectType;
     dto.size = release?.artifacts
-    .filter(a => a.isInstallationFile)
+    ?.filter(a => a.isInstallationFile)
     ?.map(a => a?.fileUpload?.size)
     ?.reduce((size, a) => size + a, 0);
     return dto;

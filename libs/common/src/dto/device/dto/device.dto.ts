@@ -60,6 +60,12 @@ export class DeviceDto {
   @IsOptional()
   uid: number
 
+  @ApiProperty({required: false, type: 'string', isArray: true})
+  platforms: string[]
+
+  @ApiProperty({required: false, type: 'string', isArray: true})
+  formations: string[]
+
 
   static fromDeviceEntity(deviceE: DeviceEntity, discoveryE: DiscoveryMessageEntity): DeviceDto {
     let device = new DeviceDto()
@@ -69,9 +75,12 @@ export class DeviceDto {
     device.name = deviceE.name
     device.OS = deviceE.OS
     device.availableStorage = deviceE.availableStorage;
+    device.formations = deviceE.formations;
+    device.platforms = deviceE.platforms?.map(platform => platform.name);
     device.power = discoveryE?.situationalDevice.power;
     device.bandwidth = discoveryE?.situationalDevice.bandwidth;
     device.operativeState = discoveryE?.situationalDevice.operativeState;
+
 
     device.uid = deviceE?.orgUID?.UID;
     device.groupId = deviceE?.orgUID?.group?.id;
