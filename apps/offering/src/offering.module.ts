@@ -1,15 +1,14 @@
 import { Module } from '@nestjs/common';
 import { OfferingController } from './offering.controller';
-import { OfferingService } from './offering.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@app/common';
-import { ComponentOfferingEntity, DeviceEntity, MapOfferingEntity, ProjectEntity, ReleaseEntity, UploadVersionEntity } from '@app/common/database/entities';
+import { ComponentOfferingEntity, DeviceEntity, MapOfferingEntity, ProjectEntity, ReleaseEntity } from '@app/common/database/entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from '@app/common/logger/logger.module';
 import { ApmModule } from '@app/common/apm/apm.module';
 import { MicroserviceModule, MicroserviceName, MicroserviceType } from '@app/common/microservice-client';
 import { SafeCronModule } from '@app/common/safe-cron';
-import { OfferingV2Service } from './offering-v2.service'
+import { OfferingService } from './offering.service'
 
 @Module({
   imports: [
@@ -21,10 +20,10 @@ import { OfferingV2Service } from './offering-v2.service'
     }),
     ApmModule,
     DatabaseModule,
-    TypeOrmModule.forFeature([UploadVersionEntity, ComponentOfferingEntity, MapOfferingEntity, DeviceEntity, ReleaseEntity, ProjectEntity]),
+    TypeOrmModule.forFeature([ComponentOfferingEntity, MapOfferingEntity, DeviceEntity, ReleaseEntity, ProjectEntity]),
     SafeCronModule,
   ],
   controllers: [OfferingController],
-  providers: [OfferingService, OfferingV2Service],
+  providers: [OfferingService],
 })
 export class OfferingModule { }

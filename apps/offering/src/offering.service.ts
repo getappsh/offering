@@ -1,182 +1,133 @@
-import { Inject, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
-import {  RpcException } from '@nestjs/microservices';
-import { Raw, Repository, ILike } from 'typeorm';
-import {
-  ComponentOfferingEntity,
-  DeviceComponentStateEnum,
-  DeviceEntity,
-  DeviceMapStateEnum,
-  DiscoveryMessageEntity,
-  DiscoveryType,
-  MapEntity,
-  MapOfferingEntity,
-  OfferingActionEnum,
-  UploadStatus,
-  UploadVersionEntity,
-} from '@app/common/database/entities';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeviceComponentsOfferingDto, OfferingResponseDto, PushOfferingDto, OfferingMapPushResDto } from '@app/common/dto/offering';
-import { DiscoveryMessageDto } from '@app/common/dto/discovery';
-import { ComponentDto, PlatformDto } from '@app/common/dto/discovery';
-import { MicroserviceName, MicroserviceClient } from '@app/common/microservice-client';
-import { DeviceTopics, DeviceTopicsEmit } from '@app/common/microservice-client/topics';
-import { lastValueFrom } from 'rxjs';
-import { DeviceDto } from '@app/common/dto/device/dto/device.dto';
-import { DeviceSoftwareStateDto } from '@app/common/dto/device/dto/device-software.dto';
-import { DeviceMapStateDto } from '@app/common/dto/device';
-import { MapDto } from '@app/common/dto/map';
-import { UploadEventDto, UploadEventEnum } from '@app/common/dto/upload';
-import { Cron } from '@nestjs/schedule';
-import { SafeCron } from '@app/common/safe-cron';
+import { ComponentOfferingEntity, DeviceComponentStateEnum, DeviceEntity, DeviceMapStateEnum, MapEntity, MapOfferingEntity, OfferingActionEnum, ProjectEntity, ProjectType, ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
+import { DeviceMapStateDto } from "@app/common/dto/device";
+import { DeviceComponentStateDto } from "@app/common/dto/device/dto/device-software.dto";
+import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
+import { MapDto } from "@app/common/dto/map";
+import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
+import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
+import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
+import { DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
+import { SafeCron } from "@app/common/safe-cron";
+import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { lastValueFrom } from "rxjs";
+import { ArrayOverlap, In, Repository } from "typeorm";
+
 
 @Injectable()
-export class OfferingService implements OnModuleInit{
+export class OfferingService implements OnModuleInit {
   private readonly logger = new Logger(OfferingService.name);
 
   constructor(
-    @InjectRepository(UploadVersionEntity)private readonly uploadVersionRepo: Repository<UploadVersionEntity>,
+    @InjectRepository(ReleaseEntity)private readonly releaseRepo: Repository<ReleaseEntity>,
+    @InjectRepository(ProjectEntity)private readonly projectRepo: Repository<ProjectEntity>, 
+    @InjectRepository(DeviceEntity)private readonly deviceRepo: Repository<DeviceEntity>, 
     @InjectRepository(ComponentOfferingEntity)private readonly compOfferingRepo: Repository<ComponentOfferingEntity>,
     @InjectRepository(MapOfferingEntity)private readonly mapOfferingRepo: Repository<MapOfferingEntity>,
-    @InjectRepository(DeviceEntity) private readonly deviceRepo: Repository<DeviceEntity>,
-    @Inject(MicroserviceName.DISCOVERY_SERVICE) private readonly deviceClient: MicroserviceClient,
-  
-  ) {}
-
-  async getOfferOfComp(catalogId: string): Promise<ComponentDto>{
-    const comp = await this.uploadVersionRepo.findOneBy({catalogId: catalogId});
-    if (!comp) {
-      this.logger.warn(`Component not found, catalogId ${catalogId}`);
-      // todo check way the exception message is not returned
-      throw new NotFoundException('Component not found');
-
-    }
-    const compRes = ComponentDto.fromUploadVersionEntity(comp);
-    return compRes
-  }
-  
-  async checkUpdates(dis: DiscoveryMessageDto): Promise<OfferingResponseDto> {
-    const deviceId = dis.general.physicalDevice.ID;
-    this.logger.debug(`Create offering for device "${deviceId}"`);
-    const offeringRes = new OfferingResponseDto()
-    offeringRes.isNewVersion = false;
-
-    const platformName = dis?.softwareData?.platform.name || "Merkava";
-    const formation = dis?.softwareData?.formation || "yatush";
-    const OS = dis.general.physicalDevice.OS
-    if (!platformName || !formation){
-      return offeringRes
-    }
-
-
-    this.logger.debug(`Platform: ${platformName}, Formation: ${formation}`)
-    let offered_components  = await this.uploadVersionRepo.find({
-      where: {
-        platform: ILike(platformName),
-        formation: ILike(formation),
-        OS: Raw(() => 'COALESCE(UploadVersionEntity.OS, :value) ILIKE :value', {value: OS}),
-        uploadStatus: UploadStatus.READY
-      }
-    });
-
-    for (let comp of offered_components){
-      if (!offeringRes.isNewVersion){
-        offeringRes.isNewVersion = true;
-        offeringRes.platform = new PlatformDto();
-        offeringRes.platform.name = platformName;
-        offeringRes.platform.components = [];
-      }
-
-      const compRes = ComponentDto.fromUploadVersionEntity(comp);
-
-      offeringRes.platform.components.push(compRes)
-    }
-    this.logger.debug(`Offering for device: "${deviceId}" offering comps: [${offeringRes?.platform?.components.map(comp => comp.catalogId)}]`)
-    return offeringRes;
-
-  }
-
-  @SafeCron({cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering"})
-  async offeringComponentTask(){
-    this.logger.log(`Start offering component task`);
-    for (let i = 0;; i++){
-      let result = await this.devicesWithPlatformAndFormation(i);
-      if (!result) return;
-
-      const platform = result.platform|| "Merkava";
-      const formation = result.formation || "yatush";
-  
-      this.logger.debug(`Search offering for platform: ${platform}, formation: ${formation}, OS: ${result.os}, number of associated devices: ${result.devices.length}`)
-      
-      let offeredComponents  = await this.uploadVersionRepo.find({
-        where: {
-          platform: ILike(platform),
-          formation: ILike(formation),
-          OS: Raw(() => 'COALESCE(UploadVersionEntity.OS, :value) ILIKE :value', {value: result.os}),
-          uploadStatus: UploadStatus.READY
-        }
-      });
-
-      this.logger.debug(`${offeredComponents.length} offered components have been found`)
-      for (let comp of offeredComponents){
-        await this.setSoftwareOffering(result.devices, comp.catalogId, OfferingActionEnum.OFFERING);
-        this.sendDeviceSoftwareState(result.devices, comp.catalogId, DeviceComponentStateEnum.OFFERING);
-      }
-    }
-  }
-
-  private async devicesWithPlatformAndFormation(offset: number): Promise<{devices: [string], platform: string, formation: string, os: string}>{
-    return this.deviceRepo.manager.connection.createQueryBuilder()
-    .select([
-        "array_agg(DISTINCT sub.deviceID) AS devices",
-        "lower(sub.platform) as platform",
-        "lower(sub.formation) as formation",
-        "sub.OS"
-    ])
-    .addFrom(
-      (dp) => {
-        return dp.select([
-          "d.ID as deviceID",
-          "dm.discovery_data -> 'platform' ->> 'name' AS platform",
-          "dm.discovery_data ->> 'formation' AS formation",
-          "d.OS AS OS"
-        ])
-        .from(DeviceEntity, "d")
-        .leftJoin(DiscoveryMessageEntity, "dm", "d.ID = dm.deviceID and dm.discoveryType != :dtype", {dtype: DiscoveryType.MTLS})
-        .orderBy("d.ID")
-        .addOrderBy("dm.lastUpdatedDate", "DESC")
-        .distinctOn(["d.ID"])
-      },
-      "sub"
-    )
-    .groupBy("lower(sub.platform)")
-    .addGroupBy("lower(sub.formation)")
-    .addGroupBy("sub.OS")
-    .offset(offset)
-    .limit(1)
-    .getRawOne()
-  }
-
-  async getDeviceComponentOffering(deviceId: string): Promise<DeviceComponentsOfferingDto>{
-    this.logger.log("get device component offering");
-    let comps = await this.compOfferingRepo.find({where: {device: {ID: deviceId}}, relations: {component: true}})
-
-    let deviceOffering = new DeviceComponentsOfferingDto()
-
-    deviceOffering.offer = comps.filter(dc => dc.action == OfferingActionEnum.OFFERING).map(dc => ComponentDto.fromUploadVersionEntity(dc.component));
-    deviceOffering.push = comps.filter(dc => dc.action == OfferingActionEnum.PUSH).map(dc => ComponentDto.fromUploadVersionEntity(dc.component));
-
-    return deviceOffering
-  }
-
-  async getDeviceMapOffering(deviceId: string){
-    this.logger.log("get device map offering");
-    let maps = await this.mapOfferingRepo.find({where: {device: {ID: deviceId}}, relations: {map: {mapProduct: true}}});
     
-    let deviceOffering = new OfferingMapPushResDto()
-    deviceOffering.push = maps.filter(dm => dm.action == OfferingActionEnum.PUSH).map(dm => MapDto.fromMapEntity(dm.map));
+    @Inject(MicroserviceName.DISCOVERY_SERVICE) private readonly deviceClient: MicroserviceClient,
+    
+  ){}
 
-    return deviceOffering
+  async getDeviceComponentOffering(dto: ComponentOfferingRequestDto): Promise<DeviceComponentsOfferingDto>{
+    this.logger.log(`Get offering for device: ${dto.deviceId}`);
+
+    // const [updates, offering] = await Promise.all([
+    //   this.getUpdatesForComponents(dto),
+    //   this.getOfferingFromFormationsAndComponents(dto)
+    // ])
+    // const uniqueOffering = offering.filter(o => !updates.some(u => u.catalogId == o.catalogId))
+    // const res = [...uniqueOffering, ...updates].filter(r => !dto.products.includes(r.catalogId));
+
+    const [offering, push] = await Promise.all([
+      this.getOfferingFromFormationsPlatformsAndComponents(dto),
+      this.compOfferingRepo.find({
+        select: {release: {
+          version: true, catalogId: true, releaseNotes: true, status: true, createdAt: true, updatedAt: true,
+          project: {id: true, name: true, projectType: true}, artifacts: {fileUpload: {size: true}, isInstallationFile: true},
+        }},
+        where: {device: {ID: dto.deviceId}, action: OfferingActionEnum.PUSH}, 
+        relations: {release: {project: true, artifacts: {fileUpload: true}}}})
+    ])
+
+    const res = new DeviceComponentsOfferingDto()
+    res.offer = offering
+      ?.filter(o => !dto.components?.includes(o.catalogId) && !push?.some(p => p?.release?.catalogId == o.catalogId))
+      ?.map(o => ComponentV2Dto.fromEntity(o)); 
+
+    res.push = push
+      ?.filter(p => !dto.components?.includes(p.release.catalogId))
+      ?.map(p => ComponentV2Dto.fromEntity(p.release)); 
+
+    this.logger.log(`Get offering for device: ${dto.deviceId}, offer count: ${res.offer?.length}, push count: ${res.push?.length}`);
+
+    this.setDeviceSoftwaresOffering(dto.deviceId, res.offer.map(o => o.id), OfferingActionEnum.OFFERING)
+    this.sendDeviceSoftwaresState(dto.deviceId, res.offer.map(o => o.id), DeviceComponentStateEnum.OFFERING);
+    return res
   }
+
+  private async getOfferingFromFormationsPlatformsAndComponents(dto: ComponentOfferingRequestDto): Promise<ReleaseEntity[]>{
+    const projects = await this.projectRepo.find({
+      select: {id: true, platforms: false},
+      where: [
+        {
+          releases: {catalogId: In(dto.components ?? [])}
+        },
+        {
+          projectType: ProjectType.FORMATION,
+          name: In(dto.formations ?? []),
+        },
+        {
+          projectType: ProjectType.PRODUCT,
+          platforms: {name: In(dto.platforms ?? [])},
+        }
+      ]
+    });
+    const projectIds = projects.map(p => p.id);
+    this.logger.log(`Get offering for device: ${dto.deviceId}, associated projects: ${projectIds}`);
+
+    const offering = await this.releaseRepo.find({
+      select: {project: {id: true, name: true, projectType: true}, artifacts: {fileUpload: {size: true}, isInstallationFile: true}},
+      where: {
+          status: ReleaseStatusEnum.RELEASED,
+          project: {id: In(projectIds)}
+        },
+      relations: {project: true, artifacts: {fileUpload: true}},
+     });
+
+     return offering
+  }
+
+  // Return the latest release for each component id
+  async getUpdatesForComponents(components: string[]): Promise<ReleaseEntity[]> {
+    this.logger.debug(`Get updates for releaseIds: ${components}`);
+    const updates = await this.releaseRepo
+      .createQueryBuilder("r")
+      .innerJoin(
+        qb =>
+          qb
+            .select("re.project_id", "project_id")
+            .addSelect("MAX(re.sort_order)", "max_sort_order")
+            .from(ReleaseEntity, "re")
+            .where(sqb => {
+              const subQuery = sqb
+                .subQuery()
+                .select("DISTINCT r.project_id")
+                .from(ReleaseEntity, "r")
+                .where("r.catalog_id IN (:...releaseIds)", { releaseIds: components })
+                .getQuery();
+              return `re.project_id IN (${subQuery})`;
+            })
+            .andWhere("re.status = :status", { status: ReleaseStatusEnum.RELEASED })
+            .groupBy("re.project_id"),
+        "latest",
+        "r.project_id = latest.project_id AND r.sort_order = latest.max_sort_order"
+      )
+      .getMany()
+
+      return updates.filter(r => !components.includes(r.catalogId))
+  }
+
 
   private async getDevicesInGroup(groups: number[]): Promise<string[]>{
     this.logger.debug(`get devices in groups: ${JSON.stringify(groups)}`);
@@ -185,54 +136,6 @@ export class OfferingService implements OnModuleInit{
     return ids;
   }
 
-
-  async setSoftwareOffering(devices: string[], catalogId: string, action: OfferingActionEnum){
-    this.logger.log(`Update software offering - software: ${catalogId}, action: ${action}, number of devices: ${devices.length}`);
-    
-    let compsOffering = [];
-    for (let id of devices){
-      let entity = this.compOfferingRepo.create();
-      entity.action = action;
-      entity.component = {catalogId: catalogId} as UploadVersionEntity;
-      entity.device = {ID: id} as DeviceEntity;
-      compsOffering.push(entity);
-    }
-      
-    try {
-      if (action === OfferingActionEnum.PUSH){
-        await this.compOfferingRepo.upsert(compsOffering, ['device', 'component']);
-      }else if(action === OfferingActionEnum.OFFERING){
-        await this.compOfferingRepo.createQueryBuilder()
-        .insert()
-        .values(compsOffering)
-        .orIgnore()
-        .execute();
-      }
-    }catch(err){
-      this.logger.error(`error update comp offering, ${err}`);
-      return
-    }   
-  }
-
-  async sendDeviceSoftwareState(devices: string[], catalogId: string, state: DeviceComponentStateEnum){
-    this.logger.log(`Send software state - software: ${catalogId}, state: ${state}, number of devices: ${devices.length}`);
-
-    let devicesState = []
-    for (let id of devices){
-      let deviceState = new DeviceSoftwareStateDto();
-      deviceState.state = state;
-      deviceState.catalogId = catalogId;
-      deviceState.deviceId = id;
-      devicesState.push(deviceState);
-    }
-
-    const batchSize = 15;
-    for (let i = 0; i < devicesState.length; i += batchSize) {
-      const batch = devicesState.slice(i, i + batchSize);
-      this.logger.debug(`Send device software state from index ${i} to ${i + batchSize - 1}:`);
-      this.deviceClient.emit(DeviceTopicsEmit.UPDATE_DEVICE_SOFTWARE_STATE, batch);
-    }
-  }
 
   async pushSoftwareOffering(po: PushOfferingDto){
     this.logger.debug(`push software offering`);
@@ -244,63 +147,7 @@ export class OfferingService implements OnModuleInit{
     await this.setSoftwareOffering(devices, po.catalogId, OfferingActionEnum.PUSH)
     this.sendDeviceSoftwareState(devices, po.catalogId, DeviceComponentStateEnum.PUSH)
   }
-  async uploadEvent(uploadEvent: UploadEventDto){
-    if (uploadEvent.event === UploadEventEnum.ERROR){
-      this.logger.log("upload event: error")
-      this.logger.debug(`delete comp: ${uploadEvent.catalogId} offering form devices`);
-      this.compOfferingRepo.delete({component: {catalogId: uploadEvent.catalogId}});
 
-      this.deviceClient.emit(DeviceTopicsEmit.COMPONENT_EVENT, uploadEvent);
-      
-    }else if (uploadEvent.event === UploadEventEnum.READY){
-      this.logger.log("upload event: ready")
-      this.logger.debug("get device that updatable by the component")
-      let devices = await this.deviceRepo.manager.connection.createQueryBuilder()
-        .select("sub.deviceID as id")
-        .addFrom(
-          (dp) => {
-            return dp.select([
-              "d.ID as deviceID",
-              "dm.discovery_data -> 'platform' ->> 'name' AS platform",
-              "dm.discovery_data ->> 'formation' AS formation",
-              "d.OS AS OS"
-            ])
-            .from(DeviceEntity, "d")
-            .leftJoin(DiscoveryMessageEntity, "dm", "d.ID = dm.deviceID and dm.discoveryType != :dtype", {dtype: DiscoveryType.MTLS})
-            .orderBy("d.ID")
-            .addOrderBy("dm.lastUpdatedDate", "DESC")
-            .distinctOn(["d.ID"])
-          },
-          "sub"
-        )
-        .where(`sub.OS ILIKE COALESCE(:OS, sub.OS)`, {OS: uploadEvent.OS})
-        .andWhere(`COALESCE(NULLIF(sub.platform, ''), 'merkava') ILIKE :platformName`, { platformName: uploadEvent.platform })
-        .andWhere(`COALESCE(NULLIF(sub.formation, ''), 'yatush') ILIKE :formation`, { formation: uploadEvent.formation })
-        .distinctOn(["sub.deviceID"])
-        .getRawMany();
-
-      const ids = devices.map(device => device.id);
-      await this.setSoftwareOffering(ids, uploadEvent.catalogId, OfferingActionEnum.OFFERING);
-      this.sendDeviceSoftwareState(ids, uploadEvent.catalogId, DeviceComponentStateEnum.OFFERING)
-    }
-  }
-
-  async deviceSoftwareEvent(event: DeviceSoftwareStateDto){
-    this.logger.debug(`device: ${event.deviceId}, component: ${event.catalogId}, event: ${event.state}`);
-    if (event.state === DeviceComponentStateEnum.INSTALLED){
-      this.logger.debug(`delete comp: ${event.catalogId} offering form device: ${event.deviceId}`);
-      this.compOfferingRepo.delete({component: {catalogId: event.catalogId}, device: {ID: event.deviceId}});
-    }
-  }
-
-  async deviceMapEvent(event: DeviceMapStateDto){
-    this.logger.debug(`device: ${event.deviceId}, map: ${event.catalogId}, event: ${event.state}`);
-    if (event.state === DeviceMapStateEnum.INSTALLED){
-      this.logger.debug(`delete map: ${event.catalogId} offering form device: ${event.deviceId}`);
-      this.mapOfferingRepo.delete({map: {catalogId: event.catalogId}, device: {ID: event.deviceId}});
-    }
-
-  }
   async pushMapOffering(po: PushOfferingDto){
     this.logger.debug(`push map offering`);
     let devices = po.devices;
@@ -336,168 +183,204 @@ export class OfferingService implements OnModuleInit{
     this.deviceClient.emit(DeviceTopicsEmit.UPDATE_DEVICE_MAP_STATE, devicesState);
   }
 
-  // private getNewVersion(platform: string, OS: string, formation: string, component: string, currentVersion: string) {
-  //   return this.uploadVersionRepo.findOne({
-  //     where: {
-  //       platform: platform,
-  //       formation: formation,
-  //       component: component,
-  //       OS: Raw(() => 'COALESCE(UploadVersionEntity.OS, :value) = :value', {value: OS}),
-  //       version: MoreThan(currentVersion),
-  //     },
-  //     order: {
-  //       version: 'DESC',
-  //     },
-  //   });
-  // }
-  // async checkUpdates(dis: DiscoveryMessageDto) {
-  //   this.logger.debug('Create offering');
-  //   const offeringRes = new OfferingResponseDto()
-  //   offeringRes.isNewVersion = false;
+  private async setDeviceSoftwaresOffering(deviceId: string, catalogIds: string[], action: OfferingActionEnum){
+    this.logger.debug(`Set device software offering deviceId: ${deviceId}, catalogIds: ${catalogIds}, action: ${action}`);
+    const entities = []
 
-  //   const platformName = dis.data.platform.name;
-  //   const formation = dis.data.formation;
-  //   const OS = dis.general.physicalDevice.OS
+    for(const ci of catalogIds){
+      const entity = this.compOfferingRepo.create()
+      entity.action = action;
+      entity.release = {catalogId: ci} as ReleaseEntity;
+      entity.device = {ID: deviceId} as DeviceEntity;
+      entities.push(entity)
+    }
 
+    await this.compOfferingRepo.manager.transaction(async entityManager => {
+      await entityManager
+        .createQueryBuilder()
+        .delete()
+        .from(ComponentOfferingEntity)
+        .where("device_ID = :deviceId", {deviceId})
+        .andWhere("action = :action", {action})
+        .execute()
 
-  //   this.logger.debug(`Platform: ${platformName}, Formation: ${formation}`)
-  //   for (let comp of dis.data.platform.components){
-  //     const newVersion = await this.getNewVersion(platformName, OS, formation, comp.name, comp.versionNumber)
+      if (action === OfferingActionEnum.PUSH){
+        await entityManager.upsert(ComponentOfferingEntity, entities,  ['device', 'release'])
+      }else{
+        await entityManager
+          .createQueryBuilder()
+          .insert()
+          .into(ComponentOfferingEntity)
+          .values(entities)
+          .orIgnore()
+          .execute()
+      }
+    })
+    .catch(err => this.logger.error(`Failed to set device software offering: ${err}`));
+ 
+  }
 
-  //     if (!newVersion){
-  //       this.logger.debug(`No new Version has been found to component: ${comp.name}, version: ${comp.versionNumber}`)
-  //       continue;
-  //     }
-  //     if (!offeringRes.isNewVersion){
-  //       offeringRes.isNewVersion = true;
-  //       offeringRes.platform = new PlatformDto();
-  //       offeringRes.platform.name = platformName;
-  //       offeringRes.platform.components = [];
-  //     }
-  //     this.logger.debug(`New Version has been found to component: ${newVersion.component}, version: ${newVersion.version}`)
-  //     const compRes = new ComponentDto()
-  //     compRes.id = newVersion.id.toString();
-  //     compRes.name = newVersion.component;
-  //     compRes.versionNumber = newVersion.version;
-  //     compRes.baseVersion = newVersion.baseVersion || "";
-  //     compRes.prevVersion = newVersion.prevVersion || "";
-  //     compRes.catalogId = newVersion.catalogId;
-      
-  //     compRes.virtualSize = newVersion.virtualSize;
-      
-  //     compRes.category = newVersion.metadata?.category;
-  //     compRes.releaseNotes = newVersion.metadata?.releaseNote;
+  private async sendDeviceSoftwaresState(deviceId: string, catalogIds: string[], state: DeviceComponentStateEnum){
+    this.logger.debug(`Send device software state deviceId: ${deviceId}, catalogIds: ${catalogIds}, state: ${state}`);
+    let devicesState = []
 
-  //     compRes.urlPath = await this.s3Service.generatePresignedUrlForDownload(newVersion.s3Url);
+    for(const catalogId of catalogIds){
+      let deviceState = new DeviceComponentStateDto();
+      deviceState.state = state;
+      deviceState.catalogId = catalogId;
+      deviceState.deviceId = deviceId;
+      devicesState.push(deviceState);
+    }
 
-  //     offeringRes.platform.components.push(compRes)
-  //   }
+    const batchSize = 15;
+    for (let i = 0; i < devicesState.length; i += batchSize) {
+      const batch = devicesState.slice(i, i + batchSize);
+      this.logger.debug(`Send device software state from index ${i} to ${i + batchSize - 1}:`);
+      this.deviceClient.emit(DeviceTopicsEmit.UPDATE_DEVICE_SOFTWARE_STATE, batch);
+    }
 
-  //   return offeringRes;
-  // }
+  }
 
-
-
-  // private getPackageStatus(OS: string, formation: string, currentVersion: string, latestVersion: string) {
-  //   return this.versionPackageRepo.findOne({
-  //     where: {
-  //       OS: OS,
-  //       formation: formation,
-  //       fromVersion: currentVersion,
-  //       toVersion: latestVersion,
-  //       },
-  //     });
-  //   }
-  
+  async setSoftwareOffering(devices: string[], catalogId: string, action: OfferingActionEnum){
+    this.logger.log(`Update software offering - software: ${catalogId}, action: ${action}, number of devices: ${devices.length}`);
     
-  //   private async sendToDelivery(OS: OS, formation: string, currentVersion: string, latestVersion: string){
-  //     const packageStatus = await this.getPackageStatus(OS, formation, currentVersion, latestVersion);
-  //     if (packageStatus){
-  //       this.logger.debug("Offering Already on delivery");
-  //     }else {
-  //       const pm = new PackageMessageDto(OS, formation, currentVersion, latestVersion);
-  //       await validateOrReject(pm)
-  
-  //       this.logger.debug(`Send to delivery a new packages to be prepare: ${pm}`);
-  //       this.offeringMicroClient.emit(
-  //         DeliveryTopics.PREPARE_PACKAGE,
-  //         pm,
-  //       );
-  //     }
-  //   }
+    let compsOffering = [];
+    for (let id of devices){
+      let entity = this.compOfferingRepo.create();
+      entity.action = action;
+      entity.release = {catalogId: catalogId} as ReleaseEntity;
+      entity.device = {ID: id} as DeviceEntity;
+      compsOffering.push(entity);
+    }
+      
+    try {
+      if (action === OfferingActionEnum.PUSH){
+        await this.compOfferingRepo.upsert(compsOffering, ['device', 'release']);
+      }else if(action === OfferingActionEnum.OFFERING){
+        await this.compOfferingRepo.createQueryBuilder()
+        .insert()
+        .values(compsOffering)
+        .orIgnore()
+        .execute();
+      }
+    }catch(err){
+      this.logger.error(`error update comp offering, ${err}`);
+      return
+    }   
+  }
 
-  // // get all component and sub components recursively, if components appear twice takeing the lower version.
-  // private getAllComponentVersions(versions: {string: string}, components: ComponentDto[]){
-  //   if (!Array.isArray(components)){
-  //     return
-  //   }
-  //   for (const comp of components) {
-  //     if(comp.name in versions){
-  //       versions[comp.name] = (versions[comp.name] < comp.versionNumber) ? versions[comp.name] : comp.versionNumber;
-  //     }else {
-  //       versions[comp.name] = comp.versionNumber;
-  //     }
-  //     this.getAllComponentVersions(versions, comp.subComponents);
-  //   }
-  // }
-  
-  // async checkUpdates(dism: DiscoveryMessageDto) {
-  //   this.logger.debug('Create offering');
+  async sendDeviceSoftwareState(devices: string[], catalogId: string, state: DeviceComponentStateEnum){
+    this.logger.log(`Send software state - software: ${catalogId}, state: ${state}, number of devices: ${devices.length}`);
+
+    let devicesState = []
+    for (let id of devices){
+      let deviceState = new DeviceComponentStateDto();
+      deviceState.state = state;
+      deviceState.catalogId = catalogId;
+      deviceState.deviceId = id;
+      devicesState.push(deviceState);
+    }
+
+    const batchSize = 15;
+    for (let i = 0; i < devicesState.length; i += batchSize) {
+      const batch = devicesState.slice(i, i + batchSize);
+      this.logger.debug(`Send devices software state from index ${i} to ${i + batchSize - 1}:`);
+      this.deviceClient.emit(DeviceTopicsEmit.UPDATE_DEVICE_SOFTWARE_STATE, batch);
+    }
+  }
+
+
+  async getDeviceMapOffering(deviceId: string){
+    this.logger.log("get device map offering");
+    let maps = await this.mapOfferingRepo.find({where: {device: {ID: deviceId}}, relations: {map: {mapProduct: true}}});
     
-  //   const versions = {} as {string: string};
-  //   const offeringRes: OfferingResponseDto[]  = [];
-  //   const packageMessages: PackageMessageDto[] = [];
+    let deviceOffering = new OfferingMapPushResDto()
+    deviceOffering.push = maps.filter(dm => dm.action == OfferingActionEnum.PUSH).map(dm => MapDto.fromMapEntity(dm.map));
 
-  //   const os = dism.general.physicalDevice.OS;
+    return deviceOffering
+  }
 
-  //   versions[dism.data.baseVersion.name] = dism.data.baseVersion.versionNumber
-  
-  //   this.getAllComponentVersions(versions, dism.data.baseVersion.components)
 
-  //   this.logger.debug(`Found ${Object.keys(versions).length} components: ${Object.keys(versions)}`)
+  async deviceSoftwareEvent(event: DeviceComponentStateDto){
+    this.logger.debug(`device: ${event.deviceId}, component: ${event.catalogId}, event: ${event.state}`);
+    if (event.state === DeviceComponentStateEnum.INSTALLED){
+      this.logger.debug(`delete comp: ${event.catalogId} offering form device: ${event.deviceId}`);
+      this.compOfferingRepo.delete({release: {catalogId: event.catalogId}, device: {ID: event.deviceId}});
+    }
+  }
 
-  //   for (const key in versions){
-  //     const newVer = await this.getNewVersion(key, os, versions[key]);
+  async deviceMapEvent(event: DeviceMapStateDto){
+    this.logger.debug(`device: ${event.deviceId}, map: ${event.catalogId}, event: ${event.state}`);
+    if (event.state === DeviceMapStateEnum.INSTALLED){
+      this.logger.debug(`delete map: ${event.catalogId} offering form device: ${event.deviceId}`);
+      this.mapOfferingRepo.delete({map: {catalogId: event.catalogId}, device: {ID: event.deviceId}});
+    }
+  }
 
-  //     if (newVer == null){
-  //       continue
-  //     }
 
-  //     let status: string;
-  //     let latestVersion = newVer.baseVersion;
+  // // TODO pagination
+  private getDevicesByPlatformsFormationsAndComponents(platforms: string[], formations: string[], projects: number[]): Promise<DeviceEntity[]>{
+    return this.deviceRepo.find({
+      select: {ID: true},
+      where: [
+        {components: {release: {project: {id: In(projects)}}}},
+        {platforms: {name: In(platforms)}},
+        {formations: ArrayOverlap(formations)}
+      ]
+    })
+  }
 
-  //     const packageStatus = await this.getPackageStatus(os, key, versions[key], latestVersion);
+  async releaseChangedEvent(dto: ReleaseChangedEventDto){
+    if (dto.event === ReleaseStatusEnum.RELEASED){
+      const project = await this.projectRepo.findOneBy({releases: {catalogId: dto.catalogId}});
 
-  //     if (packageStatus == null) {
-  //       const pm = new PackageMessageDto(os, key, versions[key], latestVersion)
-  //       await validateOrReject(pm)
-  //       packageMessages.push(pm);
+      const platforms = project.platforms?.map(p => p.name);
+      const formation = project.projectType == ProjectType.FORMATION ? project.name : null;
 
-  //       status = 'startingProgress';
-  //     } else {
-  //       status = packageStatus.status;
-  //     }
-  //     offeringRes.push(new OfferingResponseDto(os, key, versions[key], latestVersion, status))
-  //   }
+      const device = await this.getDevicesByPlatformsFormationsAndComponents(platforms, [formation], [project.id])
+      
+      const ids = device.map(d => d.ID);
+      this.logger.debug(`set comp: ${dto.catalogId} offering on devices: ${ids}`);
 
-  //   this.logger.debug(`Send to delivery ${packageMessages.length} new packages to be prepare`);
-  //   if (packageMessages.length) {
-  //     this.offeringMicroClient.emit(
-  //       DeliveryTopics.PREPARE_PACKAGE,
-  //       packageMessages,
-  //     );
-  //   }
+      await this.setSoftwareOffering(ids, dto.catalogId, OfferingActionEnum.OFFERING);
+      this.sendDeviceSoftwareState(ids, dto.catalogId, DeviceComponentStateEnum.OFFERING)
 
-  //   this.logger.debug(`Found ${offeringRes.length} packages to offer: ${offeringRes}`);
+    }else {
+      this.logger.debug(`delete comp: ${dto.catalogId} offering form devices`);
+      this.compOfferingRepo.delete({release: {catalogId: dto.catalogId}});
 
-  //   return offeringRes;
-  // }
+      this.deviceClient.emit(DeviceTopicsEmit.RELEASE_CHANGED_EVENT, dto);
+    }
+  }
+
+
+  @SafeCron({cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering"})
+  async offeringComponentTask(){
+    this.logger.log(`Start offering component task`);
+    const projects = await this.projectRepo.find({
+      select: {releases: {catalogId: true}, platforms: {name: true}},
+      where: {releases: {status: ReleaseStatusEnum.RELEASED}},
+      relations: {releases: true}
+    })
+    
+    for (const project of projects){
+      const platforms = project.platforms?.map(p => p.name);
+      const formation = project.projectType == ProjectType.FORMATION ? project.name : null;
+      const devices = await this.getDevicesByPlatformsFormationsAndComponents(platforms, [formation], [project.id]);
+
+      const ids = devices.map(d => d.ID);
+      for (const release of project.releases){
+        this.logger.debug(`set comp: ${release.catalogId} offering on devices: ${ids}`);
+        await this.setSoftwareOffering(ids, release.catalogId, OfferingActionEnum.OFFERING);
+        this.sendDeviceSoftwareState(ids, release.catalogId, DeviceComponentStateEnum.OFFERING);
+      }
+    }
+  }
 
 
   async onModuleInit() {
     this.deviceClient.subscribeToResponseOf([DeviceTopics.All_DEVICES])
     await this.deviceClient.connect()
-
   }
 
 }
