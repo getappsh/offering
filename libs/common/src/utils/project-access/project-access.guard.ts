@@ -21,7 +21,7 @@ export class ProjectAccessGuard implements CanActivate {
     const validateProjectToken = this.reflector.get<boolean>('validateProjectTokenAccess', context.getHandler());
     const validateAnyToken = this.reflector.get<boolean>('validateProjectAnyAccess', context.getHandler());
 
-    const request = extractRequest(context)
+    const request = extractRequest(context) as Record<string, any>
     const headers = extractHeaders(context)
 
     const user = headers?.user;

@@ -24,6 +24,9 @@ export class HashDto {
 export class DeliveryItemDto {
   @ApiProperty()
   catalogId: string;
+  
+  @ApiProperty()
+  id: number;
 
   @ApiProperty()
   itemKey: string;
@@ -48,6 +51,7 @@ export class DeliveryItemDto {
   static fromDeliveryItemEntity(diE: DeliveryItemEntity): DeliveryItemDto {
     const dto = new DeliveryItemDto();
     dto.catalogId = diE.delivery.catalogId;
+    dto.id = diE.id;
     dto.itemKey = diE.itemKey;
     dto.metaData = diE.metaData;
     dto.url = diE.path;
@@ -57,6 +61,7 @@ export class DeliveryItemDto {
   static fromDeliveryItemDto(diDto: DeliveryItemDto): DeliveryItemDto {
     const dto = new DeliveryItemDto();
     dto.catalogId = diDto.catalogId;
+    dto.id = diDto.id;
     dto.itemKey = diDto.itemKey;
     dto.metaData = diDto.metaData;
     dto.url = diDto.url;

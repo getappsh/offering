@@ -177,7 +177,6 @@ export const DeviceTopicsEmit = {
     MAP_UPDATES_JOB_START: `getapp-device.map.job.updates.start${region}`,
     UPDATE_TLS_STATUS: `getapp-device.update.tls.status${region}`,
     IM_PUSH_DISCOVERY: `getapp-device.im.push.discovery${region}`,
-    COMPONENT_EVENT: `getapp-device.component.event`,
     RELEASE_CHANGED_EVENT: `getapp-device.release-changed-event${region}`,
 } as const
 
