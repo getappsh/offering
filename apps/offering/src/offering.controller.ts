@@ -5,8 +5,8 @@ import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-cli
 import { DiscoveryMessageDto } from '@app/common/dto/discovery';
 import { ComponentOfferingRequestDto, PushOfferingDto } from '@app/common/dto/offering';
 import { ItemTypeEnum } from '@app/common/database/entities';
-import { UploadEventDto } from '@app/common/dto/upload';
-import { DeviceSoftwareStateDto } from '@app/common/dto/device/dto/device-software.dto';
+import { ReleaseChangedEventDto, UploadEventDto } from '@app/common/dto/upload';
+import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
 import { DeviceMapStateDto } from '@app/common/dto/device';
 import { RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
@@ -26,7 +26,7 @@ export class OfferingController {
   @MessagePattern(OfferingTopics.GET_OFFER_OF_COMP)
   getOfferOfComp(@RpcPayload("stringValue") catalogId: string){    
     this.logger.debug(`get offering for comp: ${catalogId}`)
-    return this.offeringService.getOfferOfComp(catalogId)
+    return this.offeringV2Service.getUpdatesForComponents([catalogId])
   }
 
   @MessagePattern(OfferingTopics.CHECK_UPDATES)
@@ -62,14 +62,14 @@ export class OfferingController {
     }
   }
 
-  @EventPattern(OfferingTopicsEmit.COMPONENT_UPLOAD_EVENT)
-  uploadEvent(@RpcPayload() event: UploadEventDto){
-    this.logger.log(`Component Upload event ${event.catalogId}`);
-    this.offeringService.uploadEvent(event);
+  @EventPattern(OfferingTopicsEmit.RELEASE_CHANGED_EVENT)
+  releaseChangedEvent(@RpcPayload() event: ReleaseChangedEventDto){
+    this.logger.log(`Release changed event for catalogId: ${event.catalogId}, event: ${event.event}`);
+    this.offeringV2Service.releaseChangedEvent(event);
   }
 
   @EventPattern(OfferingTopicsEmit.DEVICE_SOFTWARE_EVENT)
-  deviceSoftwareEvent(@RpcPayload() event: DeviceSoftwareStateDto){
+  deviceSoftwareEvent(@RpcPayload() event: DeviceComponentStateDto){
     this.logger.log(`Device software event`);
     this.offeringV2Service.deviceSoftwareEvent(event);
   }

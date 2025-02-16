@@ -1,10 +1,10 @@
 import { ComponentOfferingEntity, DeviceComponentStateEnum, DeviceEntity, DeviceMapStateEnum, MapEntity, MapOfferingEntity, OfferingActionEnum, ProjectEntity, ProjectType, ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
 import { DeviceMapStateDto } from "@app/common/dto/device";
-import { DeviceSoftwareStateDto } from "@app/common/dto/device/dto/device-software.dto";
+import { DeviceComponentStateDto } from "@app/common/dto/device/dto/device-software.dto";
 import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingV2Dto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
-import { ComponentV2Dto } from "@app/common/dto/upload";
+import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
 import { DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
@@ -98,8 +98,8 @@ export class OfferingV2Service implements OnModuleInit {
   }
 
   // Return the latest release for each component id
-  private async getUpdatesForComponents(dto: ComponentOfferingRequestDto){
-    this.logger.debug(`Get updates for releaseIds: ${dto.components}`);
+  async getUpdatesForComponents(components: string[]): Promise<ReleaseEntity[]> {
+    this.logger.debug(`Get updates for releaseIds: ${components}`);
     const updates = await this.releaseRepo
       .createQueryBuilder("r")
       .innerJoin(
@@ -113,7 +113,7 @@ export class OfferingV2Service implements OnModuleInit {
                 .subQuery()
                 .select("DISTINCT r.project_id")
                 .from(ReleaseEntity, "r")
-                .where("r.catalog_id IN (:...releaseIds)", { releaseIds: dto.components })
+                .where("r.catalog_id IN (:...releaseIds)", { releaseIds: components })
                 .getQuery();
               return `re.project_id IN (${subQuery})`;
             })
@@ -124,7 +124,7 @@ export class OfferingV2Service implements OnModuleInit {
       )
       .getMany()
 
-      return updates.filter(r => !dto.components.includes(r.catalogId))
+      return updates.filter(r => !components.includes(r.catalogId))
   }
 
 
@@ -224,7 +224,7 @@ export class OfferingV2Service implements OnModuleInit {
     let devicesState = []
 
     for(const catalogId of catalogIds){
-      let deviceState = new DeviceSoftwareStateDto();
+      let deviceState = new DeviceComponentStateDto();
       deviceState.state = state;
       deviceState.catalogId = catalogId;
       deviceState.deviceId = deviceId;
@@ -273,7 +273,7 @@ export class OfferingV2Service implements OnModuleInit {
 
     let devicesState = []
     for (let id of devices){
-      let deviceState = new DeviceSoftwareStateDto();
+      let deviceState = new DeviceComponentStateDto();
       deviceState.state = state;
       deviceState.catalogId = catalogId;
       deviceState.deviceId = id;
@@ -300,7 +300,7 @@ export class OfferingV2Service implements OnModuleInit {
   }
 
 
-  async deviceSoftwareEvent(event: DeviceSoftwareStateDto){
+  async deviceSoftwareEvent(event: DeviceComponentStateDto){
     this.logger.debug(`device: ${event.deviceId}, component: ${event.catalogId}, event: ${event.state}`);
     if (event.state === DeviceComponentStateEnum.INSTALLED){
       this.logger.debug(`delete comp: ${event.catalogId} offering form device: ${event.deviceId}`);
@@ -313,6 +313,19 @@ export class OfferingV2Service implements OnModuleInit {
     if (event.state === DeviceMapStateEnum.INSTALLED){
       this.logger.debug(`delete map: ${event.catalogId} offering form device: ${event.deviceId}`);
       this.mapOfferingRepo.delete({map: {catalogId: event.catalogId}, device: {ID: event.deviceId}});
+    }
+  }
+
+
+  async releaseChangedEvent(dto: ReleaseChangedEventDto){
+    if (dto.event === ReleaseStatusEnum.RELEASED){
+      // TODO
+      
+    }else {
+      this.logger.debug(`delete comp: ${dto.catalogId} offering form devices`);
+      this.compOfferingRepo.delete({release: {catalogId: dto.catalogId}});
+
+      this.deviceClient.emit(DeviceTopicsEmit.RELEASE_CHANGED_EVENT, dto);
     }
   }
 
