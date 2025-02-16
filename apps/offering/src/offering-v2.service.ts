@@ -10,7 +10,7 @@ import { DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
-import { In, Repository } from "typeorm";
+import { ArrayContains, In, Repository } from "typeorm";
 
 
 @Injectable()
@@ -20,6 +20,7 @@ export class OfferingV2Service implements OnModuleInit {
   constructor(
     @InjectRepository(ReleaseEntity)private readonly releaseRepo: Repository<ReleaseEntity>,
     @InjectRepository(ProjectEntity)private readonly projectRepo: Repository<ProjectEntity>, 
+    @InjectRepository(DeviceEntity)private readonly deviceRepo: Repository<DeviceEntity>, 
     @InjectRepository(ComponentOfferingEntity)private readonly compOfferingRepo: Repository<ComponentOfferingEntity>,
     @InjectRepository(MapOfferingEntity)private readonly mapOfferingRepo: Repository<MapOfferingEntity>,
     
@@ -319,8 +320,26 @@ export class OfferingV2Service implements OnModuleInit {
 
   async releaseChangedEvent(dto: ReleaseChangedEventDto){
     if (dto.event === ReleaseStatusEnum.RELEASED){
-      // TODO
+      const project = await this.projectRepo.findOneBy({releases: {catalogId: dto.catalogId}});
+
+      const platforms = project.platforms?.map(p => p.name);
+      const formation = project.projectType == ProjectType.FORMATION ? project.name : null;
+
+      const device = await this.deviceRepo.find({
+        select: {ID: true},
+        where: [
+          {components: {release: {project: {id: project.id}}}},
+          {platforms: {name: In(platforms)}},
+          {formations: ArrayContains([formation])}
+        ]
+      })
       
+      const ids = device.map(d => d.ID);
+      this.logger.debug(`set comp: ${dto.catalogId} offering on devices: ${ids}`);
+
+      await this.setSoftwareOffering(ids, dto.catalogId, OfferingActionEnum.OFFERING);
+      this.sendDeviceSoftwareState(ids, dto.catalogId, DeviceComponentStateEnum.OFFERING)
+
     }else {
       this.logger.debug(`delete comp: ${dto.catalogId} offering form devices`);
       this.compOfferingRepo.delete({release: {catalogId: dto.catalogId}});
@@ -332,7 +351,6 @@ export class OfferingV2Service implements OnModuleInit {
   async onModuleInit() {
     this.deviceClient.subscribeToResponseOf([DeviceTopics.All_DEVICES])
     await this.deviceClient.connect()
-
   }
 
 }
