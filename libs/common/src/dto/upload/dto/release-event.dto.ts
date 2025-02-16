@@ -1,11 +1,28 @@
+import { ReleaseStatusEnum } from '@app/common/database/entities';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
+
+export enum ReleaseEventEnum {
+  DELETED = 'deleted',
+}
+
+export type ReleaseEventType = ReleaseStatusEnum | ReleaseEventEnum
+
+export class ReleaseChangedEventDto {
+
+  constructor(
+    public catalogId: string, 
+    public event: ReleaseEventType) {}
+}
+
+// TODO: delete
 export enum UploadEventEnum {
   ERROR = 'error',
   READY = 'ready',
 }
 
+// TODO: delete
 export class UploadEventDto {
   @ApiProperty()
   @IsString()

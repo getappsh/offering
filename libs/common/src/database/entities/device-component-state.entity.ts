@@ -8,11 +8,11 @@ import { ReleaseEntity } from './release.entity';
 @Unique('device_component_unique_constraint', ['device', 'release'])
 export class DeviceComponentEntity extends BaseEntity {
 
-  @ManyToOne(() => DeviceEntity, { nullable: false })
+  @ManyToOne(() => DeviceEntity, { nullable: false, onDelete: "CASCADE" })
   @JoinColumn({ name: "device_ID" })
   device: DeviceEntity;
 
-  @ManyToOne(() => ReleaseEntity, { nullable: false })
+  @ManyToOne(() => ReleaseEntity, { nullable: false, onDelete: "CASCADE" })
   @JoinColumn({ name: "release_catalog_id" })
   release: ReleaseEntity;
 

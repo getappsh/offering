@@ -55,6 +55,7 @@ export const OfferingTopics = {
 
 export const OfferingTopicsEmit = {
     COMPONENT_UPLOAD_EVENT: `getapp-offering.component-upload-event${region}`,
+    RELEASE_CHANGED_EVENT: `getapp-offering.release-changed-event${region}`,
     OFFERING_PUSH: `getapp-offering.push${region}`,
     DEVICE_SOFTWARE_EVENT: `getapp-offering.device.software-event${region}`,
     DEVICE_MAP_EVENT: `getapp-offering.device.map-event${region}`,
@@ -177,6 +178,7 @@ export const DeviceTopicsEmit = {
     UPDATE_TLS_STATUS: `getapp-device.update.tls.status${region}`,
     IM_PUSH_DISCOVERY: `getapp-device.im.push.discovery${region}`,
     COMPONENT_EVENT: `getapp-device.component.event`,
+    RELEASE_CHANGED_EVENT: `getapp-device.release-changed-event${region}`,
 } as const
 
 
