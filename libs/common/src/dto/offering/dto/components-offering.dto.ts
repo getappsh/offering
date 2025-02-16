@@ -1,31 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, ValidateNested } from "class-validator";
-import { ComponentDto, DiscoveryMessageV2Dto } from "../../discovery";
+import { DiscoveryMessageV2Dto } from "../../discovery";
 import { ComponentV2Dto } from "../../upload";
 
+
 export class DeviceComponentsOfferingDto {
-  @ApiProperty({type: () => [ComponentDto]})
-  @IsArray()
-  @ValidateNested({each:true})
-  @Type(() => ComponentDto)
-  offer: ComponentDto[]
-
-
-  @ApiProperty({type: () => [ComponentDto]})
-  @IsArray()
-  @ValidateNested({each:true})
-  @Type(() => ComponentDto)
-  push: ComponentDto[]
-
-
-  toString(){
-    return JSON.stringify(this)
-  }
-}
-
-
-export class DeviceComponentsOfferingV2Dto {
   @ApiProperty({type: () => [ComponentV2Dto]})
   @IsArray()
   @ValidateNested({each:true})
