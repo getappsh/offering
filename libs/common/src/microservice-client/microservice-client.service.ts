@@ -130,9 +130,11 @@ export class MicroserviceClient {
   }
 
   private sendHealthEvents(consumer: Consumer){
-    consumer.on('consumer.heartbeat', event => this.kafkaHealthService.setHeartbeatEvent(event));
-    consumer.on('consumer.disconnect', event => this.kafkaHealthService.setFailedEvent(event))
-    consumer.on('consumer.stop', event => this.kafkaHealthService.setFailedEvent(event));
-    consumer.on('consumer.crash', event => this.kafkaHealthService.setFailedEvent(event))
+    if (this.isKafka()){
+      consumer.on('consumer.heartbeat', event => this.kafkaHealthService.setHeartbeatEvent(event));
+      consumer.on('consumer.disconnect', event => this.kafkaHealthService.setFailedEvent(event))
+      consumer.on('consumer.stop', event => this.kafkaHealthService.setFailedEvent(event));
+      consumer.on('consumer.crash', event => this.kafkaHealthService.setFailedEvent(event))
+    }
   }
 }
