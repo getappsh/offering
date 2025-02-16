@@ -7,10 +7,11 @@ import { DeviceComponentsOfferingV2Dto, ComponentOfferingRequestDto, PushOfferin
 import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
 import { DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
+import { SafeCron } from "@app/common/safe-cron";
 import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
-import { ArrayContains, In, Repository } from "typeorm";
+import { ArrayContains, ArrayOverlap, In, Repository } from "typeorm";
 
 
 @Injectable()
@@ -23,6 +24,7 @@ export class OfferingV2Service implements OnModuleInit {
     @InjectRepository(DeviceEntity)private readonly deviceRepo: Repository<DeviceEntity>, 
     @InjectRepository(ComponentOfferingEntity)private readonly compOfferingRepo: Repository<ComponentOfferingEntity>,
     @InjectRepository(MapOfferingEntity)private readonly mapOfferingRepo: Repository<MapOfferingEntity>,
+
     
     @Inject(MicroserviceName.DISCOVERY_SERVICE) private readonly deviceClient: MicroserviceClient,
     
@@ -34,13 +36,13 @@ export class OfferingV2Service implements OnModuleInit {
 
     // const [updates, offering] = await Promise.all([
     //   this.getUpdatesForComponents(dto),
-    //   this.getOfferingFromFormationsAndPlatforms(dto)
+    //   this.getOfferingFromFormationsAndComponents(dto)
     // ])
     // const uniqueOffering = offering.filter(o => !updates.some(u => u.catalogId == o.catalogId))
     // const res = [...uniqueOffering, ...updates].filter(r => !dto.products.includes(r.catalogId));
 
     const [offering, push] = await Promise.all([
-      this.getOfferingFromFormationsPlatformsAndProducts(dto),
+      this.getOfferingFromFormationsPlatformsAndComponents(dto),
       this.compOfferingRepo.find({
         select: {release: {
           version: true, catalogId: true, releaseNotes: true, status: true, createdAt: true, updatedAt: true,
@@ -66,7 +68,7 @@ export class OfferingV2Service implements OnModuleInit {
     return res
   }
 
-  private async getOfferingFromFormationsPlatformsAndProducts(dto: ComponentOfferingRequestDto): Promise<ReleaseEntity[]>{
+  private async getOfferingFromFormationsPlatformsAndComponents(dto: ComponentOfferingRequestDto): Promise<ReleaseEntity[]>{
     const projects = await this.projectRepo.find({
       select: {id: true, platforms: false},
       where: [
@@ -318,6 +320,18 @@ export class OfferingV2Service implements OnModuleInit {
   }
 
 
+  // // TODO pagination
+  private getDevicesByPlatformsFormationsAndComponents(platforms: string[], formations: string[], projects: number[]): Promise<DeviceEntity[]>{
+    return this.deviceRepo.find({
+      select: {ID: true},
+      where: [
+        {components: {release: {project: {id: In(projects)}}}},
+        {platforms: {name: In(platforms)}},
+        {formations: ArrayOverlap(formations)}
+      ]
+    })
+  }
+
   async releaseChangedEvent(dto: ReleaseChangedEventDto){
     if (dto.event === ReleaseStatusEnum.RELEASED){
       const project = await this.projectRepo.findOneBy({releases: {catalogId: dto.catalogId}});
@@ -325,14 +339,7 @@ export class OfferingV2Service implements OnModuleInit {
       const platforms = project.platforms?.map(p => p.name);
       const formation = project.projectType == ProjectType.FORMATION ? project.name : null;
 
-      const device = await this.deviceRepo.find({
-        select: {ID: true},
-        where: [
-          {components: {release: {project: {id: project.id}}}},
-          {platforms: {name: In(platforms)}},
-          {formations: ArrayContains([formation])}
-        ]
-      })
+      const device = await this.getDevicesByPlatformsFormationsAndComponents(platforms, [formation], [project.id])
       
       const ids = device.map(d => d.ID);
       this.logger.debug(`set comp: ${dto.catalogId} offering on devices: ${ids}`);
@@ -347,6 +354,31 @@ export class OfferingV2Service implements OnModuleInit {
       this.deviceClient.emit(DeviceTopicsEmit.RELEASE_CHANGED_EVENT, dto);
     }
   }
+
+
+  @SafeCron({cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering"})
+  async offeringComponentTask(){
+    this.logger.log(`Start offering component task`);
+    const projects = await this.projectRepo.find({
+      select: {releases: {catalogId: true}, platforms: {name: true}},
+      where: {releases: {status: ReleaseStatusEnum.RELEASED}},
+      relations: {releases: true}
+    })
+    
+    for (const project of projects){
+      const platforms = project.platforms?.map(p => p.name);
+      const formation = project.projectType == ProjectType.FORMATION ? project.name : null;
+      const devices = await this.getDevicesByPlatformsFormationsAndComponents(platforms, [formation], [project.id]);
+
+      const ids = devices.map(d => d.ID);
+      for (const release of project.releases){
+        this.logger.debug(`set comp: ${release.catalogId} offering on devices: ${ids}`);
+        await this.setSoftwareOffering(ids, release.catalogId, OfferingActionEnum.OFFERING);
+        this.sendDeviceSoftwareState(ids, release.catalogId, DeviceComponentStateEnum.OFFERING);
+      }
+    }
+  }
+
 
   async onModuleInit() {
     this.deviceClient.subscribeToResponseOf([DeviceTopics.All_DEVICES])
