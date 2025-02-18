@@ -7,7 +7,6 @@ export enum MicroserviceType {
   UPLOAD,
   GET_MAP,
   DEVICE,
-  MICRO_DISCOVERY,
 }
 
 export const MicroserviceName = {
@@ -19,7 +18,6 @@ export const MicroserviceName = {
   UPLOAD_SERVICE: "UPLOAD_SERVICE",
   GET_MAP_SERVICE: "GET_MAP_SERVICE",
   DEVICE_SERVICE: "DEVICE_SERVICE",
-  MICRO_DISCOVERY_SERVICE: "MICRO_DISCOVERY_SERVICE",
 }
 
 export interface MicroserviceModuleOptions {

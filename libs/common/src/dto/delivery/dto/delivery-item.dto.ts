@@ -31,6 +31,9 @@ export class DeliveryItemDto {
   @ApiProperty()
   itemKey: string;
 
+  @ApiProperty({required: false})
+  artifactType 
+
   @ApiProperty({ required: false })
   metaData: string;
 
@@ -43,6 +46,7 @@ export class DeliveryItemDto {
   @ApiProperty({ required: false })
   @IsOptional()
   hash: HashDto
+  
 
   toString() {
     return JSON.stringify(this);

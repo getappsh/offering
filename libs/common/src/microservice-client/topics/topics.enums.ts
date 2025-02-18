@@ -158,7 +158,6 @@ export const DeviceTopics = {
     GET_MAP: `getapp-map.map.id${region}`,
     REGISTER_SOFTWARE: `getapp-device.register.software${region}`,
     DEVICE_CONTENT: `getapp-device.content.installed${region}`,
-    DISCOVERY_SOFTWARE: `getapp-device.discover.software.catalog${region}`,
     IM_PULL_DISCOVERY: `getapp-device.im.pull.discovery${region}`,
      // Config
      GET_DEVICE_CONFIG: `getapp-device.config.get${region}`,
