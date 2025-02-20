@@ -23,7 +23,7 @@ export class OfferingController {
   @MessagePattern(OfferingTopics.GET_OFFER_OF_COMP)
   getOfferOfComp(@RpcPayload("stringValue") catalogId: string){    
     this.logger.debug(`get offering for comp: ${catalogId}`)
-    return this.offeringService.getUpdatesForComponents([catalogId])
+    return this.offeringService.getOfferOfComp(catalogId)
   }
 
 

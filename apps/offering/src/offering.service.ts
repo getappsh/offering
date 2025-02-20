@@ -4,11 +4,11 @@ import { DeviceComponentStateDto } from "@app/common/dto/device/dto/device-softw
 import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
-import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
+import { ComponentV2Dto, ReleaseChangedEventDto, ReleaseDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
 import { DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
 import { SafeCron } from "@app/common/safe-cron";
-import { Inject, Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
 import { ArrayOverlap, In, Repository } from "typeorm";
@@ -96,6 +96,22 @@ export class OfferingService implements OnModuleInit {
      });
 
      return offering
+  }
+
+  async getOfferOfComp(catalogId: string){
+    const release = await this.releaseRepo.findOne({
+      where: {
+        catalogId: catalogId,
+        status: ReleaseStatusEnum.RELEASED
+      },
+      relations: ['project'],
+      select: { project: { id: true, name: true } }
+    })
+
+    if (!release){
+      throw new NotFoundException(`Release ${catalogId} not found`)
+    }
+    return ReleaseDto.fromEntity(release);
   }
 
   // Return the latest release for each component id
