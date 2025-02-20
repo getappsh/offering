@@ -42,6 +42,10 @@ export class SetReleaseDto {
   @IsNotEmpty({each: true})
   dependencies?: string[]
 
+  toString(){
+    return JSON.stringify(this)
+  }
+
 }
 
 export class ReleaseDto {
@@ -96,6 +100,10 @@ export class ReleaseDto {
     dto.requiredRegulationsCount = release.requiredRegulationsCount;
     dto.compliantRegulationsCount = release.compliantRegulationsCount;
     return dto;
+  }
+
+  toString(){
+    return JSON.stringify(this)
   }
 }
 
@@ -170,6 +178,10 @@ export class ComponentV2Dto{
     ?.map(a => a?.fileUpload?.size)
     ?.reduce((size, a) => size + a, 0);
     return dto;
+  }
+  
+  toString(){
+    return JSON.stringify(this)
   }
 }
 

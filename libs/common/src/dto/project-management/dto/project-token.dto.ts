@@ -71,6 +71,10 @@ export class CreateProjectTokenDto{
     @IsOptional()
     isActive?: boolean
 
+    toString(){
+        return JSON.stringify(this)
+    }
+
 }
 
 export class UpdateProjectTokenDto {
@@ -93,6 +97,10 @@ export class UpdateProjectTokenDto {
     @IsBoolean()
     @IsOptional()
     isActive?: boolean
+
+    toString(){
+        return JSON.stringify(this)
+    }
 }
 
 

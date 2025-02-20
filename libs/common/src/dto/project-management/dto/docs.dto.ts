@@ -36,6 +36,10 @@ export class CreateDocDto {
     doc.project = {id: this.projectId} as ProjectEntity
     return doc
   }
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
 
 

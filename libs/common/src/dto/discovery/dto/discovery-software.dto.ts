@@ -1,6 +1,6 @@
 import { DeviceComponentStateEnum, UploadVersionEntity } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsSemVer, IsString, ValidateNested } from "class-validator";
 
 export class ComponentDto {
@@ -116,6 +116,10 @@ export class DiscoverySoftwareDto {
   @ValidateNested()
   @Type(() => PlatformDto)
   platform: PlatformDto;
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
 
 export class ComponentStateDto{
@@ -132,6 +136,10 @@ export class ComponentStateDto{
   @IsOptional()
   @IsString()
   error?: string
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
 
 export class DiscoverySoftwareV2Dto {
@@ -148,6 +156,11 @@ export class DiscoverySoftwareV2Dto {
   @IsNotEmpty({each: true})
   @IsArray()
   @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map(v => v.toLowerCase().trim().replace(/\s+/g, "-"))
+      : value
+  )
   platforms: string[];
 
   @ApiProperty({required: false, isArray: true, type: ComponentStateDto})
@@ -156,6 +169,10 @@ export class DiscoverySoftwareV2Dto {
   @ValidateNested()
   @Type(() => ComponentStateDto)
   components: ComponentStateDto[]
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
 
 

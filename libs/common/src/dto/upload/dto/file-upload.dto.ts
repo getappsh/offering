@@ -15,6 +15,10 @@ export class CreateFileUploadUrlDto{
   objectKey?: string
 
 
+  toString(){
+    return JSON.stringify(this)
+  }
+
 }
 
 export class FileUploadUrlDto{
@@ -30,4 +34,8 @@ export class FileUploadUrlDto{
   url: string
 
   objectKey: string
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }

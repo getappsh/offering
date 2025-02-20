@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { OidcService, UserSearchDto } from "./oidc.interface";
 import { UserDto } from "../dto/oidc/dto/user.dto";
 import { HttpService } from "@nestjs/axios";
@@ -32,10 +32,15 @@ export class KcService implements OidcService {
     const relativeUrl = '/realms/getapp/protocol/openid-connect/token';
 
     const data = new URLSearchParams();
-    data.append('client_id', 'admin-cli');
-    data.append('username', this.config.get('KC_ADMIN_USER'));
-    data.append('password', this.config.get('KC_ADMIN_PASSWORD'));
-    data.append('grant_type', 'password');
+    // data.append('client_id', 'admin-cli');
+    // data.append('username', this.config.get('KC_ADMIN_USER'));
+    // data.append('password', this.config.get('KC_ADMIN_PASSWORD'));
+    // data.append('grant_type', 'password');
+
+    data.append('client_id', this.config.get('CLIENT_ID'));
+    data.append('client_secret', this.config.get('SECRET_KEY'));
+    data.append('grant_type', 'client_credentials');
+
 
     let headers = {
       'Content-Type': 'application/x-www-form-urlencoded'

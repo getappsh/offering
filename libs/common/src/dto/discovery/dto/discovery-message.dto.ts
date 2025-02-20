@@ -57,4 +57,9 @@ export class DiscoveryMessageV2Dto {
   @ValidateNested()
   @Type(() => DiscoveryMapDto)
   mapData: DiscoveryMapDto;
+
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }

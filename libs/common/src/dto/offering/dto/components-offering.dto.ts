@@ -19,6 +19,10 @@ export class DeviceComponentsOfferingDto {
   @Type(() => ComponentV2Dto)
   push: ComponentV2Dto[]
 
+  toString(){
+    return JSON.stringify(this)
+  }
+
 }
 
 

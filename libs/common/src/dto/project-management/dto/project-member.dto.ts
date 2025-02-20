@@ -18,6 +18,11 @@ export class AddMemberToProjectDto{
     @IsOptional()    
     @IsEnum(RoleInProject)
     role: RoleInProject = RoleInProject.PROJECT_MEMBER;
+
+    toString(){
+        return JSON.stringify(this)
+    }
+    
 }
 
 export class EditProjectMemberDto{
@@ -32,6 +37,10 @@ export class EditProjectMemberDto{
     @IsEnum(RoleInProject)
     @ApiProperty({enum: RoleInProject, default: RoleInProject.PROJECT_MEMBER})
     role: RoleInProject = RoleInProject.PROJECT_MEMBER;
+
+    toString(){
+        return JSON.stringify(this)
+    }
 
 }
 

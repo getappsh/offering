@@ -40,6 +40,10 @@ export class SetRegulationStatusDto{
   @IsOptional()
   reportDetails?: string
 
+  toString(){
+    return JSON.stringify(this)
+  }
+
 }
 
 export class  SetRegulationCompliancyDto {
@@ -55,6 +59,10 @@ export class  SetRegulationCompliancyDto {
   @ApiProperty({ description: 'Compliancy of the regulation' })
   @IsBoolean()
   isCompliant: boolean
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
 
 export class RegulationSnapshotDto{
@@ -70,6 +78,10 @@ export class RegulationSnapshotDto{
 
   @ApiProperty({ description: 'Type Id of the regulation'})
   typeId: number
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
 
 export class RegulationStatusDto  extends RegulationStatusParams{
@@ -111,5 +123,9 @@ export class RegulationStatusDto  extends RegulationStatusParams{
     }
     return this
 
+  }
+
+  toString(){
+    return JSON.stringify(this)
   }
 }

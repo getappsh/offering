@@ -36,6 +36,11 @@ export class BaseProjectDto {
     return this;
   }
 
+  toString(){
+    return JSON.stringify(this)
+  }
+
+
 }
 
 export class ProjectMemberContextDto {
@@ -50,6 +55,11 @@ export class ProjectMemberContextDto {
     this.preferences = ProjectMemberPreferencesDto.fromMemberEntity(memberProject);
     return this;
   }
+
+  toString(){
+    return JSON.stringify(this)
+  }
+
 }
 
 export class MinimalReleaseDto {
@@ -77,6 +87,11 @@ export class MinimalReleaseDto {
     dto.compliantRegulationsCount = release.compliantRegulationsCount;
     return dto;
   }
+
+  toString(){
+    return JSON.stringify(this)
+  }
+
 }
 
 
@@ -87,6 +102,11 @@ export class ProjectReleasesChangedEvent {
   latestRelease?: MinimalReleaseDto;
 
   upcomingRelease?: MinimalReleaseDto;
+
+  toString(){
+    return JSON.stringify(this)
+  }
+
 }
 
 
@@ -97,6 +117,10 @@ export class ProjectSummaryDto {
 
   @ApiProperty({ required: false, description: 'Upcoming release of the project' })
   upcomingRelease?: MinimalReleaseDto
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
 
 export class ProjectDto extends BaseProjectDto {
@@ -159,6 +183,10 @@ export class DetailedProjectDto extends ProjectDto {
     this.members = project.memberProject?.map(memberProject => new MemberResDto().fromMemberProjectEntity(memberProject));
     this.tokens = project.tokens?.map(token => ProjectTokenDto.fromProjectTokenEntity(token))
     return this;
+  }
+
+  toString(){
+    return JSON.stringify(this)
   }
 
 }

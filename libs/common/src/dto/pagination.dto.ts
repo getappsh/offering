@@ -14,6 +14,11 @@ export class PaginatedResultDto<T> {
   @ApiProperty({ description: 'The number of items per page', example: 10 })
   perPage: number;
 
+  toString(){
+    return JSON.stringify(this)
+  }
+
+
 }
 
 export const ApiOkResponsePaginated = <DataDto extends Type<unknown>>(dataDto: DataDto) =>
