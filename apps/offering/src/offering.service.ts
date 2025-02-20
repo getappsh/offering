@@ -104,14 +104,14 @@ export class OfferingService implements OnModuleInit {
         catalogId: catalogId,
         status: ReleaseStatusEnum.RELEASED
       },
-      relations: ['project'],
-      select: { project: { id: true, name: true } }
+      relations: {project: true, artifacts: {fileUpload: true}},
+      select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true} }
     })
 
     if (!release){
       throw new NotFoundException(`Release ${catalogId} not found`)
     }
-    return ReleaseDto.fromEntity(release);
+    return ComponentV2Dto.fromEntity(release);
   }
 
   // Return the latest release for each component id
@@ -397,6 +397,8 @@ export class OfferingService implements OnModuleInit {
   async onModuleInit() {
     this.deviceClient.subscribeToResponseOf([DeviceTopics.All_DEVICES])
     await this.deviceClient.connect()
+
+    this.getOfferOfComp('4.GetApp-Agent@1.0.4').then((res) => console.log(res));
   }
 
 }
