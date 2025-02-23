@@ -2,7 +2,6 @@ import { Entity, Column, ManyToOne, OneToMany, JoinColumn, BeforeInsert, CreateD
 import { ProjectEntity } from './project.entity';
 import { ReleaseArtifactEntity } from './release-artifact.entity';
 import { ReleaseStatusEnum } from './enums.entity';
-import { nanoid } from "nanoid";
 import { DeviceComponentEntity } from './device-component-state.entity';
 
 @Entity('release')
@@ -45,6 +44,8 @@ export class ReleaseEntity {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
+  @Column({ name: 'released_at', type: 'timestamptz', nullable: true })
+  releasedAt: Date | null;
 
   @ManyToMany(() => ReleaseEntity, (release) => release.dependentReleases, { cascade: true })
   @JoinTable({
@@ -58,6 +59,8 @@ export class ReleaseEntity {
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder: number;
 
+  @Column({ name: 'latest', type: 'boolean', default: false })
+  latest: boolean
 
   @ManyToMany(() => ReleaseEntity, (release) => release.dependencies)
   dependentReleases: ReleaseEntity[];

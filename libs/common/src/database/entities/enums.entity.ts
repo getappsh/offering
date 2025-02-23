@@ -62,6 +62,7 @@ export enum PrepareStatusEnum {
     DONE = "done",
     ERROR = "error",
     DELETE = "delete",
+    PENDING = "pending",
 }
 
 export enum DeployStatusEnum {

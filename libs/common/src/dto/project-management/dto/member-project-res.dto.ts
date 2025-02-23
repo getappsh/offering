@@ -88,10 +88,10 @@ export class MemberProjectsResDto {
   @ApiProperty({required: false})
   member: MemberResDto;
 
-  @ApiProperty({required: false, type: ProjectDto, isArray: true})
+  @ApiProperty({required: false, type: ProjectDto})
   projects: ProjectDto[];
   
-  @ApiProperty({required: false, type: ProjectDto , isArray: true})
+  @ApiProperty({required: false, type: ProjectDto})
   invitedProjects: ProjectDto[];
 
   toString(){

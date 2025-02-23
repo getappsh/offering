@@ -32,7 +32,7 @@ export class DeliveryItemDto {
   itemKey: string;
 
   @ApiProperty({required: false})
-  artifactType 
+  artifactType: string; 
 
   @ApiProperty({ required: false })
   metaData: string;
@@ -60,6 +60,7 @@ export class DeliveryItemDto {
     dto.metaData = diE.metaData;
     dto.url = diE.path;
     dto.size = diE.size;
+    dto.artifactType = diE.artifactType;
     return dto
   }
   static fromDeliveryItemDto(diDto: DeliveryItemDto): DeliveryItemDto {
@@ -70,6 +71,7 @@ export class DeliveryItemDto {
     dto.metaData = diDto.metaData;
     dto.url = diDto.url;
     dto.size = diDto.size;
+    dto.artifactType = diDto.artifactType;
 
     if(diDto.hash){
       dto.hash = HashDto.fromHashDto(diDto.hash)

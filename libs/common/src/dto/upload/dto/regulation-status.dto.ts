@@ -19,9 +19,9 @@ export class RegulationStatusParams extends ProjectIdentifierParams {
   regulation: string
 }
 
-export class SetRegulationStatusDto{
+export class SetRegulationStatusDto {
 
-  projectIdentifier: string |  number
+  projectIdentifier: string | number
 
   regulation: string
 
@@ -35,7 +35,7 @@ export class SetRegulationStatusDto{
   @IsNotEmpty()
   value: string
 
-  @ApiProperty({ required: false,  description: 'Report Details of the regulation' })
+  @ApiProperty({ required: false, description: 'Report Details of the regulation' })
   @IsString()
   @IsOptional()
   reportDetails?: string
@@ -46,9 +46,9 @@ export class SetRegulationStatusDto{
 
 }
 
-export class  SetRegulationCompliancyDto {
+export class SetRegulationCompliancyDto {
 
-  projectIdentifier: string |  number
+  projectIdentifier: string | number
 
   regulation: string
 
@@ -65,18 +65,18 @@ export class  SetRegulationCompliancyDto {
   }
 }
 
-export class RegulationSnapshotDto{
+export class RegulationSnapshotDto {
 
   @ApiProperty({ description: 'Name of the regulation' })
   name: string
 
-  @ApiProperty({required: false, description: 'Description of the regulation' })
+  @ApiProperty({ required: false, description: 'Description of the regulation' })
   description?: string
 
   @ApiProperty({ description: 'Configuration of the regulation', required: false })
   config?: string;
 
-  @ApiProperty({ description: 'Type Id of the regulation'})
+  @ApiProperty({ description: 'Type Id of the regulation' })
   typeId: number
 
   toString(){
@@ -84,12 +84,12 @@ export class RegulationSnapshotDto{
   }
 }
 
-export class RegulationStatusDto  extends RegulationStatusParams{
+export class RegulationStatusDto extends RegulationStatusParams {
 
   @ApiProperty({ description: 'Value of the regulation' })
   value: string
 
-  @ApiProperty({ required: false,  description: 'Report Details of the regulation' })
+  @ApiProperty({ required: false, description: 'Report Details of the regulation' })
   reportDetails?: string
 
   @ApiProperty({ description: 'Compliancy of the regulation' })
@@ -101,7 +101,7 @@ export class RegulationStatusDto  extends RegulationStatusParams{
   @ApiProperty({ description: 'Update date of the regulation status' })
   updatedAt: Date
 
-  @ApiProperty({required: false, description: 'Regulation snapshot', type: RegulationSnapshotDto})
+  @ApiProperty({ required: false, type: RegulationSnapshotDto })
   regulationSnapshot?: RegulationSnapshotDto
 
   fromRegulationStatusEntity(regulationStatus: RegulationStatusEntity) {
