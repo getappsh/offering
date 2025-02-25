@@ -17,6 +17,7 @@ import { OfferingService } from './offering.service'
     MicroserviceModule.register({
       name: MicroserviceName.DISCOVERY_SERVICE,
       type: MicroserviceType.DISCOVERY,
+      id: "offering"
     }),
     ApmModule,
     DatabaseModule,
