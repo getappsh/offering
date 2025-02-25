@@ -54,6 +54,20 @@ export class SetReleaseArtifactResDto {
   }
 }
 
+export class GetReleaseArtifactResDto {
+
+  @ApiProperty()
+  artifactId: number
+
+  @ApiProperty({ required: false, description: 'Only present for FILE artifact type' })
+  downloadUrl?: string;
+
+  toString(){
+    return JSON.stringify(this)
+  }
+
+}
+
 
 export class ReleaseArtifactDto {
 
@@ -113,4 +127,18 @@ export class ReleaseArtifactParams extends ProjectIdentifierParams {
   @IsNumber()
   @Type(() => Number)
   artifactId: number
+}
+
+
+export class ReleaseArtifactNameParams extends ProjectIdentifierParams {
+  @ApiProperty()
+  @IsSemVer()
+  @Type(() => String)
+  version: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Type(() => String)
+  fileName: string
 }

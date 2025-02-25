@@ -23,4 +23,5 @@ export const MicroserviceName = {
 export interface MicroserviceModuleOptions {
   name: string,
   type: MicroserviceType
+  id?: string
 }

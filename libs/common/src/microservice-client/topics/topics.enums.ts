@@ -17,7 +17,8 @@ export const UploadTopics = {
 
     SET_RELEASE_ARTIFACT: `getapp-upload.set-release-artifact${region}`,
     DELETE_RELEASE_ARTIFACT: `getapp-upload.delete-release-artifact${region}`,
-
+    GET_ARTIFACT_DOWNLOAD_URL: 'getapp-upload.get-artifact-download-url',
+    GET_ARTIFACT_UPLOAD_URL:    'getapp-upload.get-artifact-upload-url',
 // Regulation Status
     GET_VERSION_REGULATIONS_STATUSES: `getapp-upload.get-version-regulation-statuses${region}`,
     GET_VERSION_REGULATION_STATUS_BY_ID: `getapp-upload.get-version-regulation-status-by-id${region}`,

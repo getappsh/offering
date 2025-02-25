@@ -18,7 +18,7 @@ export class MicroserviceClient {
   private payloadVersion: string;
 
   constructor(
-    private readonly options: MicroserviceModuleOptions,
+    options: MicroserviceModuleOptions,
     private configService: ConfigService,
     private readonly cls: ClsService
   ) {
