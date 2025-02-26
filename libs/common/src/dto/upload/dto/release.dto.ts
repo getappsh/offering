@@ -190,9 +190,9 @@ export class ComponentV2Dto{
     dto.latest = release.latest;
     dto.releasedAt = release.releasedAt;
     dto.size = release?.artifacts
-    ?.filter(a => a.isInstallationFile)
-    ?.map(a => a?.fileUpload?.size)
-    ?.reduce((size, a) => size + a, 0);
+      ?.filter(a => a.isInstallationFile)
+      ?.map(a => a?.fileUpload?.size)
+      ?.reduce((size, a) => size + a, 0);
     return dto;
   }
   
