@@ -110,7 +110,7 @@ jobs:
 
           # set release
           gac releases set $NEW_VERSION --name "v$NEW_VERSION" --notes "Release v$NEW_VERSION"
-          gac releases art $NEW_VERSION docker_image -u $IMAGE_URL
+          gac releases art $NEW_VERSION docker_image -u $IMAGE_URL -d
           
           echo $?
 
