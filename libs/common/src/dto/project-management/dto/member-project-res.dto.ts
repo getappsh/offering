@@ -66,7 +66,7 @@ export class MemberProjectsResDto {
   @ApiProperty({required: false})
   member: MemberResDto;
 
-  @ApiProperty({required: false, type: ProjectDto, isArray: true})
+  @ApiProperty({required: false, type: ()=> ProjectDto, isArray: true})
   projects: ProjectDto[];
   
   @ApiProperty({required: false, type: ProjectDto , isArray: true})

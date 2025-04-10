@@ -9,7 +9,12 @@ export const V2Payload = createParamDecorator(
     if (key === "stringValue"){
       key = undefined
     }
-    return key ? request?.[key] : request;
+    
+    if (value === "undefined"){
+      value = undefined
+    }
+
+    return key ? value?.[key] : value;
   },
 );
 
