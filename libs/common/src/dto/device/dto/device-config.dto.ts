@@ -159,6 +159,13 @@ export class WindowsConfigDto extends BaseConfigDto {
   periodicDiscoveryIntervalMins: number
 
 
+  @ApiProperty({required: false, type: 'integer'})
+  @IsOptional()
+  @IsInt()
+  @Expose()
+  networkStatusIntervalMins: number
+
+
   @ApiProperty({ required: false, type: 'integer' , description: ""})
   @IsOptional()
   @IsNumber()
