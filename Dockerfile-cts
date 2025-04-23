@@ -2,25 +2,22 @@
 # to fit the prod environmet in the cts
 
 ############################################################
-###               ///    CTS part     ///                ###
+###               ///   stage 1     ///                ###
 ############################################################
 FROM node:19.5.0-alpine as cts
 
 WORKDIR /node-app
 
-# ===   create a uid and a gid to fit CTS project uid === #
-ARG uid=1004370000
-ARG username=getapp
-# Add the user to /etc/passwd
-RUN echo "${username}:x:${uid}:${uid}:${username}:/home/${username}:/sbin/nologin" >> /etc/passwd
-# Add the user to /etc/group
-RUN echo "${username}:x:${uid}:" 
+# ===   create a uid and a gid to fit CTS project uid and setup CA certificates === #
+ARG uid=1004370000 \
+    username=getapp
 
-# ===   install ca sofeware === #
-# Install the ca-certificates package to manage certificates
-RUN apk --no-cache add ca-certificates bash curl
-# Create the CA certificates directory
-RUN mkdir -p /usr/local/share/ca-certificates/
+# Combine user creation and CA setup in a single layer
+RUN echo "${username}:x:${uid}:${uid}:${username}:/home/${username}:/sbin/nologin" >> /etc/passwd && \
+    echo "${username}:x:${uid}:" >> /etc/group && \
+    apk --no-cache add ca-certificates bash curl && \
+    mkdir -p /usr/local/share/ca-certificates/ && \
+    chown -R ${uid}:${uid} /node-app
 
 # ===   inside part - must be run inside in the CTS   === #
 # Update the CA certificates bundle inside the container
@@ -28,53 +25,59 @@ RUN mkdir -p /usr/local/share/ca-certificates/
 # COPY idfcts/* /usr/local/share/ca-certificates/
 # RUN update-ca-certificates
 
-# # copt the app files
-RUN chown -R ${uid}:${uid} /node-app
-# COPY --chown=${uid}:${uid} . .
-
-# # inside the CTS the privios command wont work. so if for some resion you need to run this command inside the cts - you need to use these 2 commands insted.
-# # COPY . .
-# # RUN chown -R ${uid}:${uid} /node-app
 ENV CI=true
 
-
 ############################################################
-###               ///       end      ///                 ###
+###               ///       stage 2     ///                 ###
 ############################################################
 
-# using a alpine image - lite as posible
+# Build stage with minimal dependencies
 FROM node:19.5.0-alpine as build
-# some of the commands can't be executed if the user is not root
-USER root
-# hear the files of the app are stored.
+
 WORKDIR /node-app
+
+# Copy package files first to leverage cache
 COPY package*.json ./
-RUN npm i
+
+# Install dependencies and clean npm cache
+RUN npm ci && \
+    npm cache clean --force
+
+# Copy source files needed for build
 COPY . .
-# test stage
-# RUN npm run test
-# build
-RUN npm run build
 
+# Run tests and build, then create a clean production node_modules
+RUN npm run test && \
+    npm run build && \
+    rm -rf node_modules && \
+    npm ci --only=production && \
+    npm cache clean --force && \
+    # Remove unnecessary files from node_modules
+    find node_modules -type f -name "*.d.ts" -delete && \
+    find node_modules -type f -name "*.map" -delete && \
+    find node_modules -type d -name "test" -exec rm -rf {} + 2>/dev/null || true && \
+    find node_modules -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
+    find node_modules -type d -name "docs" -exec rm -rf {} + 2>/dev/null || true
 
+############################################################
+###               ///       stage 3     ///                 ###
+############################################################
 FROM cts as deploy
-ENV NODE_ENV=production
 
-ARG uid=1004370000
-ARG username=getapp
+ENV NODE_ENV=production \
+    api_version_tag=$api_version_tag
 
+ARG uid=1004370000 \
+    username=getapp \
+    api_version_tag
+
+# Copy only the minimal required files from build stage
 COPY --chown=${uid}:${uid} package*.json ./
-
-RUN npm install --only=production --omit=dev
-
+COPY --chown=${uid}:${uid} --from=build /node-app/node_modules ./node_modules
 COPY --chown=${uid}:${uid} --from=build /node-app/dist/ .
-RUN echo "$offering_version_tag" > NEW_TAG.txt 
 
-# a file that contains the image version
-ARG offering_version_tag
-ENV offering_version_tag=$offering_version_tag
-RUN echo "$offering_version_tag" > offering_image_version.txt
-RUN cat offering_image_version.txt
+# Set version info in a single layer
+RUN echo "$api_version_tag" > api_image_version.txt
 
 USER ${username}
-CMD ["node", "apps/offering/main.js"]
+CMD ["node", "apps/api/main.js"]
