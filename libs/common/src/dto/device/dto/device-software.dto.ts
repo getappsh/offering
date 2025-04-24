@@ -15,19 +15,17 @@ export class SoftwareStateDto {
   @ApiProperty({ required: false, enum: DeviceComponentStateEnum })
   state: DeviceComponentStateEnum;
 
-
-  @ApiProperty()
+  @ApiProperty({required: false})
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  downloadDate: Date;
+  downloadDate?: Date;
 
-
-  @ApiProperty()
+  @ApiProperty({required: false})
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  deployDate: Date;
+  deployDate?: Date;
 
   @ApiProperty({ isArray: true, type: ComponentV2Dto })
   offering: ComponentV2Dto[];
@@ -41,6 +39,8 @@ export class SoftwareStateDto {
     softwareState.software = ComponentV2Dto.fromEntity(componentState.release);
     softwareState.state = componentState.state;
     softwareState.error = componentState?.error;
+    softwareState.downloadDate = componentState?.downloadedAt;
+    softwareState.deployDate = componentState?.deployedAt;
 
     return softwareState;
   }
@@ -83,6 +83,18 @@ export class DeviceComponentStateDto extends ComponentStateDto{
   @IsString()
   @IsNotEmpty()
   deviceId: string;
+
+  @ApiProperty({required: false})
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  downloadedAt?: Date;
+
+  @ApiProperty({required: false})
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  deployedAt?: Date;
 
 
   static fromParent(parent: ComponentStateDto, deviceId: string){

@@ -19,8 +19,14 @@ export class DeviceComponentEntity extends BaseEntity {
   @Column({ name: "state", type: "enum", enum: DeviceComponentStateEnum, default: DeviceComponentStateEnum.DELIVERY })
   state: DeviceComponentStateEnum;
 
+  @Column({name: 'downloaded_at', type: 'timestamptz', default: null})
+  downloadedAt?: Date;
+
+  @Column({name: 'deployed_at', type: 'timestamptz', default: null})
+  deployedAt?: Date;
+
   @Column({name: "error", default: null})
-  error: string;
+  error?: string;
 
   toString() {
     return JSON.stringify(this)

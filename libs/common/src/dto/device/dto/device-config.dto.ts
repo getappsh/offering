@@ -127,6 +127,59 @@ export class WindowsConfigDto extends BaseConfigDto {
   @Expose()
   layers: LayersConfigDto[];
 
+  @ApiProperty({ required: false, type: String, isArray: true })
+  @IsOptional()
+  @Expose()
+  getAppServerUrls: string[] | { url: string, delete: boolean };
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @Expose()
+  mapsStoragePath: string
+
+
+  @ApiProperty({ required: false, type: 'integer', description: 'How many seconds to wait between checking the import and prepare status',  })
+  @IsOptional()
+  @IsInt()
+  @Expose()
+  queryStatusIntervalSec: number
+
+  
+  @ApiProperty({required: false })
+  @IsOptional()
+  @IsString()
+  @Expose()
+  networkAvailabilityUrl: string
+
+  @ApiProperty({required: false, type: 'integer'})
+  @IsOptional()
+  @IsInt()
+  @Expose()
+  periodicDiscoveryIntervalMins: number
+
+
+  @ApiProperty({required: false, type: 'integer'})
+  @IsOptional()
+  @IsInt()
+  @Expose()
+  networkStatusIntervalMins: number
+
+
+  @ApiProperty({ required: false, type: 'integer' , description: ""})
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  maxInventoryMissedIntervalHours: number
+
+
+  @ApiProperty({required: false,  type: 'integer'})
+  @IsOptional()
+  @IsInt()
+  @Expose()
+  mapInventoryMaxSizeMB: number
+
+
   constructor() {
     super();
     this.group = 'windows'
