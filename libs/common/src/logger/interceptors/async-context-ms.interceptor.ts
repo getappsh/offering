@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
 import { KafkaContext, TcpContext } from "@nestjs/microservices";
 import { CLS_ID, ClsService } from "nestjs-cls";
-import { Observable } from "rxjs";
+import { map, Observable } from "rxjs";
 
 // import { storage, Store } from 'nestjs-pino/storage';
 
@@ -16,7 +16,8 @@ export class AsyncContextMsInterceptor implements NestInterceptor {
     const msgContext = input.getContext()
    
     let traceId;
-    if (msgContext instanceof KafkaContext){
+    const isKafka = msgContext instanceof KafkaContext
+    if (isKafka){
       traceId = msgContext.getMessage()?.headers?.traceId;
     }else if(msgContext instanceof TcpContext) {
       let data  = input.getData();;
@@ -27,6 +28,10 @@ export class AsyncContextMsInterceptor implements NestInterceptor {
     this.cls.set(CLS_ID, traceId)
 
     // this._asyncStorage.enterWith(new AsyncContextStorage(...some data from headers));
-    return next.handle();
+    return next.handle().pipe(
+      map((data) => {
+        return typeof data !== 'string' && isKafka ? JSON.stringify(data) : data
+      })
+    );
   }
 }

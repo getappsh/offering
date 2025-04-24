@@ -79,9 +79,6 @@ export class UploadVersionEntity{
     @ManyToOne(() => ProjectEntity)
     project: ProjectEntity
 
-    @OneToMany(() => DeviceComponentEntity, deviceCompEntity => deviceCompEntity.component, { cascade: true })
-    devices: DeviceComponentEntity[]
-
     static fromArtifact({platform, component, formation, OS, version, project, size=0, ...metadata}){
         const newVersion = new UploadVersionEntity()
         newVersion.platform = platform;

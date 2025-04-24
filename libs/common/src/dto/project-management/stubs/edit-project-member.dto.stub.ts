@@ -5,6 +5,7 @@ export const editProjectMemberDtoStub = (): EditProjectMemberDto => {
   const eStub = memberProjectEntityStub()
 
   return {
+    projectIdentifier: eStub.project.id,
     projectId: eStub.project.id,
     memberId: eStub.member.id,
     role: eStub.role

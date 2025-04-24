@@ -4,7 +4,7 @@ import { ApiProperty } from "@nestjs/swagger"
 import { IsNotEmpty, IsOptional, IsString, IsSemVer } from "class-validator"
 
 
-export class UploadArtifactDto{
+export class  UploadArtifactDto{
 
     @IsString()
     @IsNotEmpty()

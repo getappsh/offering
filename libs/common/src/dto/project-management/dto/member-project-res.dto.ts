@@ -1,10 +1,10 @@
-import { MemberEntity, MemberProjectEntity, RoleInProject } from "@app/common/database/entities";
+import { MemberEntity, MemberProjectEntity, MemberProjectStatusEnum, RoleInProject } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 import { ProjectDto } from "./project.dto";
 
 export class MemberResDto {
 
-  @ApiProperty({required: false})
+  @ApiProperty({required: true})
   id: number;
 
   @ApiProperty({required: false})
@@ -13,23 +13,45 @@ export class MemberResDto {
   @ApiProperty({required: false})
   lastName: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({required: true})
   email: string;
 
   @ApiProperty({ enum: RoleInProject })
   role: string;
 
+  @ApiProperty({required: true, enum: MemberProjectStatusEnum})
+  status: MemberProjectStatusEnum
+
   @ApiProperty({required: false, default:-1})
   defaultProject: number;
 
-  fromMemberEntity(member: MemberEntity, role: string){
+  fromMemberEntity(member: MemberEntity, role: string, status?: MemberProjectStatusEnum) {
     this.id = member.id;
     this.email = member.email;
     this.firstName = member.firstName;
     this.lastName = member.lastName;
     this.role = role;
+    this.status = status;
 
     return this;
+  }
+
+  fromMemberProjectEntity(memberProject: MemberProjectEntity): this {
+    this.id = memberProject.member.id;
+    this.email = memberProject.member.email;
+    this.firstName = memberProject.member.firstName;
+    this.lastName = memberProject.member.lastName;
+    this.role = memberProject.role;
+    this.status = memberProject.status;
+
+    return this
+  }
+
+  getName(): string {
+    if (!this.firstName || !this.lastName) {
+      return this.email;
+    }
+    return `${this.firstName} ${this.lastName}`;
   }
 
   toString(){
@@ -68,8 +90,8 @@ export class MemberProjectsResDto {
 
   @ApiProperty({required: false, type: ()=> ProjectDto, isArray: true})
   projects: ProjectDto[];
-  
-  @ApiProperty({required: false, type: ProjectDto , isArray: true})
+
+  @ApiProperty({required: false, type: ProjectDto})
   invitedProjects: ProjectDto[];
 
   toString(){

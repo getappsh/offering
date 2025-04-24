@@ -42,9 +42,11 @@ function TimeoutRepeatTaskInjector(options: TimeoutRepeatTaskOptions) {
 
       const runTask = async () => {
         if (await locker.acquireLock(options.name)) {
-          const interval = setInterval(() => this.safeCron.updateJobStartTime(options.name), 1000 * 60 * 4); // 4 minutes
+          const interval = setInterval(() => locker.updateJobStartTime(options.name), 1000 * 60 * 4); // 4 minutes
           try {
             await originalMethod.apply(this, args);
+          }catch (err) {
+            this.logger.error(`Error running task: ${err}`);
           } finally {
             clearInterval(interval);
             await locker.releaseLock(options.name);

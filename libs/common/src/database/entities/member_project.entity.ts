@@ -17,11 +17,11 @@ export enum MemberProjectStatusEnum {
 export class MemberProjectEntity extends BaseEntity {
 
 
-    @ManyToOne(() => ProjectEntity)
+    @ManyToOne(() => ProjectEntity, project => project.memberProject,  { onDelete: "CASCADE" })
     @JoinColumn()
     project: ProjectEntity
 
-    @ManyToOne(() => MemberEntity)
+    @ManyToOne(() => MemberEntity, member => member.memberProjects)
     @JoinColumn()
     member: MemberEntity
 
@@ -30,6 +30,9 @@ export class MemberProjectEntity extends BaseEntity {
 
     @Column({ name: "status", type: "enum", enum: MemberProjectStatusEnum, default: MemberProjectStatusEnum.ACTIVE })
     status: MemberProjectStatusEnum
+
+    @Column({ name: "pinned", default: false })
+    pinned: boolean
 
     toString() {
         return JSON.stringify(this)

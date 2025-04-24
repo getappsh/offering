@@ -9,7 +9,7 @@ import { MSType } from './client.enum';
 
 export function getClientConfig(options: MicroserviceModuleOptions, msType: MSType): ClientProvider{
   if (msType ==  MSType.KAFKA){
-    return getKafkaClientConfig(options.type)
+    return getKafkaClientConfig(options)
   
   }else if (msType == MSType.SOCKET) {
     return getSocketClientConfig(options.type);

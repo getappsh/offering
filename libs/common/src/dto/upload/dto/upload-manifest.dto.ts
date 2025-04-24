@@ -9,4 +9,8 @@ export class UploadManifestDto {
   @IsNotEmpty()
   @ApiProperty({required: false})
   uploadToken: string;
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }

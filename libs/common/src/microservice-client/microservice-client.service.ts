@@ -18,7 +18,7 @@ export class MicroserviceClient {
   private payloadVersion: string;
 
   constructor(
-    private readonly options: MicroserviceModuleOptions,
+    options: MicroserviceModuleOptions,
     private configService: ConfigService,
     private readonly cls: ClsService
   ) {
@@ -95,6 +95,11 @@ export class MicroserviceClient {
       headers['user'] = this.isKafka() ? JSON.stringify(user) : user
     }
 
+    const projectToken = this.cls.get('projectToken');
+    if (projectToken !== undefined && typeof projectToken === 'string') {
+      headers['projectToken'] = projectToken
+    }
+
     return {
       headers,
       value: typeof data !== 'string' && this.isKafka()
@@ -125,9 +130,11 @@ export class MicroserviceClient {
   }
 
   private sendHealthEvents(consumer: Consumer){
-    consumer.on('consumer.heartbeat', event => this.kafkaHealthService.setHeartbeatEvent(event));
-    consumer.on('consumer.disconnect', event => this.kafkaHealthService.setFailedEvent(event))
-    consumer.on('consumer.stop', event => this.kafkaHealthService.setFailedEvent(event));
-    consumer.on('consumer.crash', event => this.kafkaHealthService.setFailedEvent(event))
+    if (this.isKafka()){
+      consumer.on('consumer.heartbeat', event => this.kafkaHealthService.setHeartbeatEvent(event));
+      consumer.on('consumer.disconnect', event => this.kafkaHealthService.setFailedEvent(event))
+      consumer.on('consumer.stop', event => this.kafkaHealthService.setFailedEvent(event));
+      consumer.on('consumer.crash', event => this.kafkaHealthService.setFailedEvent(event))
+    }
   }
 }

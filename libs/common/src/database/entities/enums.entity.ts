@@ -62,6 +62,7 @@ export enum PrepareStatusEnum {
     DONE = "done",
     ERROR = "error",
     DELETE = "delete",
+    PENDING = "pending",
 }
 
 export enum DeployStatusEnum {
@@ -145,3 +146,22 @@ export enum FileUPloadStatusEnum {
     PENDING = "pending",
     REMOVED = "removed"
 }
+
+export enum ReleaseStatusEnum {
+    DRAFT = 'draft',
+    IN_REVIEW = 'in_review',
+    APPROVED = 'approved',
+    RELEASED = 'released',
+    ARCHIVED = 'archived',
+  }
+
+
+export enum ArtifactTypeEnum {
+    FILE = 'file',
+    DOCKER_IMAGE = 'docker_image',
+}
+
+export enum ProjectType {
+    PRODUCT = "product",
+    FORMATION = "formation",
+  }
