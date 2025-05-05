@@ -19,6 +19,15 @@ export class DeviceMapStateEntity extends BaseEntity {
   @Column({ name: "state", type: "enum", enum: DeviceMapStateEnum, default: DeviceMapStateEnum.IMPORT })
   state: DeviceMapStateEnum;
 
+  @Column({name: 'downloaded_at', type: 'timestamptz', default: null})
+  downloadedAt?: Date;
+
+  @Column({name: 'deployed_at', type: 'timestamptz', default: null})
+  deployedAt?: Date;
+
+  @Column({name: "error", default: null})
+  error?: string;
+
   toString() {
     return JSON.stringify(this)
   }

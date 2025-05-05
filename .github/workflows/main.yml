@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - project-refactor
 ##
 jobs:
   calculate_new_tag:
@@ -28,11 +29,11 @@ jobs:
           export MAJOR=$(echo $LAST_TAG | awk -F'.' '{print $1}')
           export MINOR=$(echo $LAST_TAG | awk -F'.' '{print $2}')
           export PATCH=$(echo $LAST_TAG | awk -F'.' '{print $3}' | awk -F'-' '{print $1}')
-          export SUFFIX=$(echo $LAST_TAG | awk -F'-' '{print $2}')
+          export BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD | tr '/' '-') # Convert slashes to dashes if present
           export NEXT_PATCH=$((PATCH + 1))
-          export NEW_TAG="$MAJOR.$MINOR.$NEXT_PATCH-$SUFFIX"
+          export NEW_TAG="$MAJOR.$MINOR.$NEXT_PATCH-$BRANCH_NAME"
           echo "new tag is: $NEW_TAG"
-          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_OUTPUT          
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_OUTPUT       
           
   tag_the_commit:
     needs: calculate_new_tag
@@ -97,34 +98,24 @@ jobs:
           node-version: '18'
 
       - name: Install CLI tool
-        run: npm i -g git+https://github.com/getappsh/cli.git
-
-      - name: Verify installation
-        run: gac -V
-
-      - name: Create manifest file
         run: |
-          echo '{
-            "product": "merkava",
-            "name": "GetApp-Offering",
-            "version":"'"$NEW_VERSION"'",
-            "agentTags": "Tags of possible agent",
-            "prevVersion": "0.1.0",
-            "formation": "yatush",
-            "baseVersion": "0.1.0",
-            "installType": "None",
-            "registryUrl": "'"$IMAGE_URL"'",
-            "assetType": "docker_image",
-            "properties": {
-              "releaseNotes": "Release of the GetApp offering docker image"
-            }
-          }' > manifest.json
+          npm i -g https://github.com/getappsh/cli/releases/latest/download/getapp-cli.tgz
+          # print version
+          gac -V
 
-      - name: Upload build artifacts
+      - name: Upload Image to GetApp
         run: |
-          gac upload manifest.json "empty/for/now"  ${{ secrets.UPLOAD_TOKEN }}
+          # set token
+          gac token set $UPLOAD_TOKEN
+
+          # set release
+          gac releases set $NEW_VERSION --name "v$NEW_VERSION" --notes "Release v$NEW_VERSION"
+          gac releases art $NEW_VERSION docker_image -u $IMAGE_URL -d
+          
           echo $?
+
         env:
-          BASE_PATH: ${{ secrets.BASE_PATH }}  # Example: Use GitHub secrets for sensitive data
-          UPLOAD_TOKEN: ${{ secrets.UPLOAD_TOKEN }}  # Add the secret token here
+          GET_APP_PATH: ${{ secrets.GET_APP_PROJECT_REFACTOR_PATH }}
+          UPLOAD_TOKEN: ${{ secrets.PROJECT_REFACTOR_UPLOAD_TOKEN }}
+
 

@@ -15,7 +15,7 @@ export function extractHeaders(context: ExecutionContext): Record<string, any> {
 }
 
 
-export function extractRequest(context: ExecutionContext): Record<string, any> {
+export function extractRequest(context: ExecutionContext): Record<string, any> | string {
   const input = context.switchToRpc();
   const msgContext = input.getContext();
 

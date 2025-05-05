@@ -14,7 +14,7 @@ export const deliveryStatusDtoStub = (): DeliveryStatusDto => {
     downloadDone: eStub.downloadDone,
     downloadStop: eStub.downloadStop,
     bitNumber: eStub.bitNumber,
-    downloadData: eStub.downloadData,
+    downloadData: eStub.progress,
     downloadSpeed: eStub.downloadSpeed,
     downloadEstimateTime: eStub.downloadEstimateTime,
     currentTime: eStub.currentTime,

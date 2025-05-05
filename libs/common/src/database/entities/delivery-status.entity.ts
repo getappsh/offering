@@ -37,13 +37,13 @@ export class DeliveryStatusEntity extends BaseEntity {
   })
   type: ItemTypeEnum
 
-  @Column({ name: 'download_start', type: 'timestamp', nullable: true })
+  @Column({ name: 'download_start', type: 'timestamptz', nullable: true })
   downloadStart: Date;
 
-  @Column({ name: 'download_stop', type: 'timestamp', nullable: true })
+  @Column({ name: 'download_stop', type: 'timestamptz', nullable: true })
   downloadStop: Date;
 
-  @Column({ name: 'download_done', type: 'timestamp', nullable: true })
+  @Column({ name: 'download_done', type: 'timestamptz', nullable: true })
   downloadDone: Date;
 
   @Column({ name: "bit_number", nullable: true })
@@ -52,13 +52,13 @@ export class DeliveryStatusEntity extends BaseEntity {
   @Column({ name: "download_speed", type: 'decimal', nullable: true })
   downloadSpeed: number;
 
-  @Column({ name: "download_data", type: 'decimal', nullable: true })
-  downloadData: number;
+  @Column({ name: "progress", type: 'decimal', nullable: true })
+  progress: number;
 
   @Column({ name: 'download_estimate_time', nullable: true })
   downloadEstimateTime: number;
 
-  @Column({ name: 'current_time', type: 'timestamp', nullable: true })
+  @Column({ name: 'current_time', type: 'timestamptz', nullable: true })
   currentTime: Date;
 
   toString() {

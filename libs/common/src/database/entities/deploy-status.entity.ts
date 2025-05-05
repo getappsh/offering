@@ -32,19 +32,19 @@ export class DeployStatusEntity extends BaseEntity{
       })
     type: ItemTypeEnum
 
-    @Column({name: 'deploy_start', type: 'timestamp', nullable: true})
+    @Column({name: 'deploy_start', type: 'timestamptz', nullable: true})
     deployStart: Date;
 
-    @Column({name: 'deploy_stop', type: 'timestamp', nullable: true})
+    @Column({name: 'deploy_stop', type: 'timestamptz', nullable: true})
     deployStop: Date;
 
-    @Column({name: 'deploy_done', type: 'timestamp', nullable: true})
+    @Column({name: 'deploy_done', type: 'timestamptz', nullable: true})
     deployDone: Date;
 
     @Column({name: 'deploy_estimate_time', nullable: true})
     deployEstimateTime: number;
 
-    @Column({name: 'current_time', type: 'timestamp', nullable: true})
+    @Column({name: 'current_time', type: 'timestamptz', nullable: true})
     currentTime: Date;
 
     toString(){

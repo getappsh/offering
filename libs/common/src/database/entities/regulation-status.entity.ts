@@ -1,25 +1,39 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 import { RegulationEntity } from "./regulation.entity";
-import { UploadVersionEntity } from "./upload-version.entity";
+import { ReleaseEntity } from "./release.entity";
 
 @Entity("regulation_status")
-@Unique("regulation_version_unique_constraint",['regulation', 'version'])
+@Unique("regulation_version_unique_constraint", ['regulation', 'version'])
 export class RegulationStatusEntity {
     @PrimaryGeneratedColumn()
     id: number;
-    
-    @ManyToOne(() => UploadVersionEntity, (version) => version)
-    version: UploadVersionEntity
 
-    @ManyToOne(() => RegulationEntity, (regulation) => regulation)
+    @ManyToOne(() => ReleaseEntity, (release) => release, {nullable: false})
+    @JoinColumn({name: "version_id"})
+    version: ReleaseEntity
+
+    @ManyToOne(() => RegulationEntity, (regulation) => regulation.statuses, {
+        nullable: true,
+        onDelete: 'SET NULL'
+    })
+    @JoinColumn({ name: "regulation_id" })
     regulation: RegulationEntity;
 
-    @Column({default: false})
+    @Column({ name: 'regulation_snapshot', type: 'jsonb', default: null })
+    regulationSnapshot: Record<string, any>;
+
+    @Column({ name: "is_compliant", default: false })
     isCompliant: boolean;
 
-    @Column({ default: null })
+    @Column({ name: "value", default: null })
     value: string;
 
-    @Column({ default: null })
+    @Column({ name: "report_details", default: null })
     reportDetails: string;
+
+    @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+    createdAt: Date;
+    
+    @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+    updatedAt: Date;
 }

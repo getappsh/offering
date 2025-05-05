@@ -1,7 +1,7 @@
-import { UploadVersionEntity } from "@app/common/database/entities";
+import { DeviceComponentStateEnum, UploadVersionEntity } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsSemVer, IsString, ValidateNested } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsSemVer, IsString, ValidateNested } from "class-validator";
 
 export class ComponentDto {
 
@@ -116,4 +116,64 @@ export class DiscoverySoftwareDto {
   @ValidateNested()
   @Type(() => PlatformDto)
   platform: PlatformDto;
+
+  toString(){
+    return JSON.stringify(this)
+  }
 }
+
+export class ComponentStateDto{
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  catalogId: string;
+
+  @ApiProperty({enum: DeviceComponentStateEnum })
+  @IsEnum(DeviceComponentStateEnum)
+  state: DeviceComponentStateEnum;
+
+  @ApiProperty({required: false})
+  @IsOptional()
+  @IsString()
+  error?: string
+
+  toString(){
+    return JSON.stringify(this)
+  }
+}
+
+export class DiscoverySoftwareV2Dto {
+
+  @ApiProperty({required: false})
+  @IsString({each: true})
+  @IsNotEmpty({each: true})
+  @IsArray()
+  @IsOptional()
+  formations: string[];
+
+  @ApiProperty({required: false})
+  @IsString({each: true})
+  @IsNotEmpty({each: true})
+  @IsArray()
+  @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map(v => v.toLowerCase().trim().replace(/\s+/g, "-"))
+      : value
+  )
+  platforms: string[];
+
+  @ApiProperty({required: false, isArray: true, type: ComponentStateDto})
+  @IsArray()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ComponentStateDto)
+  components: ComponentStateDto[]
+
+  toString(){
+    return JSON.stringify(this)
+  }
+}
+
+
+

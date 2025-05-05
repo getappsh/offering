@@ -9,4 +9,10 @@ export class RegulationTypeDto {
 
     @ApiProperty({ description: 'Description of the regulation type' })
     description: string;
+
+
+    toString(){
+        return JSON.stringify(this)
+    }
+    
 }

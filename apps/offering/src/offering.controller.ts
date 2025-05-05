@@ -1,15 +1,14 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
-import { OfferingService } from './offering.service';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
-import { DiscoveryMessageDto } from '@app/common/dto/discovery';
-import { PushOfferingDto } from '@app/common/dto/offering';
+import { ComponentOfferingRequestDto, PushOfferingDto } from '@app/common/dto/offering';
 import { ItemTypeEnum } from '@app/common/database/entities';
-import { UploadEventDto } from '@app/common/dto/upload';
-import { DeviceSoftwareStateDto } from '@app/common/dto/device/dto/device-software.dto';
+import { ReleaseChangedEventDto } from '@app/common/dto/upload';
+import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
 import { DeviceMapStateDto } from '@app/common/dto/device';
 import { KafkaHealthService, RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
+import { OfferingService } from './offering.service';
 
 @Controller()
 export class OfferingController {
@@ -17,7 +16,9 @@ export class OfferingController {
   private readonly kafkaHealthService = KafkaHealthService.getInstance();
   private readonly logger = new Logger(OfferingController.name);
 
-  constructor(private readonly offeringService: OfferingService) {}
+  constructor(
+    private readonly offeringService: OfferingService
+  ) {}
   
 
   @MessagePattern(OfferingTopics.GET_OFFER_OF_COMP)
@@ -26,16 +27,10 @@ export class OfferingController {
     return this.offeringService.getOfferOfComp(catalogId)
   }
 
-  @MessagePattern(OfferingTopics.CHECK_UPDATES)
-  checkUpdates(@RpcPayload() data: DiscoveryMessageDto){    
-    return this.offeringService.checkUpdates(data)
-  }
-
 
   @MessagePattern(OfferingTopics.DEVICE_COMPONENT_OFFERING)
-  getDeviceComponentOffering(@RpcPayload("stringValue") deviceId: string){  
-    this.logger.debug(`get component offering for device: ${deviceId}`)  
-    return this.offeringService.getDeviceComponentOffering(deviceId)
+  getDeviceComponentOfferingV2(@RpcPayload() dto: ComponentOfferingRequestDto){
+    return this.offeringService.getDeviceComponentOffering(dto);
   }
 
   @MessagePattern(OfferingTopics.DEVICE_MAP_OFFERING)
@@ -54,14 +49,14 @@ export class OfferingController {
     }
   }
 
-  @EventPattern(OfferingTopicsEmit.COMPONENT_UPLOAD_EVENT)
-  uploadEvent(@RpcPayload() event: UploadEventDto){
-    this.logger.log(`Component Upload event ${event.catalogId}`);
-    this.offeringService.uploadEvent(event);
+  @EventPattern(OfferingTopicsEmit.RELEASE_CHANGED_EVENT)
+  releaseChangedEvent(@RpcPayload() event: ReleaseChangedEventDto){
+    this.logger.log(`Release changed event for catalogId: ${event.catalogId}, event: ${event.event}`);
+    this.offeringService.releaseChangedEvent(event);
   }
 
   @EventPattern(OfferingTopicsEmit.DEVICE_SOFTWARE_EVENT)
-  deviceSoftwareEvent(@RpcPayload() event: DeviceSoftwareStateDto){
+  deviceSoftwareEvent(@RpcPayload() event: DeviceComponentStateDto){
     this.logger.log(`Device software event`);
     this.offeringService.deviceSoftwareEvent(event);
   }
