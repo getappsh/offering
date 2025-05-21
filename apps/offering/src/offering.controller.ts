@@ -6,14 +6,13 @@ import { ItemTypeEnum } from '@app/common/database/entities';
 import { ReleaseChangedEventDto } from '@app/common/dto/upload';
 import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
 import { DeviceMapStateDto } from '@app/common/dto/device';
-import { KafkaHealthService, RpcPayload } from '@app/common/microservice-client';
+import { RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
 import { OfferingService } from './offering.service';
 
 @Controller()
 export class OfferingController {
 
-  private readonly kafkaHealthService = KafkaHealthService.getInstance();
   private readonly logger = new Logger(OfferingController.name);
 
   constructor(
@@ -72,17 +71,6 @@ export class OfferingController {
     const version = this.readImageVersion()
     this.logger.log(`Offering service - Health checking, Version: ${version}`)
     return "Offering service is running successfully. Version: " + version
-  }
-
-  @Get('/health/ready')
-  healthReady() {
-    return this.kafkaHealthService.isReady();
-  }
-
-
-  @Get('/health/live')
-  healthLive() {
-    return this.kafkaHealthService.isAlive();
   }
 
   private readImageVersion(){

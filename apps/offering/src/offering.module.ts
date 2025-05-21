@@ -6,7 +6,7 @@ import { ComponentOfferingEntity, DeviceEntity, MapOfferingEntity, ProjectEntity
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from '@app/common/logger/logger.module';
 import { ApmModule } from '@app/common/apm/apm.module';
-import { MicroserviceModule, MicroserviceName, MicroserviceType } from '@app/common/microservice-client';
+import { MicroserviceModule, MicroserviceName, MicroserviceType, KafkaHealthController } from '@app/common/microservice-client';
 import { SafeCronModule } from '@app/common/safe-cron';
 import { OfferingService } from './offering.service'
 
@@ -24,7 +24,7 @@ import { OfferingService } from './offering.service'
     TypeOrmModule.forFeature([ComponentOfferingEntity, MapOfferingEntity, DeviceEntity, ReleaseEntity, ProjectEntity]),
     SafeCronModule,
   ],
-  controllers: [OfferingController],
+  controllers: [OfferingController, KafkaHealthController],
   providers: [OfferingService],
 })
 export class OfferingModule { }

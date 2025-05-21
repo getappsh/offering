@@ -31,6 +31,6 @@ async function bootstrap() {
   app.useLogger(app.get(GET_APP_LOGGER))
   app.useGlobalFilters(new CustomRpcExceptionFilter())
   app.startAllMicroservices()
-  app.listen(Number(process.env.OFFERING_PORT?? 3004))
+  app.listen(Number(process.env.HEALTH_PORT?? 2999))
 }
 bootstrap();
