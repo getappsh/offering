@@ -16,23 +16,38 @@ export class S3Service implements OnApplicationBootstrap {
   private readonly logger = new Logger(S3Service.name);
 
   private s3: S3;
+  private externS3: S3;
   private bucketName: string;
-  private endpoint: string
+  private interEndpoint: string
+  private externEndpoint: string
 
   constructor(private configService: ConfigService) {
-    this.endpoint = this.configService.get('S3_ENDPOINT_INTERNAL')
+    const awsRegion = this.configService.get('AWS_REGION');
+    const accessKeyId = this.configService.get('ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get('SECRET_ACCESS_KEY');
+    const credentials = { accessKeyId, secretAccessKey };
+
+    this.interEndpoint = this.configService.get('S3_ENDPOINT_INTERNAL');
+    this.externEndpoint = this.configService.get('S3_ENDPOINT_EXTERNAL');
+    this.bucketName = this.configService.get('BUCKET_NAME');
+
+    const baseS3Config = {
+      region: awsRegion,
+      credentials,
+      forcePathStyle: !!this.interEndpoint,
+    };
 
     this.s3 = new S3({
-      forcePathStyle: this.endpoint ? true : false,
-      endpoint: this.endpoint,
-      region: this.configService.get('AWS_REGION'),
-      credentials: {
-        accessKeyId: this.configService.get('ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get('SECRET_ACCESS_KEY'),
-      },
+      ...baseS3Config,
+      endpoint: this.interEndpoint,
     });
 
-    this.bucketName = this.configService.get('BUCKET_NAME')
+    this.externS3 = this.externEndpoint
+      ? new S3({
+        ...baseS3Config,
+        endpoint: this.externEndpoint,
+      })
+      : this.s3;
   }
 
   async createBucketIfNotExists(): Promise<void> {
@@ -40,11 +55,11 @@ export class S3Service implements OnApplicationBootstrap {
       await this.s3.headBucket({ Bucket: this.bucketName });
       this.logger.debug(`Bucket "${this.bucketName}" already exists.`);
     } catch (error) {
-      if (error["$metadata"]?.httpStatusCode === 404) {
+      if (error["$metadata"].httpStatusCode === 404) {
         await this.s3.createBucket({ Bucket: this.bucketName });
         this.logger.log(`Bucket "${this.bucketName}" created successfully.`);
-      } else {        
-        this.logger.error(`Failed to check/create bucket - error code: ${error["$metadata"]?.httpStatusCode}, mes: ${error.message}`);
+      } else {
+        this.logger.error(`Failed to check/create bucket - error code: ${error["$metadata"].httpStatusCode}, mes: ${error.toString()}`);
       }
     }
   }
@@ -70,17 +85,13 @@ export class S3Service implements OnApplicationBootstrap {
       Key: fileUrl,
     })
 
-    if (!this.endpoint && fileUrl.includes("cache-public")) {
+    if (!this.interEndpoint && fileUrl.includes("cache-public")) {
       return `https://${this.bucketName}.s3.amazonaws.com/${fileUrl}`
     }
 
-    const signedUrl = await getSignedUrl(this.s3, command, {
+    const signedUrl = await getSignedUrl(this.externS3, command, {
       expiresIn: this.configService.get('DOWNLOAD_URL_EXPIRE'),
     })
-
-    if (this.endpoint && this.configService.get('S3_ENDPOINT_EXTERNAL')) {
-      return signedUrl.replace(this.endpoint, this.configService.get('S3_ENDPOINT_EXTERNAL'));
-    }
 
     return signedUrl;
   }

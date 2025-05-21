@@ -9,7 +9,7 @@ export const UploadTopics = {
     CHECK_HEALTH: `getapp-upload.check-health${region}`,
     CREATE_FILE_UPLOAD_URL: `getapp-upload.create-file-upload-url${region}`,
 
-// Releases
+    // Releases
     GET_RELEASES: `getapp-upload.get-releases${region}`,
     GET_RELEASE_BY_VERSION: `getapp-upload.get-release-by-version${region}`,
     SET_RELEASE: `getapp-upload.set-release${region}`,
@@ -18,14 +18,14 @@ export const UploadTopics = {
     SET_RELEASE_ARTIFACT: `getapp-upload.set-release-artifact${region}`,
     DELETE_RELEASE_ARTIFACT: `getapp-upload.delete-release-artifact${region}`,
     GET_ARTIFACT_DOWNLOAD_URL: 'getapp-upload.get-artifact-download-url',
-    GET_ARTIFACT_UPLOAD_URL:    'getapp-upload.get-artifact-upload-url',
-// Regulation Status
+    GET_ARTIFACT_UPLOAD_URL: 'getapp-upload.get-artifact-upload-url',
+    // Regulation Status
     GET_VERSION_REGULATIONS_STATUSES: `getapp-upload.get-version-regulation-statuses${region}`,
     GET_VERSION_REGULATION_STATUS_BY_ID: `getapp-upload.get-version-regulation-status-by-id${region}`,
     SET_VERSION_REGULATION_STATUS: `getapp-upload.set-version-regulation-status${region}`,
     SET_VERSION_REGULATION_COMPLIANCE: `getapp-upload.set-version-regulation-compliance${region}`,
     DELETE_VERSION_REGULATION_STATUS: `getapp-upload.delete-version-regulation-status${region}`,
-    
+
 } as const
 
 export const UploadTopicsEmit = {
@@ -149,6 +149,7 @@ export const GetMapTopicsEmit = {
 } as const
 
 export const DeviceTopics = {
+    DEVICE_PERSONAL: `getapp-device.personal${region}`,
     All_DEVICES: `getapp-device.all${region}`,
     DEVICE_SOFTWARES: `getapp-device.device.softwares${region}`,
     DEVICES_SOFTWARE_STATISTIC_INFO: `getapp-device.device.software.statistic.info${region}`,
@@ -160,9 +161,9 @@ export const DeviceTopics = {
     REGISTER_SOFTWARE: `getapp-device.register.software${region}`,
     DEVICE_CONTENT: `getapp-device.content.installed${region}`,
     IM_PULL_DISCOVERY: `getapp-device.im.pull.discovery${region}`,
-     // Config
-     GET_DEVICE_CONFIG: `getapp-device.config.get${region}`,
-     SET_DEVICE_CONFIG: `getapp-device.config.set${region}`,
+    // Config
+    GET_DEVICE_CONFIG: `getapp-device.config.get${region}`,
+    SET_DEVICE_CONFIG: `getapp-device.config.set${region}`,
     CHECK_HEALTH: `getapp-device.check-health${region}`
 } as const
 

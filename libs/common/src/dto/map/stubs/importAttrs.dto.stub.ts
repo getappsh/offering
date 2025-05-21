@@ -1,5 +1,6 @@
 import { productEntityStubNorthGazaRecent } from "@app/common/database/test/support/stubs/product.stub";
 import { ImportAttributes } from "../dto/importAttributes.dto";
+import { MapProductResDto } from "../dto/map-product-res.dto";
 
 export const importAttrsStubNoProduct = (): ImportAttributes => {
   const importAttrs = new ImportAttributes()
@@ -15,8 +16,8 @@ export const importAttrsStubNorthGazaRecentMoreThen60Pres = (): ImportAttributes
 
 export const importAttrsStubNorthGazaRecentFull = (): ImportAttributes => {
   const importAttrs = new ImportAttributes()
-  importAttrs.Points = "34.60945396,31.52298742,34.62086808,31.54117605",
-  importAttrs.product = productEntityStubNorthGazaRecent()
+  importAttrs.Points = "34.60945396,31.52298742,34.62086808,31.54117605"
+  importAttrs.product = productEntityStubNorthGazaRecent() as unknown as MapProductResDto
   return importAttrs
 }
 

@@ -15,6 +15,9 @@ export class ProductEntity {
 
   @Column({name: 'id'})
   id: string;
+ 
+  @Column({name: 'catalog_id'})
+  catalogId: string;
   
   @Column({name: 'product_id'})
   productId: string;

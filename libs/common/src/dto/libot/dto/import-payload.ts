@@ -15,10 +15,11 @@ export class Webhook {
 export class Roi {
   @ApiProperty({ required: false })
   type: string;
-  
+
   @ApiProperty({ required: false })
   features: Feature[];
 }
+
 export class ImportPayload {
 
   @ApiProperty({ required: false })
@@ -36,7 +37,7 @@ export class ImportPayload {
   @ApiProperty({ required: false })
   ROI: FeatureCollection<Polygon>;
 
-  @ApiProperty({ required: false , type: Roi})
+  @ApiProperty({ required: false, type: Roi })
   description: string;
 
   @ApiProperty({ required: false })
@@ -47,7 +48,8 @@ export class ImportPayload {
 
   static fromImportAttrs(attrs: ImportAttributes): ImportPayload {
     const importPayload = new ImportPayload()
-    importPayload.catalogRecordID = attrs.product.id
+
+    importPayload.catalogRecordID = attrs.product.catalogId
     importPayload.webhook = [
       {
         events: ["TASK_COMPLETED", "TASK_FAILED"],
@@ -67,7 +69,7 @@ export class ImportPayload {
         }
       ]
     }
-    importPayload.description = `Export request for prodID: ${attrs.product.id} points: [${attrs.Points}] resolution: ${attrs.targetResolution}`
+    importPayload.description = `Region: ${attrs.product.region} - date: ${new Date().toISOString()}`
     return importPayload
   }
 

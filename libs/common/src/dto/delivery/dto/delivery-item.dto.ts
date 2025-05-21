@@ -25,8 +25,9 @@ export class DeliveryItemDto {
   @ApiProperty()
   catalogId: string;
   
-  @ApiProperty()
-  id: number;
+  // Maps with no cache has no id
+  @ApiProperty({required: false, type: 'integer'})
+  id?: number;
 
   @ApiProperty()
   itemKey: string;

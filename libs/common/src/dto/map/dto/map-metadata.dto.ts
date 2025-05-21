@@ -27,11 +27,11 @@ export class MapMetadatatDto{
   @IsNumber()
   progress: number
   
-  @ApiProperty({required: false, type: 'integer', default: 0})
+  @ApiProperty({required: false, type: 'integer', format: 'int64', default: 0, minimum: 0})
   @IsNumber()
   size: number
   
-  @ApiProperty({required: false, type: 'integer', default: 0})
+  @ApiProperty({required: false, type: 'integer', format: 'int64', default: 0, minimum: 0})
   @IsNumber()
   area: number
   
