@@ -1,5 +1,6 @@
 export * from './client.enum';
 export * from './kafka/kafka-health.service'
+export * from './kafka/kafka-health.controller'
 
 import { ClientProvider } from "@nestjs/microservices";
 import { MicroserviceModuleOptions } from "../microservice-client.interface";
