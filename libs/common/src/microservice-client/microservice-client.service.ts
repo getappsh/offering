@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ClientKafka, ClientProxy, ClientProxyFactory } from '@nestjs/microservices';
 import { Observable, map, timeout } from 'rxjs';
 import { MicroserviceModuleOptions } from "./microservice-client.interface";
-import { KafkaHealthService, MSType, getClientConfig } from "./clients";
+import { MSType, getClientConfig } from "./clients";
 import { ConfigService } from "@nestjs/config";
 import { ClassConstructor, plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
@@ -13,7 +13,6 @@ import { Consumer } from "@nestjs/microservices/external/kafka.interface";
 @Injectable()
 export class MicroserviceClient {
   private readonly logger = new Logger(MicroserviceClient.name);
-  private readonly kafkaHealthService = KafkaHealthService.getInstance();
   private client: ClientProxy | ClientKafka;
   private payloadVersion: string;
 
@@ -29,6 +28,9 @@ export class MicroserviceClient {
     this.payloadVersion = configService.get<string>('RPC_PAYLOAD_VERSION')
   }
 
+  getClient(): ClientProxy | ClientKafka {
+    return this.client
+  }
 
   emit<TResult = any, TInput = any>(pattern: any, data: TInput): Observable<TResult> {
     return this.client.emit(pattern, this.formatData(data));
@@ -121,20 +123,9 @@ export class MicroserviceClient {
   }
   async connect(): Promise<any> {
     try {
-      const response = await this.client.connect();
-      this.sendHealthEvents(this.client['consumer'])
-      return response
+       return await this.client.connect();
     } catch (err) {
       return this.logger.error(err);
-    }
-  }
-
-  private sendHealthEvents(consumer: Consumer){
-    if (this.isKafka()){
-      consumer.on('consumer.heartbeat', event => this.kafkaHealthService.setHeartbeatEvent(event));
-      consumer.on('consumer.disconnect', event => this.kafkaHealthService.setFailedEvent(event))
-      consumer.on('consumer.stop', event => this.kafkaHealthService.setFailedEvent(event));
-      consumer.on('consumer.crash', event => this.kafkaHealthService.setFailedEvent(event))
     }
   }
 }

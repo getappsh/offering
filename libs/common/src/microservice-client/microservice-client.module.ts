@@ -1,24 +1,29 @@
-import { DynamicModule, Global, Module } from "@nestjs/common";
+import { DynamicModule, Global, Module, Provider } from "@nestjs/common";
 import { MicroserviceClient } from "./microservice-client.service";
 import { MicroserviceModuleOptions } from "./microservice-client.interface";
 import {ConfigService } from "@nestjs/config";
 import { ClsService } from "nestjs-cls";
+import { HealthModule } from "./health/health.module";
 
 
 @Global()
 @Module({})
 export class MicroserviceModule{
   static register(options: MicroserviceModuleOptions): DynamicModule{
+
+    const microserviceClientProvider: Provider = {
+      provide: options.name,
+      useFactory: (config: ConfigService, cls: ClsService) =>
+        new MicroserviceClient(options, config, cls),
+      inject: [ConfigService, ClsService],
+    };
+
+
     return{
       module: MicroserviceModule,
+      imports: [ HealthModule.register(options.name)],
       providers: [
-       {
-        provide: options.name,
-        useFactory: (cnf: ConfigService, cls: ClsService) => {
-          return new MicroserviceClient(options, cnf, cls)
-        },
-        inject: [ConfigService, ClsService]
-       }
+        microserviceClientProvider
       ],
       exports: [options.name]
     }
