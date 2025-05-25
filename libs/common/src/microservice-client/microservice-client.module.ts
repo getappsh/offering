@@ -21,7 +21,9 @@ export class MicroserviceModule{
 
     return{
       module: MicroserviceModule,
-      imports: [ HealthModule.register(options.name)],
+      imports: [ 
+        // HealthModule.register(options.name)
+      ],
       providers: [
         microserviceClientProvider
       ],
