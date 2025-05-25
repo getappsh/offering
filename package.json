@@ -43,6 +43,7 @@
     "@nestjs/platform-express": "^9.3.9",
     "@nestjs/schedule": "^4.1.1",
     "@nestjs/swagger": "^6.2.1",
+    "@nestjs/terminus": "^9.2.2",
     "@nestjs/typeorm": "^10.0.0",
     "@turf/turf": "^6.5.0",
     "@types/dockerode": "^3.3.16",
