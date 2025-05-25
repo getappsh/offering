@@ -8,7 +8,7 @@ import { TcpClientOptions, Transport } from "@nestjs/microservices";
 export class SocketServerHealthIndicator extends HealthIndicator implements IServerHealth{
     private readonly logger = new Logger(SocketServerHealthIndicator.name);
     private options: any
-    private readonly healthKey = "socket-server";
+    private readonly healthKey = "server";
   
     constructor(private microservice: MicroserviceHealthIndicator){
       super();

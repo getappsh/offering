@@ -22,7 +22,7 @@ export class KafkaServerHealthIndicator extends HealthIndicator implements IServ
       status = await this.livenessService.isAlive();
     }
 
-    return this.getStatus('kafka-server', status);
+    return this.getStatus('server', status);
   }
 
   async isReady(): Promise<boolean> {

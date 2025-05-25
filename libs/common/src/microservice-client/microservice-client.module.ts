@@ -3,7 +3,7 @@ import { MicroserviceClient } from "./microservice-client.service";
 import { MicroserviceModuleOptions } from "./microservice-client.interface";
 import {ConfigService } from "@nestjs/config";
 import { ClsService } from "nestjs-cls";
-import { HealthModule } from "./health/health.module";
+import { ClientHealthModule } from "./client-health/client-health.module";
 
 
 @Global()
@@ -22,7 +22,7 @@ export class MicroserviceModule{
     return{
       module: MicroserviceModule,
       imports: [ 
-        // HealthModule.register(options.name)
+        ClientHealthModule.register(options.name)
       ],
       providers: [
         microserviceClientProvider

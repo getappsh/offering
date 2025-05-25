@@ -5,3 +5,6 @@ export * from './clients'
 export * from './utils/payload.decorator'
 export * from './utils/context-helpers'
 export * from './interceptors/user-context.interceptor'
+
+export * from './client-health/client-health.interface'
+export * from './server-health/server-health.interface'
