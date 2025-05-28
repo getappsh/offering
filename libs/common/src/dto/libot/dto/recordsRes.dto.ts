@@ -4,7 +4,7 @@ export class RecordsResDto {
 
 export class RecordsBodyDto {
   version: string
-  "csw:SearchStatus":{ timestamp: string }
+  "csw:SearchStatus": { timestamp: string }
   "csw:SearchResults": SearchResultsDto
   [key: string]: string | SearchResultsDto | { timestamp: string },
 }
@@ -28,7 +28,7 @@ export class MCRasterRecordDto {
   'mc:footprint': string
   'mc:ingestionDate': string
   'mc:insertDate': string
-  'mc:links': [any]
+  'mc:links': MCLink[]
   'mc:maxResolutionDeg': number
   'mc:maxResolutionMeter': number
   'mc:minHorizontalAccuracyCE90': number
@@ -47,6 +47,13 @@ export class MCRasterRecordDto {
   'mc:type': string
   'mc:updateDateUTC': string
   'ows:BoundingBox': any
+}
+
+export class MCLink {
+  '#text': string
+  scheme: string
+  name: string
+  description: string
 }
 
 export class CatalogRecordDto {

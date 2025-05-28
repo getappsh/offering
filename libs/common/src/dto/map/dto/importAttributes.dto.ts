@@ -17,6 +17,11 @@ export class ImportAttributes {
   fileName: string
   requestId: string
   jobId: string
+  miscellaneous: {
+    deviceId: string;
+    personalName: string;
+    [key: string]: string;
+  }
 
   toString() {
     return JSON.stringify(this);
@@ -78,6 +83,10 @@ export class ImportAttributes {
   static fromImportCreateDto(importDto: CreateImportDto): ImportAttributes {
     const attr = new ImportAttributes()
     attr.Points = importDto.mapProperties.boundingBox
+    attr.miscellaneous = {
+      deviceId: importDto.deviceId,
+      personalName: "",
+    }
     return attr
   }
 

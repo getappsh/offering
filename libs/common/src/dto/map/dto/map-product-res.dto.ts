@@ -1,5 +1,5 @@
 import { ProductEntity } from "@app/common/database/entities";
-import { MCRasterRecordDto } from "@app/common/dto/libot/dto/recordsRes.dto";
+import { MCLink, MCRasterRecordDto } from "@app/common/dto/libot/dto/recordsRes.dto";
 import { FootprintValidator } from "@app/common/validators/footprint.validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
@@ -7,17 +7,33 @@ import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, Validate } from "cl
 import { PropertiesPolygonPartsDto } from "../../libot/dto/recordsResPolygonParts.dto";
 import { Feature, Polygon } from "@turf/turf";
 
+export class ProductLinkDto {
+  url: string
+  schema: string
+  name: string
+  description: string
+
+  static fromMCLinks(mcLink: MCLink) {
+    const pLinks = new ProductLinkDto()
+    pLinks.url = mcLink["#text"]
+    pLinks.schema = mcLink.scheme
+    pLinks.name = mcLink.name
+    pLinks.description = mcLink.description
+
+    return pLinks
+  }
+
+  static toString() {
+    return JSON.stringify(this)
+  }
+}
+
 export class MapProductResDto {
 
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
   id: string
-
-  // @IsString()
-  // @IsNotEmpty()
-  // @ApiProperty()
-  // exportId: string
 
   @IsString()
   @IsNotEmpty()
@@ -29,21 +45,6 @@ export class MapProductResDto {
   @ApiProperty({ required: false })
   catalogId: string;
 
-  // @IsString()
-  // @IsOptional()
-  // @ApiProperty({ required: false })
-  // sourceName: string;
-
-  // @IsString()
-  // @IsOptional()
-  // @ApiProperty({ required: false })
-  // sourceId: string;
-
-  // @IsString()
-  // @IsOptional()
-  // @ApiProperty({ required: false })
-  // sensors: string;
-
   @IsString()
   @IsOptional()
   @ApiProperty({ required: false })
@@ -54,30 +55,10 @@ export class MapProductResDto {
   @ApiProperty({ required: false })
   cities: string | null;
 
-  // @IsString()
-  // @IsOptional()
-  // @ApiProperty({ required: false })
-  // description: string;
-
-  // @IsString()
-  // @IsOptional()
-  // @ApiProperty({ required: false })
-  // horizontalAccuracyCe90: number;
-
-  // @IsString()
-  // @IsOptional()
-  // @ApiProperty({ required: false })
-  // sourceResolutionMeter: number;
-
   @IsString()
   @IsOptional()
   @ApiProperty({ required: false })
   resolutionMeter: number;
-
-  // @IsString()
-  // @IsOptional()
-  // @ApiProperty({ required: false })
-  // resolutionDegree: number;
 
   @IsString()
   @IsOptional()
@@ -91,9 +72,6 @@ export class MapProductResDto {
   @IsOptional()
   @ApiProperty({ required: false })
   productType: string;
-
-  // @ApiProperty({ required: false })
-  // productSubType: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -118,11 +96,6 @@ export class MapProductResDto {
   @Validate(FootprintValidator)
   footprint: string;
 
-  // @ApiProperty({ required: false })
-  // @IsString()
-  // @IsOptional()
-  // transparency: string
-
   @IsString()
   @IsOptional()
   @ApiProperty({ required: false })
@@ -133,6 +106,8 @@ export class MapProductResDto {
   @Type(() => Date)
   @IsDate()
   ingestionDate: Date;
+
+  links?: ProductLinkDto[]
 
   toString() {
     return JSON.stringify(this);
@@ -147,16 +122,18 @@ export class MapProductResDto {
     product.productName = records["mc:productName"]
     product.productVersion = Number(records["mc:productVersion"])
     product.productType = records["mc:productType"]
-    // product.productSubType = Number(records["mc:productSubType"]) || null ;
-    // product.description = records["mc:description"];
     product.imagingTimeBeginUTC = new Date(records["mc:imagingTimeBeginUTC"]);
     product.imagingTimeEndUTC = new Date(records["mc:imagingTimeEndUTC"]);
     product.maxResolutionDeg = Number(records["mc:maxResolutionDeg"])
     product.footprint = records["mc:footprint"]
-    // product.transparency = records["mc:transparency"]
     product.region = records["mc:region"]
     product.ingestionDate = new Date(records["mc:ingestionDate"]);
-    // product.exportId = product.id
+    return product
+  }
+
+  static fromRecordsResWithLinks(records: MCRasterRecordDto): MapProductResDto {
+    const product = MapProductResDto.fromRecordsRes(records)
+    product.links = records["mc:links"].map(l => ProductLinkDto.fromMCLinks(l))
     return product
   }
 
@@ -172,18 +149,11 @@ export class MapProductResDto {
     product.imagingTimeBeginUTC = new Date(records.properties.imagingTimeBeginUTC);
     product.imagingTimeEndUTC = new Date(records.properties.imagingTimeEndUTC);
     product.footprint = JSON.stringify(records.geometry)
-    // product.sourceId = records.properties.sourceId
-    // product.sourceName = records.properties.sourceName
     product.maxResolutionDeg = Number(records.properties.resolutionDegree)
     product.resolutionMeter = records.properties.resolutionMeter
-    // product.sourceResolutionMeter = records.properties.sourceResolutionMeter
-    // product.horizontalAccuracyCe90 = records.properties.horizontalAccuracyCe90
-    // product.sensors = records.properties.sensors
     product.countries = records.properties.countries
     product.cities = records.properties.cities
     product.region = MapProductResDto.productRegionSelector(product.countries, product.cities)
-    // product.exportId = product.catalogId
-    // product.description = records.properties.description
 
     return product
   }
@@ -208,16 +178,12 @@ export class MapProductResDto {
     product.productName = pE.productName
     product.productVersion = pE.productVersion
     product.productType = pE.productType
-    // product.productSubType = pE.productSubType
-    // product.description = pE.description
     product.imagingTimeBeginUTC = new Date(pE.imagingTimeBeginUTC);
     product.imagingTimeEndUTC = new Date(pE.imagingTimeEndUTC);
     product.maxResolutionDeg = Number(pE.maxResolutionDeg)
     product.footprint = pE.footprint
-    // product.transparency = pE.transparency
     product.region = pE.region
     product.ingestionDate = new Date(pE.ingestionDate);
-    // product.exportId = product.id
 
     return product
   }
