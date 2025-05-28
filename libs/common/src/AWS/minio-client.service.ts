@@ -73,6 +73,10 @@ export class MinioClientService implements OnModuleInit{
     return this.client.bucketExists(bucketName)
   }
 
+  listBuckets(): Promise<Minio.BucketItem[]> {
+    return this.client.listBuckets();
+  }
+
   async onModuleInit() {
     const bucketName = this.configService.get('BUCKET_NAME');
     try{
