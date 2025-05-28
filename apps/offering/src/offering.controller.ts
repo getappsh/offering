@@ -1,4 +1,4 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
 import { ComponentOfferingRequestDto, PushOfferingDto } from '@app/common/dto/offering';
@@ -7,7 +7,6 @@ import { ReleaseChangedEventDto } from '@app/common/dto/upload';
 import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
 import { DeviceMapStateDto } from '@app/common/dto/device';
 import { RpcPayload } from '@app/common/microservice-client';
-import * as fs from 'fs';
 import { OfferingService } from './offering.service';
 
 @Controller()
@@ -64,22 +63,5 @@ export class OfferingController {
   deviceMapEvent(@RpcPayload() event: DeviceMapStateDto){
     this.logger.log(`Device map event`);
     this.offeringService.deviceMapEvent(event);
-  }
-
-  @MessagePattern(OfferingTopics.CHECK_HEALTH)
-  healthCheckSuccess(){
-    const version = this.readImageVersion()
-    this.logger.log(`Offering service - Health checking, Version: ${version}`)
-    return "Offering service is running successfully. Version: " + version
-  }
-
-  private readImageVersion(){
-    let version = 'unknown'
-    try{
-      version = fs.readFileSync('NEW_TAG.txt','utf8');
-    }catch(error){
-      this.logger.error(`Unable to read image version - error: ${error}`)
-    }
-    return version
   }
 }
