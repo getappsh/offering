@@ -49,7 +49,7 @@ export class SetReleaseArtifactResDto {
   uploadUrl: string;
 
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 }
@@ -62,7 +62,7 @@ export class GetReleaseArtifactResDto {
   @ApiProperty({ required: false, description: 'Only present for FILE artifact type' })
   downloadUrl?: string;
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -77,7 +77,7 @@ export class ReleaseArtifactDto {
   @ApiProperty()
   artifactName: string
 
-  @ApiProperty({type: 'enum', enum: ArtifactTypeEnum})
+  @ApiProperty({ type: 'enum', enum: ArtifactTypeEnum })
   type: ArtifactTypeEnum
 
   @ApiProperty()
@@ -86,35 +86,35 @@ export class ReleaseArtifactDto {
   @ApiProperty()
   isInstallationFile: boolean
 
-  @ApiProperty({required: false })
+  @ApiProperty({ required: false })
   dockerImageUrl?: string
 
   @ApiProperty()
-  uploadId: number
+  uploadId?: number
 
-  @ApiProperty({type: 'enum', enum: FileUPloadStatusEnum, required: false})
+  @ApiProperty({ type: 'enum', enum: FileUPloadStatusEnum, required: false })
   status?: FileUPloadStatusEnum
 
-  @ApiProperty({required: false, type: 'integer', format: 'int64'})
+  @ApiProperty({ required: false, type: 'integer', format: 'int64' })
   size?: number
 
 
   static fromEntity(artifact: ReleaseArtifactEntity): ReleaseArtifactDto {
     const dto = new ReleaseArtifactDto();
     dto.id = artifact.id;
-    dto.artifactName = artifact.artifactName;
+    dto.artifactName = artifact.artifactName ?? "";
     dto.type = artifact.type;
     dto.metadata = artifact.metadata;
     dto.isInstallationFile = artifact.isInstallationFile;
     dto.dockerImageUrl = artifact?.dockerImageUrl;
-    dto.uploadId = artifact.fileUpload ? artifact.fileUpload.id : null;
+    dto.uploadId = artifact.fileUpload ? artifact.fileUpload.id : undefined;
     dto.status = artifact?.fileUpload?.status
     dto.size = artifact?.fileUpload?.size
-    
+
     return dto
   }
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 }

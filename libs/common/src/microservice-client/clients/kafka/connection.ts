@@ -17,20 +17,20 @@ export function getKafkaConnection(clientId?: string): KafkaConfig {
 function getConfigCTS(clientId?: string): KafkaConfig {
   return {
     clientId: clientId,
-    brokers: process.env.KAFKA_BROKER_URL.split(','),
+    brokers: process.env.KAFKA_BROKER_URL?.split(',') ?? [],
     ssl: {
       rejectUnauthorized: false,
-      ca: [readFileSync(process.env.KAFKA_PEM_PATH)],
-      key: [readFileSync(process.env.KAFKA_KEY_PATH)],
-      cert: [readFileSync(process.env.KAFKA_CERT_PATH)]
+      ca: [readFileSync(process.env.KAFKA_PEM_PATH ?? "")],
+      key: [readFileSync(process.env.KAFKA_KEY_PATH ?? "")],
+      cert: [readFileSync(process.env.KAFKA_CERT_PATH ?? "")]
     }
 
   }
 }
 
-function getConfigDefault(clientId: string): KafkaConfig {
+function getConfigDefault(clientId?: string): KafkaConfig {
   return {
     clientId: clientId,
-    brokers: process.env.KAFKA_BROKER_URL.split(','),
+    brokers: process.env.KAFKA_BROKER_URL?.split(',') ?? [],
   }
 }

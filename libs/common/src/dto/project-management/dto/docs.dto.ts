@@ -66,8 +66,8 @@ export class DocDto extends OmitType(CreateDocDto, ['projectId', 'projectIdentif
     dto.id = doc.id,
     dto.name = doc.name,
     dto.isUrl = doc.isUrl,
-    dto.readme = doc.readme,
-    dto.docUrl = doc.docUrl,
+    dto.readme = doc.readme ?? undefined,
+    dto.docUrl = doc.docUrl ?? undefined,
     dto.createdAt = doc.createdDate,
     dto.updatedAt = doc.lastUpdatedDate
 

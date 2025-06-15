@@ -19,7 +19,7 @@ export const uploadVersionEntityStub = (): UploadVersionEntity => {
     policyStatus: null,
     project: null,
     assetType: "artifact"
-  } as UploadVersionEntity
-  
+  } as unknown as UploadVersionEntity
+
 
 };

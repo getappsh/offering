@@ -22,6 +22,6 @@ export class OrgUIDEntity extends BaseEntity {
 
     @OneToOne(type => DeviceEntity, {onDelete: "SET NULL", nullable: true })
     @JoinColumn({ name: "device_id" }) // Define the foreign key column
-    device: DeviceEntity;
+    device?: DeviceEntity;
 
 }

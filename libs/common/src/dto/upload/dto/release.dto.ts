@@ -1,16 +1,16 @@
 import { ProjectType, ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsSemVer, IsString, IsBoolean} from "class-validator";
+import { IsNotEmpty, IsOptional, IsSemVer, IsString, IsBoolean } from "class-validator";
 import { ReleaseArtifactDto } from "./release-artifact.dto";
 import { Type } from "class-transformer";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 
 export class SetReleaseDto {
-  
+
   projectIdentifier: string | number
 
   projectId: number
-  
+
   @ApiProperty()
   @IsSemVer()
   version: string;
@@ -36,13 +36,13 @@ export class SetReleaseDto {
   @IsOptional()
   isDraft?: boolean = true;
 
-  @ApiProperty({ required: false, type: String, isArray: true , description: 'List of dependencies. Providing an empty array will remove all dependencies. Omitting this field or setting it to null will leave dependencies unchanged.' })
+  @ApiProperty({ required: false, type: String, isArray: true, description: 'List of dependencies. Providing an empty array will remove all dependencies. Omitting this field or setting it to null will leave dependencies unchanged.' })
   @IsOptional()
-  @IsString({each: true})
-  @IsNotEmpty({each: true})
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
   dependencies?: string[]
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -57,7 +57,7 @@ export class ReleaseDto {
 
   @ApiProperty()
   projectName: string;
-  
+
   @ApiProperty({ required: false })
   projectId?: number;
 
@@ -88,7 +88,7 @@ export class ReleaseDto {
   @ApiProperty()
   latest: boolean
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   releasedAt?: Date
 
   static fromEntity(release: ReleaseEntity): ReleaseDto {
@@ -97,8 +97,8 @@ export class ReleaseDto {
     dto.id = release.catalogId;
     dto.projectId = release?.project?.id;
     dto.projectName = release?.project?.name;
-    dto.name = release.name;
-    dto.releaseNotes = release.releaseNotes;
+    dto.name = release.name ?? "";
+    dto.releaseNotes = release.releaseNotes ?? "";
     dto.metadata = release.metadata;
     dto.status = release.status;
     dto.createdAt = release.createdAt;
@@ -106,12 +106,12 @@ export class ReleaseDto {
     dto.requiredRegulationsCount = release.requiredRegulationsCount;
     dto.compliantRegulationsCount = release.compliantRegulationsCount;
     dto.latest = release.latest;
-    dto.releasedAt = release.releasedAt;
+    dto.releasedAt = release.releasedAt ?? undefined;
 
     return dto;
   }
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 }
@@ -121,7 +121,7 @@ export class DetailedReleaseDto extends ReleaseDto {
   @ApiProperty({ type: ReleaseArtifactDto, isArray: true, required: false })
   artifacts?: ReleaseArtifactDto[];
 
-  @ApiProperty({type: ReleaseDto, isArray: true, required: false})
+  @ApiProperty({ type: ReleaseDto, isArray: true, required: false })
   dependencies: ReleaseDto[]
 
 
@@ -139,7 +139,7 @@ export class DetailedReleaseDto extends ReleaseDto {
   }
 }
 
-export class ComponentV2Dto{
+export class ComponentV2Dto {
   @ApiProperty()
   id: string;
 
@@ -149,10 +149,10 @@ export class ComponentV2Dto{
   @ApiProperty()
   projectName: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   releaseNotes?: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   metadata?: Record<string, any>;
 
   @ApiProperty({ type: 'enum', enum: ReleaseStatusEnum })
@@ -161,8 +161,8 @@ export class ComponentV2Dto{
   @ApiProperty({ type: 'enum', enum: ProjectType })
   type: ProjectType
 
-  @ApiProperty({type: 'integer', format: 'int64', required: false})
-  size: number
+  @ApiProperty({ type: 'integer', format: 'int64', required: false })
+  size?: number
 
   @ApiProperty()
   createdAt: Date;
@@ -170,10 +170,10 @@ export class ComponentV2Dto{
   @ApiProperty()
   updatedAt: Date;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   latest?: boolean
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   releasedAt?: Date
 
   static fromEntity(release: ReleaseEntity): ComponentV2Dto {
@@ -188,20 +188,20 @@ export class ComponentV2Dto{
     dto.projectName = release.project.name;
     dto.type = release.project.projectType;
     dto.latest = release.latest;
-    dto.releasedAt = release.releasedAt;
+    dto.releasedAt = release.releasedAt ?? undefined;
     dto.size = release?.artifacts
       ?.filter(a => a.isInstallationFile)
-      ?.map(a => a?.fileUpload?.size)
+      ?.map(a => a?.fileUpload?.size ?? 0)
       ?.reduce((size, a) => size + a, 0);
     return dto;
   }
-  
-  toString(){
+
+  toString() {
     return JSON.stringify(this)
   }
 }
 
-export class ReleaseParams extends ProjectIdentifierParams{
+export class ReleaseParams extends ProjectIdentifierParams {
   @ApiProperty()
   @IsSemVer()
   @Type(() => String)

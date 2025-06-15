@@ -10,7 +10,7 @@ export class MapDevicesDto extends MapDto {
 
   static fromMapEntity(mapEntity: MapEntity, devices?: DeviceDto[]): MapDevicesDto{
     let map :MapDto = super.fromMapEntity(mapEntity);
-    let allMaps: MapDevicesDto = {...map, devices}
+    let allMaps: MapDevicesDto = { ...map, devices: devices ?? [] }
     return allMaps;
   }
 

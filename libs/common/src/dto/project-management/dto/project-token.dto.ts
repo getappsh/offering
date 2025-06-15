@@ -15,72 +15,72 @@ export class ProjectTokenDto {
     @ApiProperty()
     token: string
 
-    @ApiProperty({required: false})
+    @ApiProperty({ required: false })
     expirationDate?: Date
 
-    @ApiProperty({default: false})
+    @ApiProperty({ default: false })
     neverExpires: boolean;
 
-    @ApiProperty({default: true})
+    @ApiProperty({ default: true })
     isActive: boolean = true
 
     @ApiProperty()
     createdAt: Date
 
-    static fromProjectTokenEntity(projectToken: ProjectTokenEntity){
+    static fromProjectTokenEntity(projectToken: ProjectTokenEntity) {
         let token = new ProjectTokenDto();
         token.id = projectToken.id;
         token.name = projectToken.name;
         token.token = projectToken.token;
-        token.expirationDate = projectToken.expirationDate;
+        token.expirationDate = projectToken.expirationDate ?? undefined;
         token.neverExpires = projectToken.neverExpires ?? false;
         token.isActive = projectToken.isActive;
         token.createdAt = projectToken.createdDate;
         return token
     }
-    toString(){
+    toString() {
         return JSON.stringify(this);
     }
 }
 
-export class CreateProjectTokenDto{
+export class CreateProjectTokenDto {
 
     projectIdentifier: string | number;
-   
+
     projectId: number;
- 
+
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
     @MaxLength(255)
     name: string
 
-    @ApiProperty({default: false})
+    @ApiProperty({ default: false })
     @IsBoolean()
     neverExpires: boolean;
 
-    @ApiProperty({required: false, type: Date})
+    @ApiProperty({ required: false, type: Date })
     @ValidateIf((o) => o.neverExpires === false)
     @IsDate()
     @Type(() => Date)
     expirationDate?: Date
 
-    
-    @ApiProperty({required: false})
+
+    @ApiProperty({ required: false })
     @IsBoolean()
     @IsOptional()
     isActive?: boolean
 
-    toString(){
+    toString() {
         return JSON.stringify(this)
     }
 
 }
 
 export class UpdateProjectTokenDto {
-   
+
     projectIdentifier: string | number;
-   
+
     projectId: number;
 
     id: number
@@ -93,12 +93,12 @@ export class UpdateProjectTokenDto {
     name: string
 
 
-    @ApiProperty({required: false})
+    @ApiProperty({ required: false })
     @IsBoolean()
     @IsOptional()
     isActive?: boolean
 
-    toString(){
+    toString() {
         return JSON.stringify(this)
     }
 }

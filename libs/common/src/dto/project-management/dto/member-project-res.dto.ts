@@ -8,10 +8,10 @@ export class MemberResDto {
   id: number;
 
   @ApiProperty({required: false})
-  firstName: string;
+  firstName?: string;
 
   @ApiProperty({required: false})
-  lastName: string;
+  lastName?: string;
 
   @ApiProperty({required: true})
   email: string;
@@ -20,7 +20,7 @@ export class MemberResDto {
   role: string;
 
   @ApiProperty({required: true, enum: MemberProjectStatusEnum})
-  status: MemberProjectStatusEnum
+  status?: MemberProjectStatusEnum
 
   @ApiProperty({required: false, default:-1})
   defaultProject: number;

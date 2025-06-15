@@ -7,8 +7,8 @@ export const projectEntityStub = (): ProjectEntity => {
     id: 34,
     name: uploadVersionEntityStub().component,
     description: 'Project description',
-    regulations : [],
+    regulations: [],
     tokens: [projectTokenEntityStub()],
     projectType: ProjectType.FORMATION
-  } as ProjectEntity
+  } as unknown as ProjectEntity
 };

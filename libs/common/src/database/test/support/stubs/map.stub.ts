@@ -12,7 +12,7 @@ export const mapEntityStub = (): MapEntity => {
     footprint: null,
     status: MapImportStatusEnum.START,
     mapProduct: productEntityStubNorthGaza()
-  } as MapEntity
+  } as unknown as MapEntity
 }
 
 export const updatedMapFromGazeNorthStub = (): MapEntity => {
@@ -67,12 +67,12 @@ export const withoutExpiredMap = (): MapEntity => {
   return {
     expiredDate: null,
     status: MapImportStatusEnum.DONE
-  } as MapEntity
+  } as unknown as MapEntity
 }
 
 export const withoutExpiredMapInProgress = (): MapEntity => {
   return {
     expiredDate: null,
     status: MapImportStatusEnum.IN_PROGRESS
-  } as MapEntity
+  } as unknown as MapEntity
 }

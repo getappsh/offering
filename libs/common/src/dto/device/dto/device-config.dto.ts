@@ -125,12 +125,12 @@ export class WindowsConfigDto extends BaseConfigDto {
   @IsArray()
   @Type(() => LayersConfigDto)
   @Expose()
-  layers: LayersConfigDto[];
+  layers?: LayersConfigDto[];
 
   @ApiProperty({ required: false, type: String, isArray: true })
   @IsOptional()
   @Expose()
-  getAppServerUrls: string[] | { url: string, delete: boolean };
+  getAppServerUrls?: string[] | { url: string, delete: boolean };
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -311,10 +311,10 @@ export function fromConfigEntity(eConfig: DeviceConfigEntity): AndroidConfigDto 
   } else {
     config = new WindowsConfigDto();
   }
-  config.lastConfigUpdateDate = eConfig.lastUpdatedDate;
   for (const key in eConfig.data) {
     config[key] = eConfig.data[key];
   }
+  config.lastConfigUpdateDate = eConfig.lastUpdatedDate;
   return config;
 }
 
@@ -345,7 +345,7 @@ export class DeviceConfigValidator implements PipeTransform {
     const baseErrors = await validate(base);
 
     if (baseErrors.length !== 0) {
-      throw new BadRequestException(Object.values(baseErrors[0].constraints));
+      throw new BadRequestException(Object.values(baseErrors[0].constraints ?? {}));
     }
 
     if (base.group === 'windows') {
@@ -359,7 +359,7 @@ export class DeviceConfigValidator implements PipeTransform {
       const android = plainToClass(AndroidConfigDto, value, { excludeExtraneousValues: true, exposeUnsetFields: false });
       const errors = await validate(android);
       if (errors.length !== 0) {
-        throw new BadRequestException(Object.values(errors[0].constraints));
+        throw new BadRequestException(Object.values(errors[0].constraints ?? {}));
       }
       return android
     }

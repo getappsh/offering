@@ -14,7 +14,7 @@ export const deployStatusEntityStub = (): DeployStatusEntity => {
     deployDone: null,
     deployEstimateTime: 3600,
     currentTime: null,
-  } as DeployStatusEntity
+  } as unknown as DeployStatusEntity
 };
 
 

@@ -13,49 +13,49 @@ import pino from 'pino';
 
 
 
-export function createIMports(options: LoggerModuleOptions): DynamicModule[]{
+export function createIMports(options: LoggerModuleOptions): DynamicModule[] {
   let imports: DynamicModule[] = []
 
-  if (options.jsonLogger){
+  if (options.jsonLogger) {
     imports.push(createPinoLogger(options.name))
   }
 
-  if (options.httpCls){
+  if (options.httpCls) {
     imports.push(
       ClsModule.forRoot({
         global: true,
-        middleware: { 
+        middleware: {
           mount: true,
           generateId: true,
           idGenerator: (req: Request) =>
-              req.headers['x-request-id'] ?? nanoid()
-         },
+            req.headers['x-request-id'] ?? nanoid()
+        },
       }),
     )
 
-  }else{
+  } else {
     imports.push(
       ClsModule.forRoot({
         global: true,
-        guard: { 
+        guard: {
           mount: true,
           // generateId: true,
           // idGenerator: (context: ExecutionContext) => {
           //   const input = context.switchToRpc().getData();
           //   return input.headers.traceId
           // }
-        }, 
+        },
       })
     )
-    
+
   }
   return imports
 }
 
-export function createProviders(options: LoggerModuleOptions): Provider[]{
+export function createProviders(options: LoggerModuleOptions): Provider[] {
   let providers: Provider[] = []
-  
-  if(!options.httpCls){
+
+  if (!options.httpCls) {
     providers.push(
       {
         provide: APP_INTERCEPTOR,
@@ -69,12 +69,12 @@ export function createProviders(options: LoggerModuleOptions): Provider[]{
     useClass: LoggingInterceptor,
   })
 
-  if(options.jsonLogger){
+  if (options.jsonLogger) {
     providers.push({
       provide: GET_APP_LOGGER,
       useClass: LoggerService
-      })
-  }else{
+    })
+  } else {
     const logLevels: LogLevel[] = []
     switch (process.env.LOG_LEVEL) {
       default:
@@ -91,7 +91,7 @@ export function createProviders(options: LoggerModuleOptions): Provider[]{
 
     const cLogger = new ConsoleLogger()
     cLogger.setLogLevels(logLevels)
-    
+
     providers.push(
       {
         provide: GET_APP_LOGGER,
@@ -104,15 +104,15 @@ export function createProviders(options: LoggerModuleOptions): Provider[]{
 }
 
 
-function createPinoLogger(name: string): DynamicModule{
+function createPinoLogger(name: string): DynamicModule {
   return LoggerModule.forRoot({
     pinoHttp: {
       level: process.env.LOG_LEVEL || 'trace',
       name: name,
       quietReqLogger: true,
       autoLogging: false,
-      genReqId: () => undefined,
-      base: {name: undefined},
+      genReqId: undefined,
+      base: { name: undefined },
       timestamp: pino.stdTimeFunctions.isoTime,
       // transport: {
       //   target: 'pino-pretty',

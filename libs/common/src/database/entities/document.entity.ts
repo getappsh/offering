@@ -12,10 +12,10 @@ export class DocEntity extends BaseEntity {
   isUrl: boolean;
 
   @Column({name: 'readme', type: "text", nullable: true })
-  readme?: string;
+  readme?: string | null;
 
-  @Column({ name: "doc_url", nullable: true })
-  docUrl?: string;
+  @Column({ name: "doc_url", nullable: true, type: "text" })
+  docUrl?: string | null;
 
   @ManyToOne(() => ProjectEntity, (project) => project.docs, { onDelete: "CASCADE", nullable: false })
   @JoinColumn({ name: 'project_id' })

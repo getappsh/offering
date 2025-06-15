@@ -78,8 +78,7 @@ export const ProjectManagementTopics = {
     GET_PROJECTS: `getapp-project-management.get-projects${region}`,
     SEARCH_PROJECTS: `getapp-project-management.search-projects${region}`,
     GET_PROJECT_BY_IDENTIFIER: `getapp-project-management.get-project-by-identifier${region}`,
-    GET_PLATFORMS: `getapp-project-management.get-platforms${region}`,
-
+    
     ADD_PROJECT_NEW_MEMBER: `getapp-project-management.add-project-new-member${region}`,
     CONFIRM_PROJECT_MEMBER: `getapp-project-management.confirm-project-member${region}`,
     EDIT_PROJECT_MEMBER: `getapp-project-management.edit-project-member${region}`,
@@ -188,6 +187,30 @@ export const DevicesGroupTopics = {
     GET_GROUP_DEVICES: `getapp-device.group.get-devices${region}`,
     SET_GROUP_DEVICES: `getapp-device.group.set-devices${region}`,
 } as const
+
+export const DevicesHierarchyTopics = {
+    // Device Types
+    GET_DEVICE_TYPES: `getapp-device.hierarchy.get-device-types${region}`,
+    GET_DEVICE_TYPE_BY_NAME: `getapp-device.hierarchy.get-device-type-by-name${region}`,
+    CREATE_DEVICE_TYPE: `getapp-device.hierarchy.create-device-type${region}`,
+    UPDATE_DEVICE_TYPE: `getapp-device.hierarchy.update-device-type${region}`,
+    DELETE_DEVICE_TYPE: `getapp-device.hierarchy.delete-device-type${region}`,
+
+    // Platforms
+    GET_PLATFORMS: `getapp-device.hierarchy.get-platforms${region}`,
+    GET_PLATFORM_BY_NAME: `getapp-device.hierarchy.get-platform-by-name${region}`,
+    CREATE_PLATFORM: `getapp-device.hierarchy.create-platform${region}`,
+    UPDATE_PLATFORM: `getapp-device.hierarchy.update-platform${region}`,
+    DELETE_PLATFORM: `getapp-device.hierarchy.delete-platform${region}`,
+
+    // Hierarchy Tree
+    GET_PLATFORM_HIERARCHY_TREE: `getapp-device.hierarchy.get-platform-hierarchy-tree${region}`,
+    GET_DEVICE_TYPE_HIERARCHY_TREE: `getapp-device.hierarchy.get-device-type-hierarchy-tree${region}`,
+    ADD_DEVICE_TYPE_TO_PLATFORM: `getapp-device.hierarchy.add-device-type-to-platform${region}`,
+    REMOVE_DEVICE_TYPE_FROM_PLATFORM: `getapp-device.hierarchy.remove-device-type-from-platform${region}`,
+    ADD_PROJECT_TO_DEVICE_TYPE: `getapp-device.hierarchy.add-project-to-device-type${region}`,
+    REMOVE_PROJECT_FROM_DEVICE_TYPE: `getapp-device.hierarchy.remove-project-from-device-type${region}`,
+}
 
 export const DeviceBugReportTopics = {
     NEW_BUG_REPORT: `getapp-device.bug-report.new${region}`,

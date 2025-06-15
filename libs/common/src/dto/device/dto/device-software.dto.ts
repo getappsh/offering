@@ -31,7 +31,7 @@ export class SoftwareStateDto {
   offering: ComponentV2Dto[];
 
   @ApiProperty({ required: false})
-  error: string;
+  error?: string;
 
   static fromDeviceComponentEntity(componentState: DeviceComponentEntity) {
 

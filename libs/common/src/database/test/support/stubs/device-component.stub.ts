@@ -9,5 +9,5 @@ export const deviceComponentEntityStub = (): DeviceComponentEntity => {
     release: { catalogId: upload.catalogId, version: upload.version } as ReleaseEntity,
     state: DeviceComponentStateEnum.INSTALLED,
     error: null
-  } as DeviceComponentEntity
+  } as unknown as DeviceComponentEntity
 }

@@ -37,8 +37,8 @@ export class KcService implements OidcService {
     // data.append('password', this.config.get('KC_ADMIN_PASSWORD'));
     // data.append('grant_type', 'password');
 
-    data.append('client_id', this.config.get('CLIENT_ID'));
-    data.append('client_secret', this.config.get('SECRET_KEY'));
+    data.append('client_id', this.config.getOrThrow('CLIENT_ID'));
+    data.append('client_secret', this.config.getOrThrow('SECRET_KEY'));
     data.append('grant_type', 'client_credentials');
 
 

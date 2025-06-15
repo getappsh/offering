@@ -4,6 +4,6 @@ import { MemberProjectEntity, ProjectEntity } from "@app/common/database/entitie
 export const PROJECT_ACCESS_SERVICE = 'PROJECT_ACCESS_SERVICE'
 
 export interface ProjectAccessService {
-  getMemberInProject( projectIdentifier: string | number, email: string): Promise<MemberProjectEntity>;
+  getMemberInProject( projectIdentifier: string | number, email: string): Promise<MemberProjectEntity | null>;
   getProjectFromToken(token: string): Promise<ProjectEntity>;
 }

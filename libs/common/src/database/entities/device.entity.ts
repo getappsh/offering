@@ -1,10 +1,10 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
-import { UploadVersionEntity } from "./upload-version.entity";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { DeviceMapStateEntity } from "./device-map-state.entity";
 import { OrgUIDEntity } from "./org-uid.entity";
 import { DeviceComponentEntity } from "./device-component-state.entity";
 import { PlatformEntity } from "./platform.entity";
 import { ReleaseEntity } from "./release.entity";
+import { DeviceTypeEntity } from "./device-type.entity";
 
 @Entity("device")
 export class DeviceEntity {
@@ -21,8 +21,16 @@ export class DeviceEntity {
   @Column({ name: 'last_connection_date', type: "timestamptz", nullable: true })
   lastConnectionDate: Date;
 
+  @ManyToOne(() => PlatformEntity, { nullable: true, eager: true, onUpdate: "CASCADE" })
+  @JoinColumn({ name: "platform_name" })
+  platform?: PlatformEntity;
+
+  @ManyToOne(() => DeviceTypeEntity, { nullable: true, eager: true, onUpdate: "CASCADE" })
+  @JoinColumn({ name: "device_type" })
+  deviceType?: DeviceTypeEntity;
+
   @Column({ nullable: true })
-  name: string
+  name: string;
 
   @Column({ name: 'MAC', nullable: true })
   MAC: string;
@@ -40,7 +48,11 @@ export class DeviceEntity {
   possibleBandwidth: string;
 
   @Column({ name: 'available_storage', nullable: true })
-  availableStorage: string
+  availableStorage: string;
+
+  @ManyToOne(() => DeviceEntity, { nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "parent" })
+  parent: DeviceEntity;
 
   @ManyToMany(() => ReleaseEntity, releaseEntity => releaseEntity.devices, {
     cascade: true
@@ -57,13 +69,13 @@ export class DeviceEntity {
 
   @ManyToMany(() => PlatformEntity, { eager: true })
   @JoinTable({
-      name: "device_platforms",
-      joinColumn: { name: "device_ID", referencedColumnName: "ID" },
-      inverseJoinColumn: { name: "platform_name", referencedColumnName: "name" },
+    name: "device_platforms",
+    joinColumn: { name: "device_ID", referencedColumnName: "ID" },
+    inverseJoinColumn: { name: "platform_name", referencedColumnName: "name" },
   })
   platforms: PlatformEntity[];
 
-  @Column("text", {name: "formations", array: true, nullable: true})
+  @Column("text", { name: "formations", array: true, nullable: true })
   formations: string[];
 
 }

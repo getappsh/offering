@@ -2,7 +2,7 @@ import { ExecutionContext } from '@nestjs/common';
 import { KafkaContext, TcpContext } from '@nestjs/microservices';
 
 
-export function extractHeaders(context: ExecutionContext): Record<string, any> {
+export function extractHeaders(context: ExecutionContext) {
   const input = context.switchToRpc();
   const msgContext = input.getContext();
  

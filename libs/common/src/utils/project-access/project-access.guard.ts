@@ -54,7 +54,7 @@ export class ProjectAccessGuard implements CanActivate {
     return true
   }
 
-  private async validateUser(projectIdentifier: string | number, email: string, roles: string[]): Promise<ProjectEntity> {
+  private async validateUser(projectIdentifier: string | number, email: string, roles: string[]): Promise<ProjectEntity | undefined> {
     if (!email) return;
       const memberProject = await this.accessService.getMemberInProject(projectIdentifier, email);
       if (!memberProject){
@@ -71,7 +71,7 @@ export class ProjectAccessGuard implements CanActivate {
     return memberProject.project
   }
 
-  private async validateProject(projectToken: string, roles: string[]): Promise<ProjectEntity> {
+  private async validateProject(projectToken: string, roles: string[]): Promise<ProjectEntity | undefined> {
     if (!projectToken) return;
     // TODO: Validate role for project token
 

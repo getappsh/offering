@@ -84,18 +84,22 @@ export class SituationalDiscoveryDto {
 
 export class PhysicalDiscoveryDto {
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsValidStringFor(Pattern.MAC)
   MAC: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsValidStringFor(Pattern.IP)
   IP: string;
 
-  @ApiProperty({required: true})
-  @IsNotEmpty()
+  /**
+   * @deprecated This field is deprecated and will be removed in the future. use instead id in the root object
+   */
+  @Deprecated()
+  @ApiProperty({ required: false, deprecated: true })
+  @IsOptional()
   @IsString()
   ID: string;
 
@@ -105,17 +109,17 @@ export class PhysicalDiscoveryDto {
   @IsEnum(OS)
   OS: OS;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   serialNumber: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   possibleBandwidth: string;
 
-  
+
   /**
     * @deprecated This field is deprecated and will be removed in the future. use instead SituationalDiscoveryDto.availableStorage
     */
@@ -130,21 +134,21 @@ export class PhysicalDiscoveryDto {
 
 export class GeneralDiscoveryDto {
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PersonalDiscoveryDto)
   personalDevice: PersonalDiscoveryDto;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => SituationalDiscoveryDto)
   situationalDevice: SituationalDiscoveryDto;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsNotEmpty()
   @ValidateNested()

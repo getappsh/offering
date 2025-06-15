@@ -24,7 +24,7 @@ export class DBService implements OidcService {
   async getUsers(params?: Partial<{ [key in keyof UserDto]: any }>): Promise<UserDto[]> {
     this.logger.log('get all users from db');
 
-    const getEKey = (key: keyof UserDto): keyof MemberEntity => {
+    const getEKey = (key: keyof UserDto): keyof MemberEntity | undefined => {
       switch (key) {
         case "email":
           return "email";

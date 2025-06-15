@@ -53,7 +53,7 @@ export class ImportPayload {
     importPayload.webhook = [
       {
         events: ["TASK_COMPLETED", "TASK_FAILED"],
-        url: process.env.LIBOT_CALLBACK_URL
+        url: process.env.LIBOT_CALLBACK_URL ?? ""
       }
     ]
     importPayload.ROI = {
@@ -69,7 +69,7 @@ export class ImportPayload {
         }
       ]
     }
-    importPayload.description = `Region: ${attrs.product.region} - date: ${new Date().toISOString()}`
+    importPayload.description = `Map catalogId: ${attrs.requestId}, ${attrs.miscellaneous.personalName ? "Affiliation: " + attrs.miscellaneous.personalName : ""}, DeviceId: ${attrs.miscellaneous.deviceId}`
     return importPayload
   }
 

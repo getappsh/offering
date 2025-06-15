@@ -17,7 +17,7 @@ export enum MapOfferingStatus {
 
 export class mapOfferingConfig {
   @ApiProperty({ required: false })
-  exportMaxResolutionDeg: number
+  exportMaxResolutionDeg?: number
 
   constructor(maxResolutionDeg?: number) {
     this.exportMaxResolutionDeg = maxResolutionDeg

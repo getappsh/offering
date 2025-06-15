@@ -41,9 +41,9 @@ export class ProxyHttpConfigService {
         this.logger.log(`Destination server run in "secure" mode`)
 
         const httpsAgent = new https.Agent({
-          ca: fs.readFileSync(process.env.CA_CERT_PATH),
-          cert: fs.readFileSync(process.env.CLIENT_CERT_PATH),
-          key: fs.readFileSync(process.env.CLIENT_KEY_PATH),
+          ca: fs.readFileSync(process.env.CA_CERT_PATH || ""),
+          cert: fs.readFileSync(process.env.CLIENT_CERT_PATH || ""),
+          key: fs.readFileSync(process.env.CLIENT_KEY_PATH || ""),
           // rejectUnauthorized: false
         })
 
@@ -95,7 +95,7 @@ export class ProxyHttpConfigService {
           this.configService.get("S3_ENDPOINT_EXTERNAL"),
           `https://${this.configService.get("BUCKET_NAME")}`
         ];
-        if (!endpointsNoAuto.some(endpoint => config.url.startsWith(endpoint))) {
+        if (!endpointsNoAuto.some(endpoint => config.url?.startsWith(endpoint))) {
           config.headers = { ...config.headers, ...(this.getDeviceAuthHeader()).headers }
           // config.headers = { ...config.headers, ...(await this.getTokenHeader()).headers }
         }

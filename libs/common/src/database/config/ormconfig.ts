@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import { PlatformEntity, DocEntity, FileUploadEntity, UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, DiscoveryMessageEntity, DeployStatusEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity, RegulationEntity, RegulationTypeEntity, RegulationStatusEntity, ReleaseEntity, ReleaseArtifactEntity, ProjectTokenEntity} from '../entities';
+import { PlatformEntity, DocEntity, FileUploadEntity, UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, DiscoveryMessageEntity, DeployStatusEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity, RegulationEntity, RegulationTypeEntity, RegulationStatusEntity, ReleaseEntity, ReleaseArtifactEntity, ProjectTokenEntity, DeviceTypeEntity} from '../entities';
 import { join } from 'path';
 import { readFileSync } from 'fs'
 import { JobsEntity } from '../entities/map-updatesCronJob';
@@ -57,6 +57,7 @@ const ormConfig = new DataSource({
     ProjectTokenEntity,
     DocEntity,
     PlatformEntity,
+    DeviceTypeEntity,
   ],
   migrations: [join(__dirname, '../migration/*.{js,ts}')],
   logging: false,
@@ -71,9 +72,9 @@ function getDBAuthParams() {
     case "TNG":
       return {
         ssl: {
-          ca: [readFileSync(process.env.DB_PEM_PATH)],
-          key: [readFileSync(process.env.DB_KEY_PATH)],
-          cert: [readFileSync(process.env.DB_CERT_PATH)]
+          ca: [readFileSync(process.env.DB_PEM_PATH ?? "")],
+          key: [readFileSync(process.env.DB_KEY_PATH ?? "")],
+          cert: [readFileSync(process.env.DB_CERT_PATH ?? "")]
         }
       }
 

@@ -6,20 +6,20 @@ import { ComponentV2Dto } from "../../upload";
 
 
 export class DeviceComponentsOfferingDto {
-  @ApiProperty({type: () => [ComponentV2Dto]})
+  @ApiProperty({ type: () => [ComponentV2Dto] })
   @IsArray()
-  @ValidateNested({each:true})
+  @ValidateNested({ each: true })
   @Type(() => ComponentV2Dto)
   offer: ComponentV2Dto[]
 
 
-  @ApiProperty({type: () => [ComponentV2Dto]})
+  @ApiProperty({ type: () => [ComponentV2Dto] })
   @IsArray()
-  @ValidateNested({each:true})
+  @ValidateNested({ each: true })
   @Type(() => ComponentV2Dto)
   push: ComponentV2Dto[]
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -32,13 +32,13 @@ export class ComponentOfferingRequestDto {
   formations?: string[]
   components?: string[]
 
-  static fromDiscoveryMessageDto(dis: DiscoveryMessageV2Dto): ComponentOfferingRequestDto{
+  static fromDiscoveryMessageDto(dis: DiscoveryMessageV2Dto): ComponentOfferingRequestDto {
     const dto = new ComponentOfferingRequestDto();
-    dto.deviceId = dis.general.physicalDevice.ID;
+    dto.deviceId = dis.id;
 
     dto.components = dis?.softwareData?.components?.map(comp => comp.catalogId);
     dto.formations = dis?.softwareData?.formations;
-    dto.platforms = dis?.softwareData?.platforms;
+    dto.platforms = dis?.platform ? [dis.platform.name] : []
     return dto
   }
 }

@@ -54,7 +54,7 @@ export class Validators {
     const polygon: number[][] = []
     if (points !== null && points.length % 2 === 0) {
       for (let i = 0; i < points.length; i = i + 2) {
-        const point = []
+        const point: number[] = []
         point.push(points[i])
         point.push(points[i + 1])
         polygon.push(point)

@@ -16,24 +16,24 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     if (context.getType() === 'http') {
       return this.logHttpCall(context, next);
-    }else{
+    } else {
       return this.logKafkaCall(context, next)
     }
-  
+
   }
   private logKafkaCall(context: ExecutionContext, next: CallHandler): Observable<any> {
     const input = context.switchToRpc();
     const msgContext = input.getContext()
-    const {headers, ...data} = input.getData()
+    const { headers, ...data } = input.getData()
 
-    let topic: string
-    if (msgContext instanceof KafkaContext){
+    let topic: string = ""
+    if (msgContext instanceof KafkaContext) {
       topic = msgContext.getTopic()
-    }else if(msgContext instanceof TcpContext) {
+    } else if (msgContext instanceof TcpContext) {
       topic = msgContext.getPattern()
     }
 
-    this.logger.verbose(JSON.stringify({topic, req: data}));
+    this.logger.verbose(JSON.stringify({ topic, req: data }));
 
     const now = Date.now();
     return next.handle().pipe(
@@ -85,5 +85,5 @@ export class LoggingInterceptor implements NestInterceptor {
     );
   }
 
-  
+
 }

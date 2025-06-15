@@ -9,27 +9,27 @@ export interface OidcService {
 }
 
 export class UserSearchDto {
-  
+
   @ApiProperty({required:false})
   @IsOptional()
   @IsString()
   email?: string;
-  
+
   @ApiProperty({required:false})
   @IsOptional()
   @IsString()
   firstName?: string;
-  
+
   @ApiProperty({required:false})
   @IsOptional()
   @IsString()
   lastName?: string;
-  
+
   @ApiProperty({required:false})
   @IsOptional()
   @IsString()
   username?: string;
-  
+
   @IsOptional()
   @IsBoolean()
   exact?: boolean;

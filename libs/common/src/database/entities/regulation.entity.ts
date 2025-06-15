@@ -13,10 +13,10 @@ export class RegulationEntity {
     name: string;
 
     @Column({name: 'display_name', default: null})
-    displayName: string;
+    displayName?: string;
 
     @Column({name: 'description', default: null})
-    description: string;
+    description?: string;
 
     @ManyToOne(() => RegulationTypeEntity, { eager: true })
     @JoinColumn({name: 'type_id'})
@@ -27,7 +27,7 @@ export class RegulationEntity {
     project: ProjectEntity;
 
     @Column({name: 'config', nullable: true })
-    config: string;
+    config?: string;
 
     @Column({ name: 'order', default: 0 })
     order: number;

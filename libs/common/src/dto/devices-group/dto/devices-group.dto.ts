@@ -1,7 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
-import { DeviceMapDto } from "../../device/dto/device-map.dto";
-import { Type } from "class-transformer";
+import { ApiProperty, getSchemaPath } from "@nestjs/swagger";
+import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 import { OrgGroupEntity } from "@app/common/database/entities";
 
 export class ChildGroupDto {
@@ -18,7 +16,7 @@ export class ChildGroupDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  description: string
+  description?: string
 
   @ApiProperty({ required: false, type: String, isArray: true })
   @IsArray()
@@ -33,7 +31,7 @@ export class ChildGroupDto {
   @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
-  parent: number;
+  parent?: number;
 
 
   static fromDevicesGroupEntity(dge: OrgGroupEntity): ChildGroupDto {
@@ -41,7 +39,7 @@ export class ChildGroupDto {
     devicesGroupDto.id = dge.id;
     devicesGroupDto.name = dge.name;
     devicesGroupDto.description = dge?.description;
-    devicesGroupDto.devices = dge?.orgUID?.map(ids => ids.device?.ID)
+    devicesGroupDto.devices = dge?.orgUID?.map(ids => ids.device?.ID).filter((id): id is string => typeof id === 'string')
     devicesGroupDto.groups = dge?.children?.map(childe => childe.id)
 
     return devicesGroupDto
@@ -51,10 +49,10 @@ export class ChildGroupDto {
     let devicesGroupDto = new ChildGroupDto();
     devicesGroupDto.id = cgr.group_id;
     devicesGroupDto.name = cgr.group_name;
-    devicesGroupDto.description = cgr?.group_description;
+    devicesGroupDto.description = cgr?.group_description ?? undefined;
     devicesGroupDto.devices = cgr.deviceIds
     devicesGroupDto.groups = cgr.childrenIds;
-    devicesGroupDto.parent = cgr.group_parent_id;
+    devicesGroupDto.parent = cgr.group_parent_id ?? undefined;
     return devicesGroupDto
   }
 
@@ -63,6 +61,22 @@ export class ChildGroupDto {
   }
 
 }
+
+export class GroupResponseDto {
+  @ApiProperty({
+    type: [String],
+    description: 'Array of group IDs (as strings) that are root nodes',
+  })
+  roots: string[];
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { $ref: getSchemaPath(ChildGroupDto) },
+    description: 'Map of group ID (as string) to ChildGroupDto',
+  })
+  groups: Record<string, ChildGroupDto>;
+}
+
 
 export class ChildGroupRawDto {
 

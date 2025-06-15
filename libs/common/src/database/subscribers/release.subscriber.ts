@@ -19,7 +19,7 @@ export class ReleaseSubscriber implements EntitySubscriberInterface<ReleaseEntit
     const projectRepo = event.manager.getRepository(ProjectEntity);
     const project = await projectRepo.findOne({ where: { id: release.project.id }});
 
-    release.catalogId = `${release.project.id}.${project.name}@${release.version}`;  
+    release.catalogId = `${release.project.id}.${project?.name}@${release.version}`;  
   }
   async afterInsert(event: InsertEvent<ReleaseEntity>) {
     this.logger.verbose(`After insert release for project: ${event.entity.project.id}, version: ${event.entity.version}`);

@@ -11,11 +11,11 @@ export class RegulationDto {
     @ApiProperty({ description: 'Name of the regulation' })
     name: string;
 
-    @ApiProperty({ description: 'Display name of the regulation' })
-    displayName: string;
+    @ApiProperty({ description: 'Display name of the regulation', required: false })
+    displayName?: string;
 
-    @ApiProperty({ description: 'Description of the regulation' })
-    description: string;
+    @ApiProperty({ description: 'Description of the regulation', required: false })
+    description?: string;
 
     @ApiProperty({ description: 'Type of the regulation' , type: RegulationTypeDto})
     type: RegulationTypeDto;

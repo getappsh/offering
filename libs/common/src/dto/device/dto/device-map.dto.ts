@@ -11,7 +11,7 @@ export class DeviceMapDto extends DeviceDto {
   @IsNotEmpty()
   maps: MapStateDto[];
 
-  static fromDeviceMapEntity(dme: DeviceEntity, discoveryE: DiscoveryMessageEntity): DeviceMapDto {
+  static fromDeviceMapEntity(dme: DeviceEntity, discoveryE?: DiscoveryMessageEntity): DeviceMapDto {
     if(!dme.maps){
       throw new Error("device entity must have a maps property")
     }

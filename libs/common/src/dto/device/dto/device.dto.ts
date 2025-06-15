@@ -67,7 +67,7 @@ export class DeviceDto {
   formations: string[]
 
 
-  static fromDeviceEntity(deviceE: DeviceEntity, discoveryE: DiscoveryMessageEntity): DeviceDto {
+  static fromDeviceEntity(deviceE: DeviceEntity, discoveryE?: DiscoveryMessageEntity): DeviceDto {
     let device = new DeviceDto()
     device.id = deviceE.ID;
     device.lastUpdatedDate = deviceE.lastUpdatedDate
