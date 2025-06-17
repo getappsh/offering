@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { OS } from "./enums.entity";
 import { DeviceTypeEntity } from "./device-type.entity";
 import { truncate } from "fs";
@@ -6,7 +6,10 @@ import { truncate } from "fs";
 @Entity("platform")
 export class PlatformEntity {
 
-  @PrimaryColumn({ name: "name" })
+  @PrimaryGeneratedColumn()
+  id: number
+
+  @Column({ name: "name", unique: true })
   name: string;
 
   @Column({ name: "description", default: null })
@@ -24,8 +27,8 @@ export class PlatformEntity {
   @ManyToMany(() => DeviceTypeEntity, deviceType => deviceType.platforms, { cascade: true })
   @JoinTable({
     name: "platform_device_type",
-    joinColumn: { name: "platform_name", referencedColumnName: "name" },
-    inverseJoinColumn: { name: "device_type_name", referencedColumnName: "name" },
+    joinColumn: { name: "platform_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "device_type_id", referencedColumnName: "id" },
   })
   deviceTypes: DeviceTypeEntity[];
 }

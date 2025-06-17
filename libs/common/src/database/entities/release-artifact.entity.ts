@@ -1,9 +1,8 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToOne, Index, Check, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToOne, Index, Check } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { ReleaseEntity } from './release.entity';
 import { ArtifactTypeEnum } from './enums.entity';
 import { FileUploadEntity } from './file-upload.entity';
-import { PlatformEntity } from './platform.entity';
 
 @Entity('release_artifact')
 
@@ -27,13 +26,6 @@ export class ReleaseArtifactEntity extends BaseEntity {
   @Column({ name: 'metadata', type: 'jsonb', default: {} })
   metadata: Record<string, any>;
 
-  @ManyToMany(() => PlatformEntity, { eager: true })
-  @JoinTable({
-      name: "artifact_platforms",
-      joinColumn: { name: "artifact_id", referencedColumnName: "id" },
-      inverseJoinColumn: { name: "platform_name", referencedColumnName: "name" },
-  })
-  platforms: PlatformEntity[];
 
   @ManyToOne(() => ReleaseEntity, release => release.artifacts, {nullable: false})
   @JoinColumn({ name: 'release_id' })

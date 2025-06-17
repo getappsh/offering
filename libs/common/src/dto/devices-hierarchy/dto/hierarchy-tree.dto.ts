@@ -3,6 +3,8 @@ import { Transform, Type } from "class-transformer";
 import { IsString, IsNotEmpty } from "class-validator";
 import { ProjectIdentifierParams } from "../../project-management";
 import { DeviceTypeEntity, PlatformEntity, ProjectEntity } from "@app/common/database/entities";
+import { PlatformParams } from "./platform.dto";
+import { DeviceTypeParams } from "./device-type.dto";
 
 
 export class ProjectRefDto {
@@ -25,6 +27,10 @@ export class ProjectRefDto {
 }
 
 export class DeviceTypeHierarchyDto {
+
+  @ApiProperty({ description: "ID of the device type" })
+  deviceTypeId: number;
+
   @ApiProperty({ description: "Name of the device type" })
   deviceTypeName: string;
 
@@ -33,6 +39,7 @@ export class DeviceTypeHierarchyDto {
 
   static fromDeviceTypeEntity(deviceType: DeviceTypeEntity) {
     const dto = new DeviceTypeHierarchyDto();
+    dto.deviceTypeId = deviceType.id;
     dto.deviceTypeName = deviceType.name;
     dto.projects = deviceType.projects.map(ProjectRefDto.fromProjectEntity);
     return dto;
@@ -45,6 +52,9 @@ export class DeviceTypeHierarchyDto {
 
 
 export class PlatformHierarchyDto {
+  @ApiProperty({ description: "ID of the platform" })
+  platformId: number;
+
   @ApiProperty({description: "Name of the platform"})
   platformName: string;
 
@@ -53,6 +63,7 @@ export class PlatformHierarchyDto {
 
   static fromPlatformEntity(platform: PlatformEntity) {
     const dto = new PlatformHierarchyDto();
+    dto.platformId = platform.id;
     dto.platformName = platform.name;
     dto.deviceTypes = platform.deviceTypes.map(DeviceTypeHierarchyDto.fromDeviceTypeEntity);
     return dto;
@@ -64,27 +75,12 @@ export class PlatformHierarchyDto {
 }
 
 
-export class PlatformDeviceTypeParams {
-  @ApiProperty({ description: "Name of the platform" })
-  @IsString()
-  @IsNotEmpty()
-  @Transform(({ value }) =>
-    value.toLowerCase().trim().replace(/\s+/g, "-")
-  )
-  @Type(() => String)
-  platformName: string;
-
-  @ApiProperty({ description: "Name of the device type" })
-  @IsString()
-  @IsNotEmpty()
-  @Transform(({ value }) =>
-    value.toLowerCase().trim().replace(/\s+/g, "-")
-  )
-  @Type(() => String)
-  deviceTypeName: string;
-}
+export class PlatformDeviceTypeParams extends IntersectionType(
+  PlatformParams,
+  DeviceTypeParams
+) { }
 
 export class DeviceTypeProjectParams extends IntersectionType(
-  PickType(PlatformDeviceTypeParams, ['deviceTypeName'] as const),
+  DeviceTypeParams,
   ProjectIdentifierParams
 ) {}

@@ -22,11 +22,11 @@ export class DeviceEntity {
   lastConnectionDate: Date;
 
   @ManyToOne(() => PlatformEntity, { nullable: true, eager: true, onUpdate: "CASCADE" })
-  @JoinColumn({ name: "platform_name" })
+  @JoinColumn({ name: "platform_id" })
   platform?: PlatformEntity;
 
   @ManyToOne(() => DeviceTypeEntity, { nullable: true, eager: true, onUpdate: "CASCADE" })
-  @JoinColumn({ name: "device_type" })
+  @JoinColumn({ name: "device_type_id" })
   deviceType?: DeviceTypeEntity;
 
   @Column({ nullable: true })
@@ -67,13 +67,13 @@ export class DeviceEntity {
   @OneToOne(type => OrgUIDEntity, org => org.device, { nullable: true })
   orgUID: OrgUIDEntity
 
-  @ManyToMany(() => PlatformEntity, { eager: true })
-  @JoinTable({
-    name: "device_platforms",
-    joinColumn: { name: "device_ID", referencedColumnName: "ID" },
-    inverseJoinColumn: { name: "platform_name", referencedColumnName: "name" },
-  })
-  platforms: PlatformEntity[];
+  // @ManyToMany(() => PlatformEntity, { eager: true })
+  // @JoinTable({
+  //   name: "device_platforms",
+  //   joinColumn: { name: "device_ID", referencedColumnName: "ID" },
+  //   inverseJoinColumn: { name: "platform_name", referencedColumnName: "name" },
+  // })
+  // platforms: PlatformEntity[];
 
   @Column("text", { name: "formations", array: true, nullable: true })
   formations: string[];
