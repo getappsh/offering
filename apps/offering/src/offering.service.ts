@@ -340,7 +340,7 @@ export class OfferingService implements OnModuleInit {
       select: {ID: true},
       where: [
         {components: {release: {project: {id: In(projects)}}}},
-        {platforms: {name: In(platforms)}},
+        {platform: {name: In(platforms)}},
         {formations: ArrayOverlap(formations)}
       ]
     })
