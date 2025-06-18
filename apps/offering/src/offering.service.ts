@@ -101,22 +101,6 @@ export class OfferingService implements OnModuleInit {
      return offering
   }
 
-  async getOfferOfComp(catalogId: string){
-    const release = await this.releaseRepo.findOne({
-      where: {
-        catalogId: catalogId,
-        status: ReleaseStatusEnum.RELEASED
-      },
-      relations: {project: true, artifacts: {fileUpload: true}},
-      select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true} }
-    })
-
-    if (!release){
-      throw new NotFoundException(`Release ${catalogId} not found`)
-    }
-    return ComponentV2Dto.fromEntity(release);
-  }
-
   // Return the latest release for each component id
   async getUpdatesForComponents(components: string[]): Promise<ReleaseEntity[]> {
     this.logger.debug(`Get updates for releaseIds: ${components}`);
