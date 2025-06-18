@@ -2,13 +2,16 @@ import { ComponentOfferingEntity, DeviceComponentStateEnum, DeviceEntity, Device
 import { DeviceMapStateDto } from "@app/common/dto/device";
 import { DeviceComponentStateDto } from "@app/common/dto/device/dto/device-software.dto";
 import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
+import { DeviceTypeHierarchyDto, DeviceTypeParams, PlatformHierarchyDto, PlatformParams } from "@app/common/dto/devices-hierarchy";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
+import { DeviceTypeOfferingDto, PlatformOfferingDto, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
+import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { ComponentV2Dto, ReleaseChangedEventDto, ReleaseDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
-import { DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
+import { DevicesHierarchyTopics, DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
 import { SafeCron } from "@app/common/safe-cron";
-import { Inject, Injectable, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
 import { ArrayOverlap, In, Repository } from "typeorm";
@@ -370,6 +373,97 @@ export class OfferingService implements OnModuleInit {
   }
 
 
+  async getOfferingForPlatform(params: PlatformParams): Promise<PlatformOfferingDto> {
+    this.logger.log(`get offering for platform: ${params.platformId}`);
+    let tree: PlatformHierarchyDto
+    try{
+      tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE, params));
+    }catch(e){
+      this.logger.error(`get offering for platform: ${params.platformId} error: ${e}`);
+      throw new InternalServerErrorException(`get offering for platform: ${params.platformId} error: ${e}`)
+    }
+    const projects = tree.deviceTypes.flatMap(dt => dt.projects).map(p => p.projectId);
+    const componentOffering = await this.getOfferingForProjects(projects);
+    
+    let platformOffering = PlatformOfferingDto.fromPlatformHierarchyDto(tree);
+
+    platformOffering.deviceTypes?.map(dt => {
+      dt.projects?.map(p => {
+        const release = componentOffering.get(p.projectId);
+        if (release){
+          p.releases.push(release)
+        }
+      })
+    })
+    return platformOffering
+  }
+
+  async getOfferingForDeviceType(params: DeviceTypeParams): Promise<DeviceTypeOfferingDto> {
+    this.logger.log(`get offering for device type: ${params.deviceTypeId}`);
+    let tree: DeviceTypeHierarchyDto
+    try{
+      tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE, params));
+    }catch(e){
+      this.logger.error(`get offering for device type: ${params.deviceTypeId} error: ${e}`);
+      throw new InternalServerErrorException(`get offering for device type: ${params.deviceTypeId} error: ${e}`)
+    }
+    const projects = tree.projects.map(p => p.projectId);
+    const componentOffering = await this.getOfferingForProjects(projects);
+
+    let deviceTypeOffering = DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
+
+    deviceTypeOffering.projects?.map(p => {
+      const release = componentOffering.get(p.projectId);
+      if (release){
+        p.releases.push(release)
+      }
+    })
+
+    return deviceTypeOffering
+  }
+
+  async getOfferingForProject(params: ProjectIdentifierParams): Promise<ProjectRefOfferingDto>{
+    this.logger.log(`get offering for project: ${params.projectIdentifier}`);
+    let project;
+    if (typeof params.projectIdentifier === 'string'){
+      project = await this.projectRepo.findOneBy({name: params.projectIdentifier});
+    }else {
+      project = await this.projectRepo.findOneBy({id: params.projectIdentifier});
+    }
+
+    if (!project){
+      this.logger.error(`get offering for project: ${params.projectIdentifier} not found`);
+      throw new NotFoundException(`get offering for project: ${params.projectIdentifier} not found`);
+    }
+    const offering = await this.getOfferingForProjects([project.id]);
+    
+    const projectOffering = new ProjectRefOfferingDto();
+    projectOffering.projectId = project.id;
+    projectOffering.projectName = project.name;
+
+    const release = offering.get(project.id);
+    if (release){
+      projectOffering.releases.push(release)
+    }
+
+    return projectOffering
+  }
+
+  private async getOfferingForProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
+    this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
+    const releases = await this.releaseRepo.find({
+      where: {
+        status: ReleaseStatusEnum.RELEASED, 
+        project: {id: In(projects)},
+        latest: true
+      }, 
+      relations: {project: true}
+      },
+    );
+    this.logger.verbose(`offering for projects: ${JSON.stringify(releases.map(r => r.catalogId))}`);
+    return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+  }
+  
   @SafeCron({cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering"})
   async offeringComponentTask(){
     this.logger.log(`Start offering component task`);
@@ -395,7 +489,11 @@ export class OfferingService implements OnModuleInit {
 
 
   async onModuleInit() {
-    this.deviceClient.subscribeToResponseOf([DeviceTopics.All_DEVICES])
+    this.deviceClient.subscribeToResponseOf([
+      DeviceTopics.All_DEVICES,
+      DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
+      DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE
+    ])
     await this.deviceClient.connect()
   }
 

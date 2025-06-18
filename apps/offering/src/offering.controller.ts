@@ -9,6 +9,8 @@ import { DeviceMapStateDto } from '@app/common/dto/device';
 import { RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
 import { OfferingService } from './offering.service';
+import { DeviceTypeParams, PlatformParams } from '@app/common/dto/devices-hierarchy';
+import { ProjectIdentifierParams } from '@app/common/dto/project-management';
 
 @Controller()
 export class OfferingController {
@@ -26,7 +28,21 @@ export class OfferingController {
     return this.offeringService.getOfferOfComp(catalogId)
   }
 
+  @MessagePattern(OfferingTopics.GET_OFFERING_FOR_PLATFORM)
+  getOfferingForPlatform(@RpcPayload() params: PlatformParams){
+    return this.offeringService.getOfferingForPlatform(params);
+  }
 
+  @MessagePattern(OfferingTopics.GET_OFFERING_FOR_DEVICE_TYPE)
+  getOfferingForDeviceType(@RpcPayload() params: DeviceTypeParams){
+    return this.offeringService.getOfferingForDeviceType(params);
+  }
+
+  @MessagePattern(OfferingTopics.GET_OFFERING_FOR_PROJECT)
+  getOfferingForProject(@RpcPayload() params: ProjectIdentifierParams){
+    return this.offeringService.getOfferingForProject(params);
+  }
+  
   @MessagePattern(OfferingTopics.DEVICE_COMPONENT_OFFERING)
   getDeviceComponentOfferingV2(@RpcPayload() dto: ComponentOfferingRequestDto){
     return this.offeringService.getDeviceComponentOffering(dto);
