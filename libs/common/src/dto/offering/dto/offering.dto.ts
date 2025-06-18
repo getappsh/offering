@@ -39,7 +39,7 @@ export class DeviceTypeOfferingDto {
     const dto = new DeviceTypeOfferingDto();
     dto.deviceTypeId = deviceType.deviceTypeId;
     dto.deviceTypeName = deviceType.deviceTypeName;
-    dto.projects = deviceType.projects.map(ProjectRefOfferingDto.fromProjectRefDto);
+    dto.projects = deviceType.projects?.map(ProjectRefOfferingDto.fromProjectRefDto);
     return dto;
   }
 
@@ -64,7 +64,7 @@ export class PlatformOfferingDto {
     const dto = new PlatformOfferingDto();
     dto.platformId = platform.platformId;
     dto.platformName = platform.platformName;
-    dto.deviceTypes = platform.deviceTypes.map(DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto);
+    dto.deviceTypes = platform.deviceTypes?.map(DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto);
     return dto;
   }
 

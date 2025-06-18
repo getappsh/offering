@@ -49,7 +49,6 @@ export const OfferingTopics = {
     // Deprecated
     DEVICE_COMPONENT_OFFERING: `getapp-offering.device-components${region}`,
     DEVICE_MAP_OFFERING: `getapp-offering.device-map${region}`,
-    GET_OFFER_OF_COMP: `getapp-offering.get-offering-of-comp${region}`,
     CHECK_HEALTH: `getapp-offering.check-health${region}`,
 
     GET_OFFERING_FOR_PLATFORM: `getapp-offering.get-offering-for-platform${region}`,
