@@ -165,3 +165,23 @@ export enum ProjectType {
     PRODUCT = "product",
     FORMATION = "formation",
   }
+
+
+// PLATFORM TYPES
+export enum CPUArchitecture {
+  X86_64 = 'X86_64',
+  ARM64 = 'ARM64',
+}
+
+export enum DiskType {
+  HDD = 'HDD',
+  SSD = 'SSD',
+  NVME = 'NVME',
+}
+
+export enum NetworkType {
+  NAT = 'NAT',
+  BRIDGED = 'BRIDGED',
+  HOST_ONLY = 'HOST_ONLY',
+  CUSTOM = 'CUSTOM',
+}
