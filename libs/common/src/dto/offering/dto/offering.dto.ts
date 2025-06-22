@@ -9,14 +9,13 @@ export class ProjectRefOfferingDto {
   @ApiProperty({ description: "Identifier of the project" })
   projectId: number;
 
-  @ApiProperty({ type: ComponentV2Dto, isArray: true, required: false })
-  releases: ComponentV2Dto[] = [];
+  @ApiProperty({ type: ComponentV2Dto, required: false })
+  release?: ComponentV2Dto;
 
   static fromProjectRefDto(projectRef: ProjectRefDto): ProjectRefOfferingDto {
     const dto = new ProjectRefOfferingDto();
     dto.projectId = projectRef.projectId;
     dto.projectName = projectRef.projectName;
-    dto.releases = [];
     return dto;
   }
 
