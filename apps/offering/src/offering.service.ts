@@ -1,13 +1,13 @@
-import { ComponentOfferingEntity, DeviceComponentStateEnum, DeviceEntity, DeviceMapStateEnum, MapEntity, MapOfferingEntity, OfferingActionEnum, ProjectEntity, ProjectType, ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
+import { ComponentOfferingEntity, DeviceComponentStateEnum, DeviceEntity, DeviceMapStateEnum, DeviceTypeEntity, MapEntity, MapOfferingEntity, OfferingActionEnum, PlatformEntity, ProjectEntity, ProjectType, ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
 import { DeviceMapStateDto } from "@app/common/dto/device";
 import { DeviceComponentStateDto } from "@app/common/dto/device/dto/device-software.dto";
 import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
-import { DeviceTypeHierarchyDto, DeviceTypeParams, PlatformHierarchyDto, PlatformParams } from "@app/common/dto/devices-hierarchy";
+import { DeviceTypeHierarchyDto, PlatformHierarchyDto } from "@app/common/dto/devices-hierarchy";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
-import { DeviceTypeOfferingDto, PlatformOfferingDto, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
+import { DeviceTypeOfferingDto, DeviceTypeOfferingParams, PlatformOfferingDto, PlatformOfferingParams, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
-import { ComponentV2Dto, ReleaseChangedEventDto, ReleaseDto } from "@app/common/dto/upload";
+import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
 import { DevicesHierarchyTopics, DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
 import { SafeCron } from "@app/common/safe-cron";
@@ -24,6 +24,8 @@ export class OfferingService implements OnModuleInit {
   constructor(
     @InjectRepository(ReleaseEntity)private readonly releaseRepo: Repository<ReleaseEntity>,
     @InjectRepository(ProjectEntity)private readonly projectRepo: Repository<ProjectEntity>, 
+    @InjectRepository(PlatformEntity)private readonly platformRepo: Repository<PlatformEntity>, 
+    @InjectRepository(DeviceTypeEntity)private readonly deviceTypeRepo: Repository<DeviceTypeEntity>, 
     @InjectRepository(DeviceEntity)private readonly deviceRepo: Repository<DeviceEntity>, 
     @InjectRepository(ComponentOfferingEntity)private readonly compOfferingRepo: Repository<ComponentOfferingEntity>,
     @InjectRepository(MapOfferingEntity)private readonly mapOfferingRepo: Repository<MapOfferingEntity>,
@@ -357,14 +359,25 @@ export class OfferingService implements OnModuleInit {
   }
 
 
-  async getOfferingForPlatform(params: PlatformParams): Promise<PlatformOfferingDto> {
-    this.logger.log(`get offering for platform: ${params.platformId}`);
+  async getOfferingForPlatform(params: PlatformOfferingParams): Promise<PlatformOfferingDto> {
+    this.logger.log(`get offering for platform: ${params.platformIdentifier}`);
+    let platformId: number
+    if (typeof params.platformIdentifier === 'string'){
+      const platform = await this.platformRepo.findOneBy({name: params.platformIdentifier});
+      if (!platform){
+        throw new NotFoundException(`get offering for platform: ${params.platformIdentifier} not found`);
+      }
+      platformId = platform.id;
+    }else {
+      platformId = params.platformIdentifier;
+    }
+
     let tree: PlatformHierarchyDto
     try{
-      tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE, params));
+      tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE, {platformId: platformId}));
     }catch(e){
-      this.logger.error(`get offering for platform: ${params.platformId} error: ${e}`);
-      throw new InternalServerErrorException(`get offering for platform: ${params.platformId} error: ${e}`)
+      this.logger.error(`get offering for platform: ${params.platformIdentifier} error: ${e}`);
+      throw new InternalServerErrorException(`get offering for platform: ${params.platformIdentifier} error: ${e}`)
     }
     const projects = tree.deviceTypes.flatMap(dt => dt.projects).map(p => p.projectId);
     const componentOffering = await this.getOfferingForProjects(projects);
@@ -379,14 +392,26 @@ export class OfferingService implements OnModuleInit {
     return platformOffering
   }
 
-  async getOfferingForDeviceType(params: DeviceTypeParams): Promise<DeviceTypeOfferingDto> {
-    this.logger.log(`get offering for device type: ${params.deviceTypeId}`);
+  async getOfferingForDeviceType(params: DeviceTypeOfferingParams): Promise<DeviceTypeOfferingDto> {
+    this.logger.log(`get offering for device type: ${params.deviceTypeIdentifier}`);
+
+    let deviceTypeId: number
+    if (typeof params.deviceTypeIdentifier === 'string'){
+      const deviceType = await this.deviceTypeRepo.findOneBy({name: params.deviceTypeIdentifier});
+      if (!deviceType){
+        throw new NotFoundException(`get offering for device type: ${params.deviceTypeIdentifier} not found`);
+      }
+      deviceTypeId = deviceType.id;
+    }else {
+      deviceTypeId = params.deviceTypeIdentifier;
+    }
+
     let tree: DeviceTypeHierarchyDto
     try{
-      tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE, params));
+      tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE, {deviceTypeId: deviceTypeId}));
     }catch(e){
-      this.logger.error(`get offering for device type: ${params.deviceTypeId} error: ${e}`);
-      throw new InternalServerErrorException(`get offering for device type: ${params.deviceTypeId} error: ${e}`)
+      this.logger.error(`get offering for device type: ${params.deviceTypeIdentifier} error: ${e}`);
+      throw new InternalServerErrorException(`get offering for device type: ${params.deviceTypeIdentifier} error: ${e}`)
     }
     const projects = tree.projects.map(p => p.projectId);
     const componentOffering = await this.getOfferingForProjects(projects);
