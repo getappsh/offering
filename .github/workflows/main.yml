@@ -5,7 +5,7 @@ on:
     branches:
       - develop
       # - project-refactor
-##
+###
 jobs:
   calculate_new_tag:
     runs-on: ubuntu-latest
