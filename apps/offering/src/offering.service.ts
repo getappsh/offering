@@ -373,10 +373,7 @@ export class OfferingService implements OnModuleInit {
 
     platformOffering.deviceTypes?.map(dt => {
       dt.projects?.map(p => {
-        const release = componentOffering.get(p.projectId);
-        if (release){
-          p.releases.push(release)
-        }
+        p.release = componentOffering.get(p.projectId);
       })
     })
     return platformOffering
@@ -397,10 +394,7 @@ export class OfferingService implements OnModuleInit {
     let deviceTypeOffering = DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
 
     deviceTypeOffering.projects?.map(p => {
-      const release = componentOffering.get(p.projectId);
-      if (release){
-        p.releases.push(release)
-      }
+      p.release = componentOffering.get(p.projectId);
     })
 
     return deviceTypeOffering
@@ -425,10 +419,7 @@ export class OfferingService implements OnModuleInit {
     projectOffering.projectId = project.id;
     projectOffering.projectName = project.name;
 
-    const release = offering.get(project.id);
-    if (release){
-      projectOffering.releases.push(release)
-    }
+    projectOffering.release = offering.get(project.id);
 
     return projectOffering
   }
