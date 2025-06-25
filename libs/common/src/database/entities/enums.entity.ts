@@ -119,6 +119,7 @@ export enum DeviceComponentStateEnum{
     OFFERING = "offering",
     PUSH = "push",
     DELIVERY = "delivery",
+    DOWNLOADED = "downloaded",
     DELETED = "deleted",
     DEPLOY = "deploy",
     INSTALLED = "installed",

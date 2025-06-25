@@ -15,6 +15,10 @@ export class DiscoveryMessageEntity extends BaseEntity {
     @Column('timestamptz', { name: "snap_shote" })
     snapshotDate: Date;
 
+    @ManyToOne(() => DeviceEntity, { nullable: true, onDelete: "SET NULL" })
+    @JoinColumn({ name: "report_dvc_id" })
+    reportingDevice?: DeviceEntity;
+
     @Column('jsonb', { name: "personal_device", nullable: true })
     personalDevice?: any;
 

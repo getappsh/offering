@@ -11,57 +11,76 @@ export class DeviceDto {
 
   @ApiProperty({ required: false })
   @IsDate()
-  lastUpdatedDate: Date
- 
+  lastUpdatedDate?: Date
+
   @ApiProperty({ required: false })
   @IsDate()
-  lastConnectionDate: Date
- 
-  @ApiProperty({ required: false })
-  @IsString()
-  name: string
+  lastConnectionDate?: Date
 
   @ApiProperty({ required: false })
   @IsString()
-  OS: string
+  name?: string
 
   @ApiProperty({ required: false })
   @IsString()
-  availableStorage: string
+  OS?: string
+
+  @ApiProperty({ required: false })
+  @IsString()
+  availableStorage?: string
 
   @ApiProperty({ required: false })
   @Min(0)
   @Max(100)
-  power: number;
+  power?: number;
 
   @ApiProperty({ required: false })
   @IsNumber()
-  bandwidth: number;
+  bandwidth?: number;
 
   @ApiProperty({ required: false })
   @IsBoolean()
-  operativeState: true
+  operativeState?: true
 
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  groupName: string
+  groupName?: string
 
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
-  groupId: number
+  groupId?: number
 
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
-  uid: number
+  uid?: number
 
-  @ApiProperty({required: false, type: 'string', isArray: true})
-  formations: string[]
+  @ApiProperty({ required: false, type: 'string', isArray: true })
+  formations?: string[]
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  platformName?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  deviceTypeName?: string;
+
+  @ApiProperty({ required: false, type: [String] })
+  @IsOptional()
+  devices?: string[];
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  deviceParentId?: string;
 
 
   static fromDeviceEntity(deviceE: DeviceEntity, discoveryE?: DiscoveryMessageEntity): DeviceDto {
@@ -77,10 +96,16 @@ export class DeviceDto {
     device.bandwidth = discoveryE?.situationalDevice.bandwidth;
     device.operativeState = discoveryE?.situationalDevice.operativeState;
 
-
+    // Group relation
     device.uid = deviceE?.orgUID?.UID;
     device.groupId = deviceE?.orgUID?.group?.id;
     device.groupName = deviceE?.orgUID?.group?.name;
+    device.devices = deviceE.children?.length ? deviceE.children?.map(d => d.ID) : undefined;
+    device.deviceParentId = deviceE?.parent?.ID;
+
+    // Org type relation    
+    device.platformName = deviceE?.platform?.name;
+    device.deviceTypeName = deviceE?.deviceType?.name;
 
     return device
   }

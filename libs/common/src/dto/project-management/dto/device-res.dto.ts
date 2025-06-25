@@ -2,26 +2,26 @@ import { DeviceEntity } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class DeviceResDto {
-  @ApiProperty({required: false})
+  @ApiProperty({required: true})
   ID: string;
 
   @ApiProperty({required: false})
-  MAC: string;
+  MAC?: string;
 
   @ApiProperty({required: false})
-  IP: string;
+  IP?: string;
 
   @ApiProperty({required: false})
-  OS: string;
+  OS?: string;
 
   @ApiProperty({required: false})
-  serialNumber: string;
+  serialNumber?: string;
 
   @ApiProperty({required: false})
-  possibleBandwidth: string;
+  possibleBandwidth?: string;
 
   @ApiProperty({required: false})
-  availableStorage: string
+  availableStorage?: string
 
 
   toString() {

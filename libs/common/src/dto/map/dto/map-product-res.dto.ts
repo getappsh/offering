@@ -53,7 +53,7 @@ export class MapProductResDto {
   @IsString()
   @IsOptional()
   @ApiProperty({ required: false })
-  cities: string | null;
+  cities: string;
 
   @IsString()
   @IsOptional()

@@ -19,7 +19,7 @@ export class DeviceEntity {
   lastUpdatedDate: Date;
 
   @Column({ name: 'last_connection_date', type: "timestamptz", nullable: true })
-  lastConnectionDate: Date;
+  lastConnectionDate?: Date;
 
   @ManyToOne(() => PlatformEntity, { nullable: true, eager: true, onUpdate: "CASCADE" })
   @JoinColumn({ name: "platform_id" })
@@ -30,29 +30,32 @@ export class DeviceEntity {
   deviceType?: DeviceTypeEntity;
 
   @Column({ nullable: true })
-  name: string;
+  name?: string;
 
   @Column({ name: 'MAC', nullable: true })
-  MAC: string;
+  MAC?: string;
 
   @Column({ name: 'IP', nullable: true })
-  IP: string;
+  IP?: string;
 
   @Column({ name: 'OS', nullable: true })
-  OS: string;
+  OS?: string;
 
   @Column({ name: 'serial_number', nullable: true })
-  serialNumber: string;
+  serialNumber?: string;
 
   @Column({ name: 'possible_bandwidth', nullable: true })
-  possibleBandwidth: string;
+  possibleBandwidth?: string;
 
   @Column({ name: 'available_storage', nullable: true })
-  availableStorage: string;
+  availableStorage?: string;
 
   @ManyToOne(() => DeviceEntity, { nullable: true, onDelete: "SET NULL" })
   @JoinColumn({ name: "parent" })
-  parent: DeviceEntity;
+  parent?: DeviceEntity;
+
+  @OneToMany(() => DeviceEntity, device => device.parent)
+  children?: DeviceEntity[];
 
   @ManyToMany(() => ReleaseEntity, releaseEntity => releaseEntity.devices, {
     cascade: true
@@ -65,7 +68,7 @@ export class DeviceEntity {
   maps: DeviceMapStateEntity[];
 
   @OneToOne(type => OrgUIDEntity, org => org.device, { nullable: true })
-  orgUID: OrgUIDEntity
+  orgUID?: OrgUIDEntity
 
   // @ManyToMany(() => PlatformEntity, { eager: true })
   // @JoinTable({
@@ -76,6 +79,6 @@ export class DeviceEntity {
   // platforms: PlatformEntity[];
 
   @Column("text", { name: "formations", array: true, nullable: true })
-  formations: string[];
+  formations?: string[];
 
 }

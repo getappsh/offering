@@ -9,14 +9,14 @@ export class OrgGroupEntity extends BaseEntity {
     name: string;
 
     @Column({ name: 'description', nullable: true })
-    description: string;
+    description?: string;
 
     @OneToMany(type => OrgUIDEntity, (uid) => uid.group)
     orgUID: OrgUIDEntity[];
 
     @ManyToOne(type => OrgGroupEntity, { nullable: true, onDelete: "SET NULL" })
     @JoinColumn({ name: "parent_id" })
-    parent: OrgGroupEntity
+    parent?: OrgGroupEntity
 
     @OneToMany(type => OrgGroupEntity, (dvcGrp) => dvcGrp.parent)
     children: OrgGroupEntity[]
