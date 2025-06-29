@@ -29,6 +29,9 @@ export enum ErrorCode {
   MAP_AREA_TOO_LARGE = "MAP.areaTooLarge",
   MAP_AREA_TOO_SMALL = "MAP.areaTooSmall",
 
+  // offering
+  PLATFORM_NOT_FOUND = "PLATFORM.notFound",
+
   // devices
   DEVICE_NOT_FOUND = "DEVICE.notFound",
   
@@ -61,6 +64,7 @@ export class ErrorDto {
       "`MAP.requestInProgress`: Delivery was already requested and is processing.<br/>" +
       "`MAP.areaTooLarge`: Area too large to distribute, reduce request size and try again.<br/>" +
       "`MAP.areaTooSmall`: Area too small to distribute, increase request size and try again.<br/>" +
+      "`PLATFORM.notFound`: Platform with given id or name not found.<br/>" +
       "`DEVICE.notFound`: Device with given id not found.<br/>" +
       "`GROUP_NOT_FOUND`: Group with the given id was not found.<br/>" +
       "`GROUP_NOT_ALLOWED_TO_ADD`: Not allowed to add to the group, see message for cause.",

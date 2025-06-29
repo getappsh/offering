@@ -3,6 +3,7 @@ import { DeviceMapStateDto } from "@app/common/dto/device";
 import { DeviceComponentStateDto } from "@app/common/dto/device/dto/device-software.dto";
 import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto } from "@app/common/dto/devices-hierarchy";
+import { AppError, ErrorCode } from "@app/common/dto/error";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
 import { DeviceTypeOfferingDto, DeviceTypeOfferingParams, PlatformOfferingDto, PlatformOfferingParams, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
@@ -11,7 +12,7 @@ import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
 import { DevicesHierarchyTopics, DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
 import { SafeCron } from "@app/common/safe-cron";
-import { Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
 import { ArrayOverlap, In, Repository } from "typeorm";
@@ -365,7 +366,7 @@ export class OfferingService implements OnModuleInit {
     if (typeof params.platformIdentifier === 'string'){
       const platform = await this.platformRepo.findOneBy({name: params.platformIdentifier});
       if (!platform){
-        throw new NotFoundException(`get offering for platform: ${params.platformIdentifier} not found`);
+        throw new AppError(ErrorCode.PLATFORM_NOT_FOUND, `get offering for platform: ${params.platformIdentifier} not found`, HttpStatus.NOT_FOUND);
       }
       platformId = platform.id;
     }else {
