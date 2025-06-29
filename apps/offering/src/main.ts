@@ -10,27 +10,32 @@ import { CustomRpcExceptionFilter } from './rpc-exception.filter';
 import { GET_APP_LOGGER } from '@app/common/logger/logger.module';
 
 
-async function bootstrap() {  
+async function bootstrap() {
+
+  const microservice = await NestFactory.createMicroservice<MicroserviceOptions>(
+    OfferingModule,
+    {
+      ...getClientConfig(
+        {
+          type: MicroserviceType.OFFERING,
+          name: MicroserviceName.OFFERING_SERVICE
+        },
+        MSType[process.env.MICRO_SERVICE_TYPE],
+
+      ),
+      bufferLogs: true
+    }
+  );
+
+  microservice.useLogger(microservice.get(GET_APP_LOGGER));
+  microservice.useGlobalFilters(new CustomRpcExceptionFilter()); // For HTTP layer
+  microservice.listen();
+
   const app = await NestFactory.create(OfferingModule, {
     bufferLogs: true
   });
-  app.connectMicroservice(getClientConfig({type: MicroserviceType.OFFERING, name: MicroserviceName.OFFERING_SERVICE}, MSType[process.env.MICRO_SERVICE_TYPE]));
-
-
-  // const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-  //   OfferingModule,
-  //   {...getClientConfig(
-  //     {
-  //       type: MicroserviceType.OFFERING, 
-  //       name: MicroserviceName.OFFERING_SERVICE
-  //     }, 
-  //     MSType[process.env.MICRO_SERVICE_TYPE]),
-  //     bufferLogs: true
-  //   }
-  // );
-  app.useLogger(app.get(GET_APP_LOGGER))
-  app.useGlobalFilters(new CustomRpcExceptionFilter())
-  app.startAllMicroservices()
-  app.listen(Number(process.env.HEALTH_PORT?? 2999))
+  await app.listen(Number(process.env.HEALTH_PORT ?? 2999));
 }
-bootstrap();
+
+bootstrap()
+

@@ -13,7 +13,7 @@ import { OfferingService } from './offering.service'
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    LoggerModule.forRoot({httpCls: false, jsonLogger: process.env.LOGGER_FORMAT === 'JSON', name: "Offering"}),
+    LoggerModule.forRoot({ httpCls: false, jsonLogger: process.env.LOGGER_FORMAT === 'JSON', name: "Offering" }),
     MicroserviceModule.register({
       name: MicroserviceName.DISCOVERY_SERVICE,
       type: MicroserviceType.DISCOVERY,
@@ -22,7 +22,7 @@ import { OfferingService } from './offering.service'
     ApmModule,
     DatabaseModule,
     TypeOrmModule.forFeature([
-      ComponentOfferingEntity, MapOfferingEntity, DeviceEntity, ReleaseEntity, 
+      ComponentOfferingEntity, MapOfferingEntity, DeviceEntity, ReleaseEntity,
       ProjectEntity, PlatformEntity, DeviceTypeEntity
     ]),
     SafeCronModule,
