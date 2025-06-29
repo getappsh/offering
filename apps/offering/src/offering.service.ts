@@ -137,6 +137,22 @@ export class OfferingService implements OnModuleInit {
     return updates.filter(r => !components.includes(r.catalogId))
   }
 
+  async getOfferOfComp(catalogId: string){
+    const release = await this.releaseRepo.findOne({
+      where: {
+        catalogId: catalogId,
+        status: ReleaseStatusEnum.RELEASED
+      },
+      relations: {project: true, artifacts: {fileUpload: true}},
+      select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true} }
+    })
+
+    if (!release){
+      throw new NotFoundException(`Release ${catalogId} not found`)
+    }
+    return ComponentV2Dto.fromEntity(release);
+  }
+
 
   private async getDevicesInGroup(groups: number[]): Promise<string[]> {
     this.logger.debug(`get devices in groups: ${JSON.stringify(groups)}`);
