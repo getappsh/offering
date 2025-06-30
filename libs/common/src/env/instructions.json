@@ -1,0 +1,64 @@
+{
+  "api": [
+    "api.env",
+    "general.env",
+    "micro-service.env",
+    "key-cloak.env",
+    "apm.env",
+    "proxy.env",
+    "secure.env"
+  ],
+  "discovery": [
+    "general.env",
+    "micro-service.env",
+    "postgres-DB.env",
+    "apm.env",
+    "smtp.env"
+  ],
+  "delivery": [
+    "general.env",
+    "delivery.env",
+    "micro-service.env",
+    "postgres-DB.env",
+    "aws.env",
+    "apm.env",
+    "proxy.env",
+    "secure.env"
+  ],
+  "get-map": [
+    "general.env",
+    "micro-service.env",
+    "postgres-DB.env",
+    "get-map.env",
+    "apm.env"
+  ],
+  "libot-emu": [
+   "libot-emu.env"
+  ],
+  "offering": [
+    "general.env",
+    "micro-service.env",
+    "postgres-DB.env",
+    "apm.env"
+  ],
+  "deploy": [
+    "general.env",
+    "micro-service.env",
+    "postgres-DB.env",
+    "apm.env"
+  ],
+  "project-management": [
+    "general.env",
+    "micro-service.env",
+    "postgres-DB.env",
+    "jwt.env",
+    "apm.env"
+  ],
+  "upload": [
+    "general.env",
+    "micro-service.env",
+    "postgres-DB.env",
+    "aws.env",
+    "apm.env"
+  ]
+}
