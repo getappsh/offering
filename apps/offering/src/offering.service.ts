@@ -471,14 +471,14 @@ export class OfferingService implements OnModuleInit {
   private async getOfferingForProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
     const releases = await this.releaseRepo.find({
+      select: {project: {id: true, name: true, projectType: true}, artifacts: {fileUpload: {size: true}, isInstallationFile: true}},
       where: {
         status: ReleaseStatusEnum.RELEASED,
         project: { id: In(projects) },
         latest: true
       },
-      relations: { project: true }
-    },
-    );
+      relations: { project: true, artifacts: { fileUpload: true } },
+    });
     this.logger.verbose(`offering for projects: ${JSON.stringify(releases.map(r => r.catalogId))}`);
     return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
   }
