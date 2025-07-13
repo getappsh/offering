@@ -76,6 +76,8 @@ export class OfferingService implements OnModuleInit {
   }
 
   private async getOfferingFromFormationsPlatformsAndComponents(dto: ComponentOfferingRequestDto): Promise<ReleaseEntity[]> {
+    const platformIds = dto.platforms?.filter((s) => /^\d+$/.test(s)) .map((s) => parseInt(s, 10));
+
     const projects = await this.projectRepo.find({
       select: { id: true, platforms: false },
       where: [
@@ -89,7 +91,11 @@ export class OfferingService implements OnModuleInit {
         {
           projectType: ProjectType.PRODUCT,
           platforms: { name: In(dto.platforms ?? []) },
-        }
+        },
+        {
+          projectType: ProjectType.PRODUCT,
+          platforms: { id: In(platformIds ?? []) },
+        },
       ]
     });
     const projectIds = projects.map(p => p.id);
