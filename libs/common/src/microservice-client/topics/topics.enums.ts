@@ -191,6 +191,13 @@ export const DevicesGroupTopics = {
     GET_GROUPS: `getapp-device.group.get-all${region}`,
     GET_GROUP_DEVICES: `getapp-device.group.get-devices${region}`,
     SET_GROUP_DEVICES: `getapp-device.group.set-devices${region}`,
+    DELETE_GROUP: `getapp-device.group.delete${region}`,
+    CREATE_ORG_IDS: `getapp-device.group.org-ids.create${region}`,
+    GET_ORG_IDS: `getapp-device.group.org-ids.get-all${region}`,
+    GET_ORG_ID: `getapp-device.group.org-ids.get${region}`,
+    EDIT_ORG_IDS: `getapp-device.group.org-ids.edit${region}`,
+    DELETE_ORG_IDS: `getapp-device.group.org-ids.delete${region}`,
+    GET_ORG_DEVICES: `getapp-device.group.org-devices.get-all${region}`
 } as const
 
 export const DevicesHierarchyTopics = {

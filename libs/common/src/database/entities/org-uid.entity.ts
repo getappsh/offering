@@ -18,10 +18,10 @@ export class OrgUIDEntity extends BaseEntity {
 
     @ManyToOne(type => OrgGroupEntity, {onDelete: "SET NULL",  nullable: true })
     @JoinColumn({ name: "group_id" }) // Define the foreign key column
-    group?: OrgGroupEntity
+    group?: OrgGroupEntity | null;
 
     @OneToOne(type => DeviceEntity, {onDelete: "SET NULL", nullable: true })
     @JoinColumn({ name: "device_id" }) // Define the foreign key column
-    device?: DeviceEntity;
+    device?: DeviceEntity | null;
 
 }

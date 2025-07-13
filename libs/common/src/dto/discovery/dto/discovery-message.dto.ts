@@ -66,10 +66,20 @@ export class DiscoveryMessageV2Dto {
 
   @ApiProperty({
     required: false,
-    description: 'Type of the discovered device (e.g., router, switch, server, etc.), used for discovery of devices of type "device"'
+    description: 'Name or ID (as string) of the deviceType (e.g., router, switch, server, etc.), used for discovery of devices of type "device"'
   })
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  deviceTypeToken?: string
+
+  
+  /**
+   * @deprecated This field is deprecated and will be removed in the future, use deviceTypeToken
+   */
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
   deviceType?: string
 
   @ApiProperty({

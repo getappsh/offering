@@ -1,17 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { Transform, Type } from "class-transformer"
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested } from "class-validator"
+import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsNumber } from "class-validator"
 import { DiscoveryMessageV2Dto } from "./discovery-message.dto"
 
 export class PlatformDiscoverDto {
 
   @ApiProperty({
-    description: 'Name of the platform or system being discovered'
+    description: 'Name or ID (as string) of the platformType or system being discovered.',
   })
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value.toLowerCase().trim().replace(/\s+/g, "-"))
-  name: string
+  token: string
 
   @ApiProperty({
     required: false,

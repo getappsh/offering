@@ -38,6 +38,10 @@ export enum ErrorCode {
   // groups
   GROUP_NOT_FOUND = "GROUP.notFound",
   GROUP_NOT_ALLOWED_TO_ADD = "GROUP.notAllowedToAdd",
+  GROUP_ORG_ID_UNKNOWN = "GROUP.orgIdUnknown",
+  GROUP_ORG_ID_NOT_ALLOWED = "GROUP.orgIdNotAllowed",
+  GROUP_ORG_ID_CONFLICT = "GROUP.orgIdConflict",
+  GROUP_ORG_ID_NOT_FOUND = "GROUP.orgIdNotFound",
 }
 
 export class ErrorDto {
@@ -67,7 +71,11 @@ export class ErrorDto {
       "`PLATFORM.notFound`: Platform with given id or name not found.<br/>" +
       "`DEVICE.notFound`: Device with given id not found.<br/>" +
       "`GROUP_NOT_FOUND`: Group with the given id was not found.<br/>" +
-      "`GROUP_NOT_ALLOWED_TO_ADD`: Not allowed to add to the group, see message for cause.",
+      "`GROUP_NOT_ALLOWED_TO_ADD`: Not allowed to add to the group, see message for cause.<br/>" +
+      "`GROUP.orgIdUnknown`: Organization ID is unknown, see message for cause.<br/>" +
+      "`GROUP.orgIdNotAllowed`: Organization ID is not allowed to be used, see message for cause.<br/>" +
+      "`GROUP.orgIdConflict`: Organization ID conflict occurred.<br/>" +
+      "`GROUP.orgIdNotFound`: Organization ID not found.",
     required: false
   })
   @IsEnum(ErrorCode)

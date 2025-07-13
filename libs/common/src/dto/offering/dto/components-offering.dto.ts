@@ -38,7 +38,7 @@ export class ComponentOfferingRequestDto {
 
     dto.components = dis?.softwareData?.components?.map(comp => comp.catalogId);
     dto.formations = dis?.softwareData?.formations;
-    dto.platforms = dis?.platform ? [dis.platform.name] : []
+    dto.platforms = dis?.platform ? [dis.platform.token] : []
     return dto
   }
 }

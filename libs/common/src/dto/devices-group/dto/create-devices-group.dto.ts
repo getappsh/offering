@@ -4,7 +4,7 @@ import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class CreateDevicesGroupDto {
 
-  @ApiProperty({required: false})
+  @ApiProperty({required: true})
   @IsString()
   @IsNotEmpty()
   @IsOptional()
@@ -12,7 +12,6 @@ export class CreateDevicesGroupDto {
 
   @ApiProperty({required: false})
   @IsString()
-  @IsNotEmpty()
   @IsOptional()
   description: string
 

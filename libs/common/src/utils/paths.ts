@@ -11,7 +11,7 @@ export const DISCOVERY = "discovery";
 export const PROJECT_MANAGEMENT = "project";
 export const USERS = "users";
 export const DEVICE = "device";
-export const DEVICE_GROUP = "org/groups";
+export const DEVICE_GROUP = "org";
 export const UPLOAD_RELEASES = 'catalog/releases';
 
 export const GET_MAP = "map";

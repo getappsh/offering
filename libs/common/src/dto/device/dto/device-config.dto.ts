@@ -117,7 +117,7 @@ export class BaseConfigDto {
 }
 
 
-export class WindowsConfigDto extends BaseConfigDto {
+export class WindowsConfigDto extends BaseConfigDto{
 
   @ApiProperty({ required: false, type: [LayersConfigDto] })
   @IsOptional()
