@@ -76,7 +76,7 @@ export class OfferingService implements OnModuleInit {
   }
 
   private async getOfferingFromFormationsPlatformsAndComponents(dto: ComponentOfferingRequestDto): Promise<ReleaseEntity[]> {
-    const platformIds = dto.platforms?.filter((s) => /^\d+$/.test(s)) .map((s) => parseInt(s, 10));
+    const platformIds = dto.platforms?.filter((s) => /^\d+$/.test(s)).map((s) => parseInt(s, 10));
 
     const projects = await this.projectRepo.find({
       select: { id: true, platforms: false },
@@ -143,17 +143,17 @@ export class OfferingService implements OnModuleInit {
     return updates.filter(r => !components.includes(r.catalogId))
   }
 
-  async getOfferOfComp(catalogId: string){
+  async getOfferOfComp(catalogId: string) {
     const release = await this.releaseRepo.findOne({
       where: {
         catalogId: catalogId,
         status: ReleaseStatusEnum.RELEASED
       },
-      relations: {project: true, artifacts: {fileUpload: true}},
-      select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true} }
+      relations: { project: true, artifacts: { fileUpload: true } },
+      select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } }
     })
 
-    if (!release){
+    if (!release) {
       throw new NotFoundException(`Release ${catalogId} not found`)
     }
     return ComponentV2Dto.fromEntity(release);
@@ -452,11 +452,11 @@ export class OfferingService implements OnModuleInit {
 
   async getOfferingForProject(params: ProjectIdentifierParams): Promise<ProjectRefOfferingDto> {
     this.logger.log(`get offering for project: ${params.projectIdentifier}`);
-    let project;
+    let project: ProjectEntity | undefined;
     if (typeof params.projectIdentifier === 'string') {
-      project = await this.projectRepo.findOneBy({ name: params.projectIdentifier });
+      project = await this.projectRepo.findOne({ where: { name: params.projectIdentifier }, relations: { label: true } });
     } else {
-      project = await this.projectRepo.findOneBy({ id: params.projectIdentifier });
+      project = await this.projectRepo.findOne({ where: { id: params.projectIdentifier }, relations: { label: true } });
     }
 
     if (!project) {
@@ -468,6 +468,8 @@ export class OfferingService implements OnModuleInit {
     const projectOffering = new ProjectRefOfferingDto();
     projectOffering.projectId = project.id;
     projectOffering.projectName = project.name;
+    projectOffering.displayName = project.projectName;
+    projectOffering.label = project.label?.name;
 
     projectOffering.release = offering.get(project.id);
 
@@ -477,13 +479,13 @@ export class OfferingService implements OnModuleInit {
   private async getOfferingForProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
     const releases = await this.releaseRepo.find({
-      select: {project: {id: true, name: true, projectType: true}, artifacts: {fileUpload: {size: true}, isInstallationFile: true}},
+      select: { project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } },
       where: {
         status: ReleaseStatusEnum.RELEASED,
         project: { id: In(projects) },
         latest: true
       },
-      relations: { project: true, artifacts: { fileUpload: true } },
+      relations: { project: { label: true }, artifacts: { fileUpload: true } },
     });
     this.logger.verbose(`offering for projects: ${JSON.stringify(releases.map(r => r.catalogId))}`);
     return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
