@@ -11,6 +11,7 @@ export class KcService implements OidcService {
   private readonly logger = new Logger(KcService.name);
 
   BASE_URL = process.env.AUTH_SERVER_URL;
+  REALM = process.env.REALM || 'getapp';
   accessToken: string = '';
   expiredAccessToken: number = 0;
 
@@ -29,7 +30,7 @@ export class KcService implements OidcService {
   async login() {
     this.logger.log('login as admin to keycloak');
 
-    const relativeUrl = '/realms/getapp/protocol/openid-connect/token';
+    const relativeUrl = `/realms/${this.REALM}/protocol/openid-connect/token`;
 
     const data = new URLSearchParams();
     // data.append('client_id', 'admin-cli');
@@ -64,7 +65,7 @@ export class KcService implements OidcService {
       })
     }
 
-    const relativeUrl = '/admin/realms/getapp/users';
+    const relativeUrl = `/admin/realms/${this.REALM}/users`;
 
     let headers = {
       'Authorization': 'Bearer ' + this.accessToken

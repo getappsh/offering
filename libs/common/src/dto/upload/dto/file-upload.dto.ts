@@ -1,3 +1,4 @@
+import { FileUPloadStatusEnum } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
@@ -38,4 +39,27 @@ export class FileUploadUrlDto{
   toString(){
     return JSON.stringify(this)
   }
+}
+
+export class UpdateFileUploadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  objectKey: string;
+
+  @ApiProperty({ required: false , enum: FileUPloadStatusEnum})
+  @IsOptional()
+  status?: FileUPloadStatusEnum;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  size?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  contentType?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  uploadAt?: Date;
 }

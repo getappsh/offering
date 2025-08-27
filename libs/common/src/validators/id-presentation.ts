@@ -32,8 +32,8 @@ export class EitherIdPresentConstraint implements ValidatorConstraintInterface {
     }
    
     // (BACKWARD COMPATIBILITY) If platform is not present and softwareData.platforms is present, set platform
-    if (!obj.platform && obj.softwareData.platforms) {
-      const platforms = obj.softwareData.platforms
+    if (!obj.platform && obj.softwareData?.platforms) {
+      const platforms = obj.softwareData?.platforms
       const platform = Array.isArray(platforms) ? platforms[0] : platforms
       if (platform) {
         obj.platform = new PlatformDiscoverDto()

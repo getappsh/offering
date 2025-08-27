@@ -5,7 +5,7 @@ export class NewBugReportResDto {
 
   constructor(bugId: number, url: string){
     this.bugId = bugId;
-    this.uploadLogsUrl = url;
+    this.uploadEndpoint = url;
   }
 
   @ApiProperty()
@@ -13,7 +13,7 @@ export class NewBugReportResDto {
 
 
   @ApiProperty()
-  uploadLogsUrl: string
+  uploadEndpoint: string
 
   toString() {
     return JSON.stringify(this)

@@ -30,4 +30,7 @@ export class FileUploadEntity extends BaseEntity{
   @Column({ name: 'upload_at', type: 'timestamptz', nullable: true })
   uploadAt?: Date
 
+  @Column({ name: 'signature', type: 'text', nullable: true})
+  signature?: string
+
 }

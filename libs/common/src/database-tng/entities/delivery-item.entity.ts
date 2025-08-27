@@ -49,4 +49,8 @@ export class DeliveryItemEntity extends BaseEntity {
 
   @Column({ type: "enum", enum: HashAlgorithmEnum, name: "hash_algorithm", nullable: true })
   hashAlgorithm: HashAlgorithmEnum
+
+  @Column({ name: "signature", type: 'text', nullable: true })
+  signature: string
+  
 }

@@ -1,6 +1,4 @@
-import { ApiProperty, IntersectionType, PickType } from "@nestjs/swagger";
-import { Transform, Type } from "class-transformer";
-import { IsString, IsNotEmpty } from "class-validator";
+import { ApiProperty, IntersectionType } from "@nestjs/swagger";
 import { ProjectIdentifierParams } from "../../project-management";
 import { DeviceTypeEntity, PlatformEntity, ProjectEntity } from "@app/common/database/entities";
 import { PlatformParams } from "./platform.dto";
@@ -8,16 +6,24 @@ import { DeviceTypeParams } from "./device-type.dto";
 
 
 export class ProjectRefDto {
-  @ApiProperty({ description: "Name of the project" })
+  @ApiProperty({ description: "Unique name of the project" })
   projectName: string;
 
   @ApiProperty({ description: "Identifier of the project" })
   projectId: number;
 
-  static fromProjectEntity(project: ProjectEntity) {
+  @ApiProperty({ description: "Display name of the project", required: false })
+  displayName?: string;
+
+  @ApiProperty({ description: "Label of the project", required: false })
+  label?: string;
+
+  static fromProjectEntity(project: ProjectEntity) {    
     const dto = new ProjectRefDto();
     dto.projectName = project.name;
     dto.projectId = project.id;
+    dto.displayName = project.projectName ?? undefined;
+    dto.label = project.label?.name;
     return dto;
   }
 

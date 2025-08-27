@@ -47,6 +47,9 @@ export class DeliveryItemDto {
   @ApiProperty({ required: false })
   @IsOptional()
   hash: HashDto
+
+  @ApiProperty({ required: false })
+  signature?: string
   
 
   toString() {
@@ -62,8 +65,11 @@ export class DeliveryItemDto {
     dto.url = diE.path;
     dto.size = diE.size;
     dto.artifactType = diE.artifactType;
+    dto.signature = diE.signature;
+    
     return dto
   }
+  
   static fromDeliveryItemDto(diDto: DeliveryItemDto): DeliveryItemDto {
     const dto = new DeliveryItemDto();
     dto.catalogId = diDto.catalogId;
@@ -73,6 +79,7 @@ export class DeliveryItemDto {
     dto.url = diDto.url;
     dto.size = diDto.size;
     dto.artifactType = diDto.artifactType;
+    dto.signature = diDto.signature;
 
     if(diDto.hash){
       dto.hash = HashDto.fromHashDto(diDto.hash)

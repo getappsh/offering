@@ -15,8 +15,11 @@ export class BaseProjectDto {
   @ApiProperty({ description: 'Unique identifier of the project' })
   id: number;
 
-  @ApiProperty({ description: 'Name of the project' })
+  @ApiProperty({ description: 'Unique slug name of the project' })
   name: string;
+
+  @ApiProperty({ required: false, description: "Human-friendly name of the project (not unique)" })
+  projectName?: string;
 
   @ApiProperty({ required: false })
   description?: string;
@@ -27,16 +30,22 @@ export class BaseProjectDto {
   @ApiProperty({ required: false, description: 'Status of the project (active, completed, on-hold)' })
   status?: string; // Needs to be an enum
 
+  @ApiProperty({ required: false, description: 'Label name assigned to the project' })
+  label?: string;
+
   fromProjectEntity(project: ProjectEntity) {
     this.id = project.id;
     this.name = project.name;
+    this.projectName = project.projectName;
     this.description = project.description;
     this.projectType = project.projectType;
+    this.label = project.label?.name;
     // this.status = project.status;
+
     return this;
   }
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -56,7 +65,7 @@ export class ProjectMemberContextDto {
     return this;
   }
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -88,7 +97,7 @@ export class MinimalReleaseDto {
     return dto;
   }
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -103,7 +112,7 @@ export class ProjectReleasesChangedEvent {
 
   upcomingRelease?: MinimalReleaseDto;
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -118,7 +127,7 @@ export class ProjectSummaryDto {
   @ApiProperty({ required: false, description: 'Upcoming release of the project' })
   upcomingRelease?: MinimalReleaseDto
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 }
@@ -182,10 +191,11 @@ export class DetailedProjectDto extends ProjectDto {
     this.createdAt = project.createdDate;
     this.members = project.memberProject?.map(memberProject => new MemberResDto().fromMemberProjectEntity(memberProject));
     this.tokens = project.tokens?.map(token => ProjectTokenDto.fromProjectTokenEntity(token))
+
     return this;
   }
 
-  toString(){
+  toString() {
     return JSON.stringify(this)
   }
 
@@ -197,16 +207,21 @@ export class CreateProjectDto {
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty()
+  @ApiProperty({ description: "Unique identifier for the project (slug)" })
   @IsValidStringFor(Pattern.SINGLE_WORD)
   @IsValidStringFor(Pattern.NOT_ONLY_NUMBERS)
   @IsValidStringFor(Pattern.NO_AT_SYMBOL)
   name: string;
 
+  @ApiProperty({ required: false, description: "Human-friendly name of the project (not unique)" })
+  @IsOptional()
+  @IsString()
+  projectName?: string;
+
   @IsString()
   @IsOptional()
   @ApiProperty({ required: false })
-  description: string;
+  description?: string;
 
 
   @ApiProperty({ required: false })
@@ -225,6 +240,11 @@ export class CreateProjectDto {
   @IsEnum(ProjectType)
   @IsOptional()
   projectType: ProjectType = ProjectType.PRODUCT;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ required: false, description: 'Label name to assign to the project' })
+  label?: string;
 
   username: string;
 }

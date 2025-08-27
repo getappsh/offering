@@ -21,11 +21,11 @@ export class DeviceEntity {
   @Column({ name: 'last_connection_date', type: "timestamptz", nullable: true })
   lastConnectionDate?: Date;
 
-  @ManyToOne(() => PlatformEntity, { nullable: true, eager: true, onUpdate: "CASCADE" })
+  @ManyToOne(() => PlatformEntity, { nullable: true, eager: true, onUpdate: "CASCADE", onDelete: "SET NULL" })
   @JoinColumn({ name: "platform_id" })
   platform?: PlatformEntity;
 
-  @ManyToOne(() => DeviceTypeEntity, { nullable: true, eager: true, onUpdate: "CASCADE" })
+  @ManyToOne(() => DeviceTypeEntity, { nullable: true, eager: true, onUpdate: "CASCADE", onDelete: "SET NULL" })
   @JoinColumn({ name: "device_type_id" })
   deviceType?: DeviceTypeEntity;
 

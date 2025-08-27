@@ -11,6 +11,7 @@ export * from './dto/project-token.dto'
 export * from './dto/regulation.dto'
 export * from './dto/regulation-type.dto'
 export * from './dto/docs.dto'
+export * from './dto/label.dto'
 
 export * from './stubs/edit-project-member.dto.stub'
 export * from './stubs/project-member.dto.stub'

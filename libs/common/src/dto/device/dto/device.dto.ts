@@ -83,6 +83,15 @@ export class DeviceDto {
   @IsOptional()
   deviceParentId?: string;
 
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  deviceParentName?: string;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  deviceParentUid?: number;
 
   static fromDeviceEntity(deviceE: DeviceEntity, discoveryE?: DiscoveryMessageEntity): DeviceDto {
     let device = new DeviceDto()
@@ -103,6 +112,8 @@ export class DeviceDto {
     device.groupName = deviceE?.orgUID?.group?.name;
     device.devices = deviceE.children?.length ? deviceE.children?.map(d => d.ID) : undefined;
     device.deviceParentId = deviceE?.parent?.ID;
+    device.deviceParentName = deviceE?.parent?.name;
+    device.deviceParentUid = deviceE?.parent?.orgUID?.UID;
 
     // Org type relation    
     device.platformName = deviceE?.platform?.name;

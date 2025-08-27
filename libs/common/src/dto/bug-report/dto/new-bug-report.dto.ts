@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { Type } from "class-transformer";
+import { IsDate, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 
 export class NewBugReportDto {
@@ -19,6 +20,25 @@ export class NewBugReportDto {
   @IsString()
   @IsOptional()
   description: string
+  
+
+  @ApiProperty({required: false})
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  startDate?: Date;
+
+
+  @ApiProperty({required: false})
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
+
+  @ApiProperty({required: false})
+  @IsOptional()
+  @IsString()
+  logLevel?: string;
 
 
   toString() {
