@@ -12,6 +12,12 @@ export class ProjectRefOfferingDto {
   @ApiProperty({ description: "Identifier of the project" })
   projectId: number;
 
+  @ApiProperty({ required: false, description: "Display name of the project" })
+  displayName?: string;
+
+  @ApiProperty({ required: false, description: "Label of the project" })
+  label?: string;
+
   @ApiProperty({ type: ComponentV2Dto, required: false })
   release?: ComponentV2Dto;
 
@@ -19,6 +25,8 @@ export class ProjectRefOfferingDto {
     const dto = new ProjectRefOfferingDto();
     dto.projectId = projectRef.projectId;
     dto.projectName = projectRef.projectName;
+    dto.displayName = projectRef.displayName;
+    dto.label = projectRef.label;
     return dto;
   }
 
