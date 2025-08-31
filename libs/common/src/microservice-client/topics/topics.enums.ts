@@ -58,6 +58,13 @@ export const OfferingTopics = {
     GET_OFFERING_FOR_DEVICE_TYPE: `getapp-offering.get-offering-for-device-type${region}`,
     GET_OFFERING_FOR_PROJECT: `getapp-offering.get-offering-for-project${region}`,
     GET_OFFER_OF_COMP: `getapp-offering.get-offering-of-comp${region}`,
+
+    // Policies
+    CREATE_OFFERING_TREE_POLICY: `getapp-offering.create-offering-tree-policy${region}`,
+    UPDATE_OFFERING_TREE_POLICY: `getapp-offering.update-offering-tree-policy${region}`,
+    DELETE_OFFERING_TREE_POLICY: `getapp-offering.delete-offering-tree-policy${region}`,
+    GET_OFFERING_TREE_POLICIES: `getapp-offering.get-offering-tree-policies${region}`,
+    
 } as const
 
 export const OfferingTopicsEmit = {
