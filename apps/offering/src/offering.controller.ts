@@ -1,7 +1,7 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
-import { ComponentOfferingRequestDto, PushOfferingDto } from '@app/common/dto/offering';
+import { ComponentOfferingRequestDto, CreateOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto, UpdateOfferingTreePolicyDto } from '@app/common/dto/offering';
 import { ItemTypeEnum } from '@app/common/database/entities';
 import { ReleaseChangedEventDto } from '@app/common/dto/upload';
 import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import { OfferingService } from './offering.service';
 import { ProjectIdentifierParams } from '@app/common/dto/project-management';
 import { DeviceTypeOfferingParams, PlatformOfferingParams } from '@app/common/dto/offering/dto/offering.dto';
+import { OfferingTreePolicyService } from './offering-tree-policy.service';
 
 @Controller()
 export class OfferingController {
@@ -18,7 +19,8 @@ export class OfferingController {
   private readonly logger = new Logger(OfferingController.name);
 
   constructor(
-    private readonly offeringService: OfferingService
+    private readonly offeringService: OfferingService,
+    private readonly policyService: OfferingTreePolicyService,
   ) { }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_PLATFORM)
@@ -88,6 +90,28 @@ export class OfferingController {
     this.logger.log(`Offering service - Health checking, Version: ${version}`)
     return "Offering service is running successfully. Version: " + version
   }
+
+  @MessagePattern(OfferingTopics.CREATE_OFFERING_TREE_POLICY)
+  createOfferingTreePolicy(@RpcPayload() dto: CreateOfferingTreePolicyDto) {
+    return this.policyService.create(dto);
+  }
+
+  @MessagePattern(OfferingTopics.GET_OFFERING_TREE_POLICIES)
+  getOfferingTreePolicies(@RpcPayload() dto: OfferingTreePolicyParams) {
+    // TODO 
+    return this.policyService.findBy(dto);
+  }
+
+  @MessagePattern(OfferingTopics.UPDATE_OFFERING_TREE_POLICY)
+  updateOfferingTreePolicy(@RpcPayload() dto: UpdateOfferingTreePolicyDto) {
+    return this.policyService.update(dto);
+  }
+
+  @MessagePattern(OfferingTopics.DELETE_OFFERING_TREE_POLICY)
+  deleteOfferingTreePolicy(@RpcPayload("id") id: number) {
+    return this.policyService.remove(id);
+  }
+
 
   private readImageVersion() {
     let version = 'unknown'
