@@ -400,7 +400,6 @@ export class OfferingService implements OnModuleInit {
       platformId = params.platformIdentifier;
     }
 
-    
     let tree: PlatformHierarchyDto
     try {
       tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE, { platformId: platformId }));
@@ -408,14 +407,40 @@ export class OfferingService implements OnModuleInit {
       this.logger.error(`get offering for platform: ${params.platformIdentifier} error: ${e}`);
       throw new InternalServerErrorException(`get offering for platform: ${params.platformIdentifier} error: ${e}`)
     }
-    const projects = tree.deviceTypes.flatMap(dt => dt.projects).map(p => p.projectId);
-    const componentOffering = await this.getOfferingForProjects(projects);
+    let policies = await this.policyService.findBy({ platformId });
+    this.logger.debug(`offering policies: ${JSON.stringify(policies)}`);
+
+    const projects = tree.deviceTypes
+      .flatMap(dt =>
+        dt.projects
+          .filter(p => !policies.some(
+            policy =>
+              policy.projectId === p.projectId &&
+              policy.deviceTypeId === dt.deviceTypeId
+          ))
+          .map(p => p.projectId)
+      );
+
+    const [policyOfferingProject, offering] = await Promise.all([
+      this.getComponents(policies.map(p => p.catalogId)),
+      this.getOfferingForProjects(projects)
+    ]);
+    let policyOfferingCatalog = new Map(Array.from(policyOfferingProject).map(([_, v]) => [v.id, v]));
+
 
     let platformOffering = PlatformOfferingDto.fromPlatformHierarchyDto(tree);
 
     platformOffering.deviceTypes?.map(dt => {
       dt.projects?.map(p => {
-        p.release = componentOffering.get(p.projectId);
+        let catalogId = policies.find(po => po.projectId == p.projectId && po.deviceTypeId == dt.deviceTypeId)?.catalogId
+        if (catalogId){
+          p.release = policyOfferingCatalog.get(catalogId);
+        }
+
+        if (!p.release){
+          p.release = offering.get(p.projectId);
+        }
+
       })
     })
     return platformOffering
@@ -445,8 +470,13 @@ export class OfferingService implements OnModuleInit {
     let policies = await this.policyService.findBy({ deviceTypeId: deviceTypeId });
     this.logger.debug(`offering policies: ${JSON.stringify(policies)}`);
 
-    const projects = tree.projects.map(p => p.projectId);
-    const componentOffering = await this.getOfferingForProjects(projects);
+    let projects = tree.projects.map(p => p.projectId);
+    projects = projects.filter(p => !policies.some(policy => policy.projectId == p));
+
+    const componentOffering = await Promise.all([
+      this.getComponents(policies.map(p => p.catalogId)),
+      this.getOfferingForProjects(projects)
+    ]).then(([components, offering]) => new Map([...components, ...offering]));
 
     let deviceTypeOffering = DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
 
@@ -470,7 +500,14 @@ export class OfferingService implements OnModuleInit {
       this.logger.error(`get offering for project: ${params.projectIdentifier} not found`);
       throw new NotFoundException(`get offering for project: ${params.projectIdentifier} not found`);
     }
-    const offering = await this.getOfferingForProjects([project.id]);
+    
+    let policy = await this.policyService.findBy({ projectId: project?.id });
+    let offering;
+    if (policy?.length > 0){
+      offering = await this.getComponents(policy.map(p => p.catalogId));
+    }else{
+      offering = await this.getOfferingForProjects([project.id]);
+    }
 
     const projectOffering = new ProjectRefOfferingDto();
     projectOffering.projectId = project.id;
@@ -498,7 +535,7 @@ export class OfferingService implements OnModuleInit {
     return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
   }
 
-  private async getComponents(catalogIds: string[]): Promise<ComponentV2Dto[]> {
+  private async getComponents(catalogIds: string[]): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get components: ${JSON.stringify(catalogIds)}`);
     const releases = await this.releaseRepo.find({
       select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } },
@@ -508,7 +545,7 @@ export class OfferingService implements OnModuleInit {
       },
       relations: { project: true, artifacts: { fileUpload: true } },
     });
-    return releases.map(r => ComponentV2Dto.fromEntity(r));
+    return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
   }
 
   @SafeCron({ cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering" })
