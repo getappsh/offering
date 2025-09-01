@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { OfferingTreePolicyEntity } from '@app/common/database/entities/offering-tree-policy.entity';
 import { CreateOfferingTreePolicyDto, OfferingTreePolicyDto, OfferingTreePolicyParams, UpdateOfferingTreePolicyDto } from '@app/common/dto/offering';
 import { ReleaseEntity, ReleaseStatusEnum } from '@app/common/database/entities';
@@ -105,7 +105,16 @@ export class OfferingTreePolicyService {
     const where: any = {};
     if (params.platformId) {
       where.platform = { id: params.platformId };
-    }
+    }else if (params.deviceTypeId ){
+      // Platform is empty but deviceType is filled → platform must be null
+      where.platform = IsNull();
+
+    }else if (params.projectId){
+      // Platform and deviceType are empty but project is filled → platform and deviceType must be null
+      where.platform = IsNull();
+      where.deviceType = IsNull();
+    } 
+
     if (params.deviceTypeId) {
       where.deviceType = { id: params.deviceTypeId };
     }
