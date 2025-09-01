@@ -16,6 +16,7 @@ import { HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, N
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
 import { ArrayOverlap, In, Repository } from "typeorm";
+import { OfferingTreePolicyService } from "./offering-tree-policy.service";
 
 
 @Injectable()
@@ -32,6 +33,8 @@ export class OfferingService implements OnModuleInit {
     @InjectRepository(MapOfferingEntity) private readonly mapOfferingRepo: Repository<MapOfferingEntity>,
 
     @Inject(MicroserviceName.DISCOVERY_SERVICE) private readonly deviceClient: MicroserviceClient,
+
+    private readonly policyService: OfferingTreePolicyService,
 
   ) { }
 
@@ -397,6 +400,7 @@ export class OfferingService implements OnModuleInit {
       platformId = params.platformIdentifier;
     }
 
+    
     let tree: PlatformHierarchyDto
     try {
       tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE, { platformId: platformId }));
@@ -438,6 +442,9 @@ export class OfferingService implements OnModuleInit {
       this.logger.error(`get offering for device type: ${params.deviceTypeIdentifier} error: ${e}`);
       throw new InternalServerErrorException(`get offering for device type: ${params.deviceTypeIdentifier} error: ${e}`)
     }
+    let policies = await this.policyService.findBy({ deviceTypeId: deviceTypeId });
+    this.logger.debug(`offering policies: ${JSON.stringify(policies)}`);
+
     const projects = tree.projects.map(p => p.projectId);
     const componentOffering = await this.getOfferingForProjects(projects);
 
@@ -489,6 +496,19 @@ export class OfferingService implements OnModuleInit {
     });
     this.logger.verbose(`offering for projects: ${JSON.stringify(releases.map(r => r.catalogId))}`);
     return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+  }
+
+  private async getComponents(catalogIds: string[]): Promise<ComponentV2Dto[]> {
+    this.logger.debug(`get components: ${JSON.stringify(catalogIds)}`);
+    const releases = await this.releaseRepo.find({
+      select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } },
+      where: {
+        status: ReleaseStatusEnum.RELEASED,
+        catalogId: In(catalogIds),
+      },
+      relations: { project: true, artifacts: { fileUpload: true } },
+    });
+    return releases.map(r => ComponentV2Dto.fromEntity(r));
   }
 
   @SafeCron({ cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering" })

@@ -1,8 +1,10 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OfferingTreePolicyEntity } from '@app/common/database/entities/offering-tree-policy.entity';
 import { CreateOfferingTreePolicyDto, OfferingTreePolicyDto, OfferingTreePolicyParams, UpdateOfferingTreePolicyDto } from '@app/common/dto/offering';
+import { ReleaseEntity, ReleaseStatusEnum } from '@app/common/database/entities';
+import { ReleaseChangedEventDto, ReleaseEventEnum } from '@app/common/dto/upload';
 
 @Injectable()
 export class OfferingTreePolicyService {
@@ -10,8 +12,9 @@ export class OfferingTreePolicyService {
   private readonly logger = new Logger(OfferingTreePolicyService.name);
 
   constructor(
-    @InjectRepository(OfferingTreePolicyEntity)
-    private readonly policyRepository: Repository<OfferingTreePolicyEntity>,
+    @InjectRepository(OfferingTreePolicyEntity) private readonly policyRepository: Repository<OfferingTreePolicyEntity>,
+    @InjectRepository(ReleaseEntity) private readonly releaseRepo: Repository<ReleaseEntity>,
+
   ) {}
 
   async create(createDto: CreateOfferingTreePolicyDto): Promise<OfferingTreePolicyDto> {
@@ -19,7 +22,15 @@ export class OfferingTreePolicyService {
     policy.platform = {id: createDto.platformId} as any;
     policy.deviceType = {id: createDto.deviceTypeId} as any ;
     policy.project = {id: createDto.projectId} as any;
-    policy.release = {catalogId: createDto.catalogId} as any; 
+
+    let release = await this.releaseRepo.findOneBy({catalogId: createDto.catalogId})
+    if (!release){
+      throw new NotFoundException(`Version with catalogId: ${createDto.catalogId} not found!`);
+    }
+    if (release.status != ReleaseStatusEnum.RELEASED){
+      throw new ForbiddenException(`Version with catalogId: ${createDto.catalogId}, is not released!`)
+    }
+    policy.release = release
 
     this.logger.debug(`Creating policy entity: ${JSON.stringify(policy)}`);
 
@@ -57,6 +68,15 @@ export class OfferingTreePolicyService {
     if (!policy) {
       throw new NotFoundException(`Device platform version policy with ID ${updateDto.id} not found`);
     }
+
+    let release = await this.releaseRepo.findOneBy({catalogId: updateDto.catalogId})
+    if (!release){
+      throw new NotFoundException(`Version with catalogId: ${updateDto.catalogId} not found!`);
+    }
+    if (release.status != ReleaseStatusEnum.RELEASED){
+      throw new ForbiddenException(`Version with catalogId: ${updateDto.catalogId}, is not released!`)
+    }
+    policy.release = release
     
     policy.platform = updateDto.platformId ? {id: updateDto.platformId} as any : policy.platform;
     policy.deviceType = updateDto.deviceTypeId ? {id: updateDto.deviceTypeId} as any : policy.deviceType; ;
@@ -104,5 +124,13 @@ export class OfferingTreePolicyService {
       }
      });
     return policies.map(policy => OfferingTreePolicyDto.fromEntity(policy));
+  }
+
+  releaseChangedEvent(dto: ReleaseChangedEventDto){
+    if (dto.event === ReleaseEventEnum.DELETED || dto.event === ReleaseStatusEnum.ARCHIVED){
+      this.logger.log(`Release ${dto.catalogId}, was deleted/archived`);
+      this.releaseRepo.delete({catalogId: dto.catalogId});
+    }
+
   }
 }

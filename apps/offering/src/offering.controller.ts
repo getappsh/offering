@@ -70,6 +70,7 @@ export class OfferingController {
   releaseChangedEvent(@RpcPayload() event: ReleaseChangedEventDto) {
     this.logger.log(`Release changed event for catalogId: ${event.catalogId}, event: ${event.event}`);
     this.offeringService.releaseChangedEvent(event);
+    this.policyService.releaseChangedEvent(event);
   }
 
   @EventPattern(OfferingTopicsEmit.DEVICE_SOFTWARE_EVENT)
