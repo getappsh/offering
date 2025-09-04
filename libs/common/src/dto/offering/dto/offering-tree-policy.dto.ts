@@ -1,9 +1,9 @@
 import { OfferingTreePolicyEntity } from "@app/common/database/entities";
-import { ApiProperty, PartialType } from "@nestjs/swagger";
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsNumber, IsOptional, IsString, ValidateIf } from "class-validator";
 import { Type } from "class-transformer";
 
-export class CreateOfferingTreePolicyDto {
+export class UpsertOfferingTreePolicyDto {
 
   @ApiProperty({ required: false })
   @IsNumber()
@@ -12,25 +12,21 @@ export class CreateOfferingTreePolicyDto {
 
   @ApiProperty({ required: false })
   @IsNumber()
-  @IsOptional()
+  @ValidateIf((dto) => dto.platformId !== undefined && dto.platformId !== null)
   deviceTypeId?: number;
 
   @ApiProperty()
   @IsNumber()
   projectId: number;
 
-  @ApiProperty()
+  @ApiProperty({ required: false, description: "Set to null to remove the policy" })
+  @IsOptional()
   @IsString()
-  catalogId: string;
+  catalogId?: string;
 }
 
-export class UpdateOfferingTreePolicyDto extends PartialType(CreateOfferingTreePolicyDto) {
-  id: number;
-}
 
 export class OfferingTreePolicyDto {
-  @ApiProperty()
-  id: number;
 
   @ApiProperty({ required: false })
   platformId?: number;
@@ -39,10 +35,13 @@ export class OfferingTreePolicyDto {
   deviceTypeId?: number;
 
   @ApiProperty()
-  projectId: number;
+  projectId?: number;
 
   @ApiProperty()
-  catalogId: string;
+  catalogId?: string;
+
+  @ApiProperty()
+  latest?: boolean;
 
   @ApiProperty()
   createdAt: Date;
@@ -53,11 +52,11 @@ export class OfferingTreePolicyDto {
   static fromEntity(entity: OfferingTreePolicyEntity): OfferingTreePolicyDto {
     const dto = new OfferingTreePolicyDto();
     Object.assign(dto, {
-      id: entity.id,
       platformId: entity.platform?.id,
       deviceTypeId: entity.deviceType?.id,
       projectId: entity.project?.id,
       catalogId: entity.release?.catalogId,
+      latest: entity.release?.latest,
       createdAt: entity.createdDate,
       updatedAt: entity.lastUpdatedDate,
     });
