@@ -1,9 +1,35 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { ComponentV2Dto } from "../../upload";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto, ProjectRefDto } from "../../devices-hierarchy";
 import { BadRequestException } from "@nestjs/common";
-import { ValidateIf, IsString, IsNotEmpty } from "class-validator";
-import { Transform } from "class-transformer";
+import { ValidateIf, IsString, IsNotEmpty, IsInt, IsOptional, IsPositive } from "class-validator";
+import { Transform, Type } from "class-transformer";
+
+export class GetProjectsOfferingDto {
+  @ApiPropertyOptional({
+    description: 'The page number to fetch (default: 1)',
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Number of projects per page (default: 20)',
+    example: 20,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  perPage?: number = 20;
+
+  toString() {
+    return JSON.stringify(this);
+  }
+}
 
 export class ProjectRefOfferingDto {
   @ApiProperty({ description: "Name of the project" })
