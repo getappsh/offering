@@ -6,7 +6,7 @@ import { DeviceTypeHierarchyDto, PlatformHierarchyDto } from "@app/common/dto/de
 import { AppError, ErrorCode } from "@app/common/dto/error";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
-import { DeviceTypeOfferingDto, DeviceTypeOfferingParams, PlatformOfferingDto, PlatformOfferingParams, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
+import { DeviceTypeOfferingDto, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingDto, PlatformOfferingParams, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
@@ -17,6 +17,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
 import { ArrayOverlap, In, Repository } from "typeorm";
 import { OfferingTreePolicyService } from "./offering-tree-policy.service";
+import { PaginatedResultDto } from "@app/common/dto/pagination.dto";
 
 
 @Injectable()
@@ -393,7 +394,7 @@ export class OfferingService implements OnModuleInit {
     if (typeof params.platformIdentifier === 'string') {
       const platform = await this.platformRepo.findOneBy({ name: params.platformIdentifier });
       if (!platform) {
-        throw new AppError(ErrorCode.PLATFORM_NOT_FOUND, `get offering for platform: ${params.platformIdentifier} not found`, HttpStatus.NOT_FOUND);
+        throw new AppError(ErrorCode.DEVICE_PLATFORM_NOT_FOUND, `get offering for platform: ${params.platformIdentifier} not found`, HttpStatus.NOT_FOUND);
       }
       platformId = platform.id;
     } else {
@@ -423,7 +424,7 @@ export class OfferingService implements OnModuleInit {
 
     const [policyOfferingProject, offering] = await Promise.all([
       this.getComponents(policies.map(p => p.catalogId)),
-      this.getOfferingForProjects(projects)
+      this.getLatestReleaseOfProjects(projects)
     ]);
     let policyOfferingCatalog = new Map(Array.from(policyOfferingProject).map(([_, v]) => [v.id, v]));
 
@@ -475,7 +476,7 @@ export class OfferingService implements OnModuleInit {
 
     const componentOffering = await Promise.all([
       this.getComponents(policies.map(p => p.catalogId)),
-      this.getOfferingForProjects(projects)
+      this.getLatestReleaseOfProjects(projects)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
 
     let deviceTypeOffering = DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
@@ -506,7 +507,7 @@ export class OfferingService implements OnModuleInit {
     if (policy?.length > 0){
       offering = await this.getComponents(policy.map(p => p.catalogId));
     }else{
-      offering = await this.getOfferingForProjects([project.id]);
+      offering = await this.getLatestReleaseOfProjects([project.id]);
     }
 
     const projectOffering = new ProjectRefOfferingDto();
@@ -520,7 +521,47 @@ export class OfferingService implements OnModuleInit {
     return projectOffering
   }
 
-  private async getOfferingForProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
+  async getOfferingForProjects(query: GetProjectsOfferingDto): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
+    this.logger.log(`get offering for projects`);
+    let total = await this.projectRepo.count();
+    
+    let projects = await this.projectRepo.find({
+      select: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
+      relations: { label: true },
+      skip: (query.page - 1) * query.perPage,
+      take: query.perPage,
+      order: { id: "ASC" }
+    });
+    let projectIds = projects.map(p => p.id);
+    
+    let policies = await this.policyService.findByProjects(projectIds);
+
+    projectIds = projectIds.filter(id => !policies.some(policy => policy.projectId == id));
+
+    const componentOffering = await Promise.all([
+      this.getComponents(policies.map(p => p.catalogId)),
+      this.getLatestReleaseOfProjects(projectIds)
+    ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    const projectOfferings = projects.map(p => {
+      const projectOffering = new ProjectRefOfferingDto();
+      projectOffering.projectId = p.id;
+      projectOffering.projectName = p.name;
+      projectOffering.displayName = p.projectName;
+      projectOffering.label = p.label?.name;
+      projectOffering.release = componentOffering.get(p.id);
+      return projectOffering;
+    });
+
+    let res = new PaginatedResultDto<ProjectRefOfferingDto>();
+    res.data = projectOfferings;
+    res.total = total;
+    res.page = query.page;
+    res.perPage = query.perPage;
+    return res
+  }
+
+  private async getLatestReleaseOfProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
     const releases = await this.releaseRepo.find({
       select: { project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } },

@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { OfferingTreePolicyEntity } from '@app/common/database/entities/offering-tree-policy.entity';
 import { CreateOfferingTreePolicyDto, OfferingTreePolicyDto, OfferingTreePolicyParams, UpdateOfferingTreePolicyDto } from '@app/common/dto/offering';
 import { ReleaseEntity, ReleaseStatusEnum } from '@app/common/database/entities';
@@ -94,6 +94,30 @@ export class OfferingTreePolicyService {
     }
     return "Policy deleted successfully";
   }
+
+  async findByProjects(projectIds: number[]): Promise<OfferingTreePolicyDto[]> {
+    this.logger.debug(`Finding policies for project IDs: ${projectIds}`);
+    if (projectIds.length === 0) {
+      this.logger.debug(`No project IDs provided, returning empty array`);
+      return [];
+    }
+    const policies = await this.policyRepository.find({
+      where: { 
+        project: { id: In(projectIds) }, 
+        deviceType: IsNull(),
+        platform: IsNull()
+      },
+      relations: ['platform', 'deviceType', 'project', 'release'],
+      select: {
+        platform: { id: true },
+        deviceType: { id: true },
+        project: { id: true },
+        release: { catalogId: true },
+      }
+    });
+    return policies.map(policy => OfferingTreePolicyDto.fromEntity(policy));
+  } 
+
 
   async findBy(params: OfferingTreePolicyParams): Promise<OfferingTreePolicyDto[]> {
     this.logger.debug(`Finding policies with params: ${JSON.stringify(params)}`);
