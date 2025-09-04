@@ -1,7 +1,7 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
-import { ComponentOfferingRequestDto, CreateOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto, UpdateOfferingTreePolicyDto } from '@app/common/dto/offering';
+import { ComponentOfferingRequestDto, UpsertOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto } from '@app/common/dto/offering';
 import { ItemTypeEnum } from '@app/common/database/entities';
 import { ReleaseChangedEventDto } from '@app/common/dto/upload';
 import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
@@ -97,25 +97,15 @@ export class OfferingController {
     return "Offering service is running successfully. Version: " + version
   }
 
-  @MessagePattern(OfferingTopics.CREATE_OFFERING_TREE_POLICY)
-  createOfferingTreePolicy(@RpcPayload() dto: CreateOfferingTreePolicyDto) {
-    return this.policyService.create(dto);
+  @MessagePattern(OfferingTopics.UPSERT_OFFERING_TREE_POLICY)
+  upsertOfferingTreePolicy(@RpcPayload() dto: UpsertOfferingTreePolicyDto) {
+    return this.policyService.upsert(dto);
   }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_TREE_POLICIES)
   getOfferingTreePolicies(@RpcPayload() dto: OfferingTreePolicyParams) {
     // TODO 
     return this.policyService.findBy(dto);
-  }
-
-  @MessagePattern(OfferingTopics.UPDATE_OFFERING_TREE_POLICY)
-  updateOfferingTreePolicy(@RpcPayload() dto: UpdateOfferingTreePolicyDto) {
-    return this.policyService.update(dto);
-  }
-
-  @MessagePattern(OfferingTopics.DELETE_OFFERING_TREE_POLICY)
-  deleteOfferingTreePolicy(@RpcPayload("id") id: number) {
-    return this.policyService.remove(id);
   }
 
 

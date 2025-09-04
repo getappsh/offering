@@ -2,7 +2,7 @@ import { ConflictException, Injectable, Logger, NotFoundException, ForbiddenExce
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { OfferingTreePolicyEntity } from '@app/common/database/entities/offering-tree-policy.entity';
-import { CreateOfferingTreePolicyDto, OfferingTreePolicyDto, OfferingTreePolicyParams, UpdateOfferingTreePolicyDto } from '@app/common/dto/offering';
+import { UpsertOfferingTreePolicyDto, OfferingTreePolicyDto, OfferingTreePolicyParams } from '@app/common/dto/offering';
 import { ReleaseEntity, ReleaseStatusEnum } from '@app/common/database/entities';
 import { ReleaseChangedEventDto, ReleaseEventEnum } from '@app/common/dto/upload';
 
@@ -17,83 +17,73 @@ export class OfferingTreePolicyService {
 
   ) {}
 
-  async create(createDto: CreateOfferingTreePolicyDto): Promise<OfferingTreePolicyDto> {
-    const policy = this.policyRepository.create();
-    policy.platform = {id: createDto.platformId} as any;
-    policy.deviceType = {id: createDto.deviceTypeId} as any ;
-    policy.project = {id: createDto.projectId} as any;
-
-    let release = await this.releaseRepo.findOneBy({catalogId: createDto.catalogId})
-    if (!release){
-      throw new NotFoundException(`Version with catalogId: ${createDto.catalogId} not found!`);
-    }
-    if (release.status != ReleaseStatusEnum.RELEASED){
-      throw new ForbiddenException(`Version with catalogId: ${createDto.catalogId}, is not released!`)
-    }
-    policy.release = release
-
-    this.logger.debug(`Creating policy entity: ${JSON.stringify(policy)}`);
-
-    try {
-      const savedPolicy = await this.policyRepository.save(policy);
-      return OfferingTreePolicyDto.fromEntity(savedPolicy);
-    } catch (error) {
-      if (error.code === '23505') { // Unique violation
-        throw new ConflictException('A policy with the same platform, device type, and project already exists.');
-      }
-      throw error;
-    }
-  }
-
-  async findOne(id: number): Promise<OfferingTreePolicyDto> {
-    const policy = await this.policyRepository.findOne({ 
-      where: { id }, 
-      relations: ['platform', 'deviceType', 'project', 'release'],
+  async upsert(dto: UpsertOfferingTreePolicyDto): Promise<OfferingTreePolicyDto> {
+    this.logger.debug(`Upserting policy entity: ${JSON.stringify(dto)}`);
+    const existingPolicy = await this.policyRepository.findOne({ 
+      where: { 
+        platform: dto.platformId ? { id: dto.platformId } : IsNull(),
+        deviceType: dto.deviceTypeId ? { id: dto.deviceTypeId } : IsNull(),
+        project: { id: dto.projectId } 
+      }, 
+      relations: ['platform', 'deviceType', 'project'],
       select: {
         platform: { id: true },
         deviceType: { id: true },
         project: { id: true },
-        release: { catalogId: true },
       }
     });
-    if (!policy) {
-      throw new NotFoundException(`Device platform version policy with ID ${id} not found`);
-    }
-    return OfferingTreePolicyDto.fromEntity(policy);
-  }
-
-  async update(updateDto: UpdateOfferingTreePolicyDto): Promise<OfferingTreePolicyDto> {
-    this.logger.debug(`Updating policy entity: ${JSON.stringify(updateDto)}`);
-    const policy = await this.policyRepository.findOne({ where: { id: updateDto.id } });
-    if (!policy) {
-      throw new NotFoundException(`Device platform version policy with ID ${updateDto.id} not found`);
-    }
-
-    let release = await this.releaseRepo.findOneBy({catalogId: updateDto.catalogId})
-    if (!release){
-      throw new NotFoundException(`Version with catalogId: ${updateDto.catalogId} not found!`);
-    }
-    if (release.status != ReleaseStatusEnum.RELEASED){
-      throw new ForbiddenException(`Version with catalogId: ${updateDto.catalogId}, is not released!`)
-    }
-    policy.release = release
     
-    policy.platform = updateDto.platformId ? {id: updateDto.platformId} as any : policy.platform;
-    policy.deviceType = updateDto.deviceTypeId ? {id: updateDto.deviceTypeId} as any : policy.deviceType; ;
-    policy.project = updateDto.platformId ? {id: updateDto.projectId} as any : policy.project;
-    policy.release = updateDto.catalogId ? {catalogId: updateDto.catalogId} as any : policy.release; 
-    const updatedPolicy = await this.policyRepository.save(policy);
-    return this.findOne(updatedPolicy.id);
+    
+    if (dto.catalogId === null || dto.catalogId === undefined){
+      this.logger.debug(`CatalogId is null, removing policy ID: ${existingPolicy.id}`);
+      if (!existingPolicy) {
+        this.logger.debug(`CatalogId is null, but no existing policy to remove`);
+        throw new NotFoundException(`No existing policy to remove for the given parameters.`);
+      }
+      this.policyRepository.remove(existingPolicy);
+      existingPolicy.release = null;
+      return OfferingTreePolicyDto.fromEntity(existingPolicy);
+    }
+
+    let release = await this.releaseRepo.findOneBy({catalogId: dto.catalogId})
+    if (!release){
+      throw new NotFoundException(`Version with catalogId: ${dto.catalogId} not found!`);
+    }
+
+    if (release.status != ReleaseStatusEnum.RELEASED){
+      throw new ForbiddenException(`Version with catalogId: ${dto.catalogId}, is not released!`)
+    }
+
+
+    if (existingPolicy) {
+      this.logger.debug(`Policy already exists, updating ID: ${existingPolicy.id}`);
+      existingPolicy.release = release;
+      await this.policyRepository.save(existingPolicy);
+      return OfferingTreePolicyDto.fromEntity(existingPolicy);
+
+    }else {
+      this.logger.debug(`Policy does not exist, creating new policy`);
+      const policy = this.policyRepository.create();
+      policy.platform = {id: dto.platformId} as any;
+      policy.deviceType = {id: dto.deviceTypeId} as any ;
+      policy.project = {id: dto.projectId} as any;
+
+      
+      policy.release = release
+      this.logger.debug(`Creating policy entity: ${JSON.stringify(policy)}`);
+
+      try {
+        const savedPolicy = await this.policyRepository.save(policy);
+        return OfferingTreePolicyDto.fromEntity(savedPolicy);
+      } catch (error) {
+        if (error.code === '23505') { // Unique violation
+          throw new ConflictException('A policy with the same platform, device type, and project already exists.');
+        }
+        throw error;
+      }
+    }
   }
 
-  async remove(id: number): Promise<string> {
-    this.logger.debug(`Removing policy entity with ID: ${id}`);
-    const result = await this.policyRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Device platform version policy with ID ${id} not found`);
-    }
-    return "Policy deleted successfully";
-  }
 
   async findByProjects(projectIds: number[]): Promise<OfferingTreePolicyDto[]> {
     this.logger.debug(`Finding policies for project IDs: ${projectIds}`);
@@ -112,7 +102,7 @@ export class OfferingTreePolicyService {
         platform: { id: true },
         deviceType: { id: true },
         project: { id: true },
-        release: { catalogId: true },
+        release: { catalogId: true, latest: true},
       }
     });
     return policies.map(policy => OfferingTreePolicyDto.fromEntity(policy));
@@ -153,7 +143,7 @@ export class OfferingTreePolicyService {
         platform: { id: true },
         deviceType: { id: true },
         project: { id: true },
-        release: { catalogId: true },
+        release: { catalogId: true, latest: true},
       }
      });
     return policies.map(policy => OfferingTreePolicyDto.fromEntity(policy));
