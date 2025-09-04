@@ -57,7 +57,6 @@ export class DiscoveryMessageV2Dto {
     required: false,
     description: 'Timestamp when the discovery snapshot was taken',
     type: String, // Important for Swagger to document this as a string
-    example: new Date(),
   })
   @IsOptional()
   @IsDate()

@@ -5,6 +5,7 @@ import { DeviceComponentEntity } from "./device-component-state.entity";
 import { PlatformEntity } from "./platform.entity";
 import { ReleaseEntity } from "./release.entity";
 import { DeviceTypeEntity } from "./device-type.entity";
+import { Deprecated } from "../../decorators";
 
 @Entity("device")
 export class DeviceEntity {
@@ -25,9 +26,13 @@ export class DeviceEntity {
   @JoinColumn({ name: "platform_id" })
   platform?: PlatformEntity;
 
-  @ManyToOne(() => DeviceTypeEntity, { nullable: true, eager: true, onUpdate: "CASCADE", onDelete: "SET NULL" })
-  @JoinColumn({ name: "device_type_id" })
-  deviceType?: DeviceTypeEntity;
+  @ManyToMany(() => DeviceTypeEntity, { eager: true })
+  @JoinTable({
+    name: "device_device_types",
+    joinColumn: { name: "device_id", referencedColumnName: "ID" },
+    inverseJoinColumn: { name: "device_type_id", referencedColumnName: "id" },
+  })
+  deviceType?: DeviceTypeEntity[];
 
   @Column({ nullable: true })
   name?: string;
@@ -78,6 +83,10 @@ export class DeviceEntity {
   // })
   // platforms: PlatformEntity[];
 
+  /**
+   * @deprecated This field is deprecated and will be removed in the future
+   */
+  @Deprecated()
   @Column("text", { name: "formations", array: true, nullable: true })
   formations?: string[];
 

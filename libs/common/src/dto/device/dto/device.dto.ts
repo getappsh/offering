@@ -117,7 +117,7 @@ export class DeviceDto {
 
     // Org type relation    
     device.platformName = deviceE?.platform?.name;
-    device.deviceTypeName = deviceE?.deviceType?.name;
+    device.deviceTypeName = deviceE?.deviceType?.map(dt => dt.name).join(", ");
 
     return device
   }

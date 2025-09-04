@@ -143,7 +143,11 @@ export class ComponentStateDto {
 
 export class DiscoverySoftwareV2Dto {
 
-  @ApiProperty({ required: false })
+  /**
+   * @deprecated This field is deprecated and will be removed in the future. use instead platform object in the root object
+   */
+  @Deprecated()
+  @ApiProperty({ required: false, deprecated: true })
   @IsString({ each: true })
   @IsNotEmpty({ each: true })
   @IsArray()

@@ -5,7 +5,7 @@ import { DeviceTypeEntity } from "./device-type.entity";
 @Entity("platform")
 export class PlatformEntity {
 
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn({ type: 'integer' })
   id: number
 
   @Column({ name: "name", unique: true })

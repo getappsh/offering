@@ -35,12 +35,13 @@ export enum ErrorCode {
   MAP_AREA_TOO_LARGE = "MAP.areaTooLarge",
   MAP_AREA_TOO_SMALL = "MAP.areaTooSmall",
 
-  // offering
-  PLATFORM_NOT_FOUND = "PLATFORM.notFound",
-
   // devices
   DEVICE_NOT_FOUND = "DEVICE.notFound",
-  
+  DEVICE_DT_NOT_FOUND = "DEVICE_TYPE.notFound",
+  DEVICE_DT_ALREADY_EXISTS = "DEVICE_TYPE.alreadyExists",
+  DEVICE_PLATFORM_NOT_FOUND = "DEVICE_PLATFORM.notFound",
+  DEVICE_PLATFORM_ALREADY_EXISTS = "DEVICE_PLATFORM.alreadyExists",
+
   // groups
   GROUP_NOT_FOUND = "GROUP.notFound",
   GROUP_NOT_ALLOWED_TO_ADD = "GROUP.notAllowedToAdd",
@@ -81,9 +82,12 @@ export class ErrorDto {
       "`MAP.areaTooLarge`: Area too large to distribute, reduce request size and try again <br /> " +
       "`MAP.areaTooSmall`: Area too small to distribute, increase request size and try again . " +
 
-      "`PLATFORM.notFound`: Platform with given id or name not found.<br/>" +
 
       "`DEVICE.notFound`: Device with given id not found.<br/>" +
+      "`DEVICE_DT_NOT_FOUND`: Device type with given id not found.<br/>" +
+      "`DEVICE_DT_ALREADY_EXISTS`: Device type with given name already exists.<br/>" +
+      "`DEVICE_PLATFORM.notFound`: Platform with given id or name not found.<br/>" +
+      "`DEVICE_PLATFORM_ALREADY_EXISTS`: Platform with given name already exists.<br/>" +
 
       "`GROUP_NOT_FOUND`: Group with the given id was not found.<br/>" +
       "`GROUP_NOT_ALLOWED_TO_ADD`: Not allowed to add to the group, see message for cause.<br/>" +
