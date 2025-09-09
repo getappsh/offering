@@ -6,7 +6,7 @@ import { DeviceTypeHierarchyDto, PlatformHierarchyDto } from "@app/common/dto/de
 import { AppError, ErrorCode } from "@app/common/dto/error";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto, OfferingTreePolicyParams } from "@app/common/dto/offering";
-import { DeviceTypeOfferingDto, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
+import { DeviceTypeOfferingDto, DeviceTypeOfferingFilterQuery, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
@@ -459,19 +459,40 @@ export class OfferingService implements OnModuleInit {
     return platformOffering
   }
 
-  async getOfferingForDeviceType(params: DeviceTypeOfferingParams): Promise<DeviceTypeOfferingDto> {
-    this.logger.log(`get offering for device type: ${params.deviceTypeIdentifier}`);
+  async getOfferingForDeviceType(query: DeviceTypeOfferingFilterQuery): Promise<DeviceTypeOfferingDto> {
+    this.logger.log(`get offering for device type: ${JSON.stringify(query.deviceTypeIdentifier)}`);
 
-    let deviceTypeId = await this.getDeviceTypeIdByParams(params);
+    let deviceTypeId = await this.getDeviceTypeIdByParams(query as DeviceTypeOfferingParams);
 
     let tree: DeviceTypeHierarchyDto
     try {
       tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE, { deviceTypeId: deviceTypeId }));
     } catch (e) {
-      this.logger.error(`get offering for device type: ${params.deviceTypeIdentifier} error: ${e}`);
-      throw new InternalServerErrorException(`get offering for device type: ${params.deviceTypeIdentifier} error: ${e}`)
+      this.logger.error(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`);
+      throw new InternalServerErrorException(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`)
     }
-    let policies = await this.policyService.findBy({ deviceTypeId: deviceTypeId });
+    const findByQuery = new OfferingTreePolicyParams()
+    findByQuery.deviceTypeId = deviceTypeId
+
+    if (query.platformIdentifier){
+      findByQuery.platformId =  await this.getPlatformIdByParams(query as PlatformOfferingParams)
+      this.logger.verbose(`Platform id: ${findByQuery.platformId}`)
+        
+      this.logger.log(`Get hierarchy tree for platform`)
+      let tree: PlatformHierarchyDto
+      try {
+        tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE, { platformId: findByQuery.platformId }));
+      } catch (e) {
+        this.logger.error(`get offering for platform: ${query.platformIdentifier} error: ${e}`);
+        throw new InternalServerErrorException(`get offering for platform: ${query.platformIdentifier} error: ${e}`)
+      }
+
+      if (!tree.deviceTypes.find(d => d.deviceTypeId === findByQuery.deviceTypeId)){
+        throw new NotFoundException(`Platform: '${query.deviceTypeIdentifier}' dose not have DeviceType: '${query.deviceTypeIdentifier}' as offering`)
+      }
+    }
+
+    let policies = await this.policyService.findBy(findByQuery);
     this.logger.debug(`offering policies: ${JSON.stringify(policies)}`);
 
     let projectIds = tree.projects.map(p => p.projectId);
