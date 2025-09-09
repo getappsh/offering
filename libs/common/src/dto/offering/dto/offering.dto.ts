@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
 import { ComponentV2Dto } from "../../upload";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto, ProjectRefDto } from "../../devices-hierarchy";
 import { BadRequestException } from "@nestjs/common";
@@ -152,4 +152,12 @@ export class DeviceTypeOfferingParams {
     throw new BadRequestException('Invalid device type identifier');
   })
   deviceTypeIdentifier: string | number
+}
+
+
+export class ProjectOfferingFilterQuery extends IntersectionType(
+  PartialType(PlatformOfferingParams),
+  PartialType(DeviceTypeOfferingParams)
+){
+  projectIdentifier?: string | number | undefined;
 }
