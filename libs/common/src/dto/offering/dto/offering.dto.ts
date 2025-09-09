@@ -6,6 +6,16 @@ import { ValidateIf, IsString, IsNotEmpty, IsInt, IsOptional, IsPositive } from 
 import { Transform, Type } from "class-transformer";
 
 export class GetProjectsOfferingDto {
+  @ApiProperty({
+    description: 'The search term (matches project name or partial match)',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  @Type(() => String)
+  query: string;
+
+  
   @ApiPropertyOptional({
     description: 'The page number to fetch (default: 1)',
     example: 1,
