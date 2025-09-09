@@ -175,3 +175,11 @@ export class ProjectOfferingFilterQuery extends IntersectionType(
 
   projectIdentifier?: string | number | undefined;
 }
+
+export class DeviceTypeOfferingFilterQuery extends IntersectionType(
+  PartialType(PlatformOfferingParams)
+){
+
+    deviceTypeIdentifier?: string | number  | undefined;
+
+}
