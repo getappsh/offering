@@ -575,13 +575,17 @@ export class OfferingService implements OnModuleInit {
     }
   
     let policy = await this.policyService.findBy(findByQuery);
-    if (!policy && findByQuery.platformId){
+
+    if (!policy.length && findByQuery.platformId){
+      this.logger.debug(`Policy was not found with the following conditions: ${JSON.stringify(findByQuery)}, removing platform condition`)
       findByQuery.platformId = undefined;
       policy = await this.policyService.findBy(findByQuery);
-      if(!policy && findByQuery.deviceTypeId){
-        findByQuery.deviceTypeId = undefined
-        policy = await this.policyService.findBy(findByQuery);
-      }
+    }
+
+    if(!policy.length && findByQuery.deviceTypeId){
+      this.logger.debug(`Policy was not found with the following conditions: ${JSON.stringify(findByQuery)}, removing device-type condition`)
+      findByQuery.deviceTypeId = undefined
+      policy = await this.policyService.findBy(findByQuery);
     }
 
     let offering;
