@@ -159,5 +159,9 @@ export class ProjectOfferingFilterQuery extends IntersectionType(
   PartialType(PlatformOfferingParams),
   PartialType(DeviceTypeOfferingParams)
 ){
+  @ValidateIf(o => o.platformIdentifier !== undefined && o.platformIdentifier !== null)
+  @IsNotEmpty({ message: 'deviceTypeIdentifier is required when platformIdentifier is provided' })
+  deviceTypeIdentifier?: string | number | undefined;;
+
   projectIdentifier?: string | number | undefined;
 }
