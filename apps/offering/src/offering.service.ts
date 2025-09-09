@@ -15,7 +15,7 @@ import { SafeCron } from "@app/common/safe-cron";
 import { HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
-import { ArrayOverlap, In, Repository } from "typeorm";
+import { ArrayOverlap, ILike, In, Repository } from "typeorm";
 import { OfferingTreePolicyService } from "./offering-tree-policy.service";
 import { PaginatedResultDto } from "@app/common/dto/pagination.dto";
 
@@ -553,15 +553,22 @@ export class OfferingService implements OnModuleInit {
     return projectOffering
   }
 
-  async getOfferingForProjects(query: GetProjectsOfferingDto): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
+  async getOfferingForProjects(dto: GetProjectsOfferingDto): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     this.logger.log(`get offering for projects`);
     let total = await this.projectRepo.count();
     
+    const whereCondition: any = {};
+     if (dto.query && dto.query.trim() !== "") {
+      whereCondition.name = ILike(`%${dto.query}%`);
+    }
+
+
     let projects = await this.projectRepo.find({
       select: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
+      where: whereCondition,
       relations: { label: true },
-      skip: (query.page - 1) * query.perPage,
-      take: query.perPage,
+      skip: (dto.page - 1) * dto.perPage,
+      take: dto.perPage,
       order: { id: "ASC" }
     });
     let projectIds = projects.map(p => p.id);
@@ -588,8 +595,8 @@ export class OfferingService implements OnModuleInit {
     let res = new PaginatedResultDto<ProjectRefOfferingDto>();
     res.data = projectOfferings;
     res.total = total;
-    res.page = query.page;
-    res.perPage = query.perPage;
+    res.page = dto.page;
+    res.perPage = dto.perPage;
     return res
   }
 
