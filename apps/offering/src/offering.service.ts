@@ -401,8 +401,28 @@ export class OfferingService implements OnModuleInit {
       throw new InternalServerErrorException(`get offering for platform: ${params.platformIdentifier} error: ${e}`)
     }
     let policies = await this.policyService.findBy({ platformId });
-    this.logger.debug(`offering policies: ${JSON.stringify(policies)}`);
+    this.logger.debug(`platform offering policies: ${JSON.stringify(policies)}`);
 
+    const missingFromPolicies = tree.deviceTypes
+      .filter(dt =>
+        dt.projects
+          .filter(p => !policies.some(
+            policy =>
+              policy.projectId === p.projectId &&
+              policy.deviceTypeId === dt.deviceTypeId
+          )).length > 0
+      ).map(dt => dt.deviceTypeId);
+    
+    const deviceTypePolicies = (await Promise.all(
+      missingFromPolicies.map(dt => this.policyService.findBy({ deviceTypeId: dt }))
+    )).flat()
+
+    deviceTypePolicies.forEach(dtp => {
+      if (!policies.find(p => p.deviceTypeId === dtp.deviceTypeId && p.projectId === dtp.projectId)){
+        policies.push(dtp);
+      }
+    })
+    
     const projects = tree.deviceTypes
       .flatMap(dt =>
         dt.projects
@@ -416,7 +436,7 @@ export class OfferingService implements OnModuleInit {
 
     const [policyOfferingProject, offering] = await Promise.all([
       this.getComponents(policies.map(p => p.catalogId)),
-      this.getLatestReleaseOfProjects(projects)
+      this.getOfferingForProjectsByIds(projects)
     ]);
     let policyOfferingCatalog = new Map(Array.from(policyOfferingProject).map(([_, v]) => [v.id, v]));
 
@@ -454,12 +474,12 @@ export class OfferingService implements OnModuleInit {
     let policies = await this.policyService.findBy({ deviceTypeId: deviceTypeId });
     this.logger.debug(`offering policies: ${JSON.stringify(policies)}`);
 
-    let projects = tree.projects.map(p => p.projectId);
-    projects = projects.filter(p => !policies.some(policy => policy.projectId == p));
+    let projectIds = tree.projects.map(p => p.projectId);
+    projectIds = projectIds.filter(p => !policies.some(policy => policy.projectId == p));
 
     const componentOffering = await Promise.all([
       this.getComponents(policies.map(p => p.catalogId)),
-      this.getLatestReleaseOfProjects(projects)
+      this.getOfferingForProjectsByIds(projectIds)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
 
     let deviceTypeOffering = DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
@@ -534,6 +554,14 @@ export class OfferingService implements OnModuleInit {
     }
   
     let policy = await this.policyService.findBy(findByQuery);
+    if (!policy && findByQuery.platformId){
+      findByQuery.platformId = undefined;
+      policy = await this.policyService.findBy(findByQuery);
+      if(!policy && findByQuery.deviceTypeId){
+        findByQuery.deviceTypeId = undefined
+        policy = await this.policyService.findBy(findByQuery);
+      }
+    }
 
     let offering;
     if (policy?.length > 0){
@@ -598,6 +626,7 @@ export class OfferingService implements OnModuleInit {
     return res
   }
 
+
   private async getDeviceTypeIdByParams(params: DeviceTypeOfferingParams): Promise<number>{
     if (typeof params.deviceTypeIdentifier === 'string') {
       const deviceType = await this.deviceTypeRepo.findOneBy({ name: params.deviceTypeIdentifier });
@@ -623,6 +652,20 @@ export class OfferingService implements OnModuleInit {
     }
 
   }
+
+  private async getOfferingForProjectsByIds(projectIds: number[]): Promise<Map<number, ComponentV2Dto>>{
+    this.logger.debug(`Get offering for projects by ids: ${JSON.stringify(projectIds)}`)
+    let policies = await this.policyService.findByProjects(projectIds);
+
+    projectIds = projectIds.filter(id => !policies.some(policy => policy.projectId == id));
+
+    const componentOffering = await Promise.all([
+      this.getComponents(policies.map(p => p.catalogId)),
+      this.getLatestReleaseOfProjects(projectIds)
+    ]).then(([components, offering]) => new Map([...components, ...offering]));
+    return componentOffering
+  }
+
 
   private async getLatestReleaseOfProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
