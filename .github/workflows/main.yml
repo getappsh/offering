@@ -118,7 +118,7 @@ jobs:
           echo $?
 
         env:
-          GET_APP_PATH: ${{ secrets.GET_APP_PROJECT_REFACTOR_PATH }}
-          UPLOAD_TOKEN: ${{ secrets.PROJECT_REFACTOR_UPLOAD_TOKEN }}
+          GET_APP_PATH: ${{ secrets.GET_APP_PATH_DEV }}
+          UPLOAD_TOKEN: ${{ secrets.UPLOAD_TOKEN_DEV }}
 
 
