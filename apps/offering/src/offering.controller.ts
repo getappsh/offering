@@ -10,7 +10,7 @@ import { RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
 import { OfferingService } from './offering.service';
 import { ProjectIdentifierParams } from '@app/common/dto/project-management';
-import { DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingParams } from '@app/common/dto/offering/dto/offering.dto';
+import { DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery } from '@app/common/dto/offering/dto/offering.dto';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 
 @Controller()
@@ -34,8 +34,8 @@ export class OfferingController {
   }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_PROJECT)
-  getOfferingForProject(@RpcPayload() params: ProjectIdentifierParams) {
-    return this.offeringService.getOfferingForProject(params);
+  getOfferingForProject(@RpcPayload() query: ProjectOfferingFilterQuery) {
+    return this.offeringService.getOfferingForProject(query);
   }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_ALL_PROJECTS)

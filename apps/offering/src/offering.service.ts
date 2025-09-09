@@ -5,8 +5,8 @@ import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto } from "@app/common/dto/devices-hierarchy";
 import { AppError, ErrorCode } from "@app/common/dto/error";
 import { MapDto } from "@app/common/dto/map";
-import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto } from "@app/common/dto/offering";
-import { DeviceTypeOfferingDto, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingDto, PlatformOfferingParams, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
+import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto, OfferingTreePolicyParams } from "@app/common/dto/offering";
+import { DeviceTypeOfferingDto, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
@@ -390,16 +390,8 @@ export class OfferingService implements OnModuleInit {
 
   async getOfferingForPlatform(params: PlatformOfferingParams): Promise<PlatformOfferingDto> {
     this.logger.log(`get offering for platform: ${params.platformIdentifier}`);
-    let platformId: number
-    if (typeof params.platformIdentifier === 'string') {
-      const platform = await this.platformRepo.findOneBy({ name: params.platformIdentifier });
-      if (!platform) {
-        throw new AppError(ErrorCode.DEVICE_PLATFORM_NOT_FOUND, `get offering for platform: ${params.platformIdentifier} not found`, HttpStatus.NOT_FOUND);
-      }
-      platformId = platform.id;
-    } else {
-      platformId = params.platformIdentifier;
-    }
+    let platformId = await this.getPlatformIdByParams(params);
+    
 
     let tree: PlatformHierarchyDto
     try {
@@ -450,16 +442,7 @@ export class OfferingService implements OnModuleInit {
   async getOfferingForDeviceType(params: DeviceTypeOfferingParams): Promise<DeviceTypeOfferingDto> {
     this.logger.log(`get offering for device type: ${params.deviceTypeIdentifier}`);
 
-    let deviceTypeId: number
-    if (typeof params.deviceTypeIdentifier === 'string') {
-      const deviceType = await this.deviceTypeRepo.findOneBy({ name: params.deviceTypeIdentifier });
-      if (!deviceType) {
-        throw new NotFoundException(`get offering for device type: ${params.deviceTypeIdentifier} not found`);
-      }
-      deviceTypeId = deviceType.id;
-    } else {
-      deviceTypeId = params.deviceTypeIdentifier;
-    }
+    let deviceTypeId = await this.getDeviceTypeIdByParams(params);
 
     let tree: DeviceTypeHierarchyDto
     try {
@@ -488,21 +471,70 @@ export class OfferingService implements OnModuleInit {
     return deviceTypeOffering
   }
 
-  async getOfferingForProject(params: ProjectIdentifierParams): Promise<ProjectRefOfferingDto> {
-    this.logger.log(`get offering for project: ${params.projectIdentifier}`);
+  
+
+  async getOfferingForProject(query: ProjectOfferingFilterQuery): Promise<ProjectRefOfferingDto> {
+    this.logger.log(`get offering for project: ${query.projectIdentifier}, filter by ${JSON.stringify(query)}`);
+    let findByQuery = new OfferingTreePolicyParams();
+
     let project: ProjectEntity | undefined;
-    if (typeof params.projectIdentifier === 'string') {
-      project = await this.projectRepo.findOne({ where: { name: params.projectIdentifier }, relations: { label: true } });
+    if (typeof query.projectIdentifier === 'string') {
+      project = await this.projectRepo.findOne({ where: { name: query.projectIdentifier }, relations: { label: true } });
     } else {
-      project = await this.projectRepo.findOne({ where: { id: params.projectIdentifier }, relations: { label: true } });
+      project = await this.projectRepo.findOne({ where: { id: query.projectIdentifier }, relations: { label: true } });
     }
 
     if (!project) {
-      this.logger.error(`get offering for project: ${params.projectIdentifier} not found`);
-      throw new NotFoundException(`get offering for project: ${params.projectIdentifier} not found`);
+      this.logger.error(`get offering for project: ${query.projectIdentifier} not found`);
+      throw new NotFoundException(`get offering for project: ${query.projectIdentifier} not found`);
     }
-    
-    let policy = await this.policyService.findBy({ projectId: project?.id });
+
+    findByQuery.projectId = project?.id;
+
+    if (query.platformIdentifier){
+      findByQuery.platformId =  await this.getPlatformIdByParams(query as PlatformOfferingParams)
+      this.logger.verbose(`Platform id: ${findByQuery.platformId}`)
+    }
+
+
+    if (query.deviceTypeIdentifier){
+      findByQuery.deviceTypeId = await this.getDeviceTypeIdByParams(query as DeviceTypeOfferingParams)
+      this.logger.verbose(`DeviceType id: ${findByQuery.deviceTypeId}`)
+    }
+
+    if (findByQuery.deviceTypeId){
+      if (findByQuery.platformId){
+        this.logger.log(`Get hierarchy tree for platform`)
+        let tree: PlatformHierarchyDto
+        try {
+          tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE, { platformId: findByQuery.platformId }));
+        } catch (e) {
+          this.logger.error(`get offering for platform: ${query.platformIdentifier} error: ${e}`);
+          throw new InternalServerErrorException(`get offering for platform: ${query.platformIdentifier} error: ${e}`)
+        }
+
+        if (!tree.deviceTypes.find(d => d.deviceTypeId === findByQuery.deviceTypeId)?.projects.find(p => p.projectId === project?.id)){
+          throw new NotFoundException(`Platform: '${query.deviceTypeIdentifier}' dose not have DeviceType: '${query.deviceTypeIdentifier}' and project: '${query.projectIdentifier}' as offering`)
+        }
+
+      }else {
+        this.logger.log(`Get hierarchy tree for deviceType`)
+
+        let tree: DeviceTypeHierarchyDto
+        try {
+          tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE, { deviceTypeId: findByQuery.deviceTypeId }));
+        } catch (e) {
+          this.logger.error(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`);
+          throw new InternalServerErrorException(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`)
+        }
+        if (!tree.projects?.find(p => p.projectId === project?.id)){
+          throw new NotFoundException(`Device type: '${query.deviceTypeIdentifier}' dose not have project: '${query.projectIdentifier}' as offering`)
+        }
+      }
+    }
+  
+    let policy = await this.policyService.findBy(findByQuery);
+
     let offering;
     if (policy?.length > 0){
       offering = await this.getComponents(policy.map(p => p.catalogId));
@@ -559,6 +591,32 @@ export class OfferingService implements OnModuleInit {
     res.page = query.page;
     res.perPage = query.perPage;
     return res
+  }
+
+  private async getDeviceTypeIdByParams(params: DeviceTypeOfferingParams): Promise<number>{
+    if (typeof params.deviceTypeIdentifier === 'string') {
+      const deviceType = await this.deviceTypeRepo.findOneBy({ name: params.deviceTypeIdentifier });
+      if (!deviceType) {
+        throw new NotFoundException(`get offering for device type: ${params.deviceTypeIdentifier} not found`);
+      }
+      return deviceType.id;
+    } else {
+      return params.deviceTypeIdentifier;
+    }
+  }
+
+
+  private async getPlatformIdByParams(params: PlatformOfferingParams): Promise<number>{
+    if (typeof params.platformIdentifier === 'string') {
+      const platform = await this.platformRepo.findOneBy({ name: params.platformIdentifier });
+      if (!platform) {
+        throw new AppError(ErrorCode.DEVICE_PLATFORM_NOT_FOUND, `get offering for platform: ${params.platformIdentifier} not found`, HttpStatus.NOT_FOUND);
+      }
+      return platform.id;
+    } else {
+      return params.platformIdentifier;
+    }
+
   }
 
   private async getLatestReleaseOfProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
