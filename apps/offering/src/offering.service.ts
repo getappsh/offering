@@ -555,15 +555,13 @@ export class OfferingService implements OnModuleInit {
 
   async getOfferingForProjects(dto: GetProjectsOfferingDto): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     this.logger.log(`get offering for projects`);
-    let total = await this.projectRepo.count();
     
     const whereCondition: any = {};
      if (dto.query && dto.query.trim() !== "") {
       whereCondition.name = ILike(`%${dto.query}%`);
     }
 
-
-    let projects = await this.projectRepo.find({
+    let [projects, total] = await this.projectRepo.findAndCount({
       select: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
       where: whereCondition,
       relations: { label: true },
