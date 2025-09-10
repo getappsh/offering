@@ -460,7 +460,7 @@ export class OfferingService implements OnModuleInit {
   }
 
   async getOfferingForDeviceType(query: DeviceTypeOfferingFilterQuery): Promise<DeviceTypeOfferingDto> {
-    this.logger.log(`get offering for device type: ${JSON.stringify(query.deviceTypeIdentifier)}`);
+    this.logger.log(`get offering for device type: ${JSON.stringify(query)}`);
 
     let deviceTypeId = await this.getDeviceTypeIdByParams(query as DeviceTypeOfferingParams);
 
@@ -493,6 +493,10 @@ export class OfferingService implements OnModuleInit {
     }
 
     let policies = await this.policyService.findBy(findByQuery);
+    if (!policies.length && findByQuery.platformId){
+      findByQuery.platformId = undefined;
+      policies = await this.policyService.findBy(findByQuery);
+    }
     this.logger.debug(`offering policies: ${JSON.stringify(policies)}`);
 
     let projectIds = tree.projects.map(p => p.projectId);
