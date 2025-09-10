@@ -38,7 +38,7 @@ export class OfferingTreePolicyService {
       this.logger.debug(`CatalogId is null, removing policy ID: ${existingPolicy?.id}`);
       if (!existingPolicy) {
         this.logger.debug(`CatalogId is null, but no existing policy to remove`);
-        throw new NotFoundException(`No existing policy to remove for the given parameters.`);
+        return new OfferingTreePolicyDto()
       }
       this.policyRepository.remove(existingPolicy);
       existingPolicy.release = null;
