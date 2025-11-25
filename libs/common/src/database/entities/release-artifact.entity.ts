@@ -34,4 +34,10 @@ export class ReleaseArtifactEntity extends BaseEntity {
   @OneToOne(() => FileUploadEntity, {nullable: true })
   @JoinColumn({ name: 'file_upload_id' })
   fileUpload?: FileUploadEntity;
+  
+  @Column({ name: 'is_executable', type: 'boolean', default: false})
+  isExecutable: boolean
+
+  @Column({ name: 'arguments', type: 'text', nullable: true, default: null})
+  arguments?: string | null
 }

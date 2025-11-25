@@ -37,6 +37,16 @@ export class SetReleaseArtifactDto {
   @IsOptional()
   metadata?: Record<string, any>;
 
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({ required: false, default: false })
+  isExecutable: boolean
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ required: false})
+  arguments: string
+
 }
 
 
@@ -89,6 +99,16 @@ export class ReleaseArtifactDto {
   @ApiProperty({ required: false })
   dockerImageUrl?: string
 
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({ required: false, default: false })
+  isExecutable: boolean
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ required: false})
+  arguments?: string | null
+
   @ApiProperty()
   uploadId?: number
 
@@ -110,6 +130,8 @@ export class ReleaseArtifactDto {
     dto.uploadId = artifact.fileUpload ? artifact.fileUpload.id : undefined;
     dto.status = artifact?.fileUpload?.status
     dto.size = artifact?.fileUpload?.size
+    dto.arguments = artifact?.arguments;
+    dto.isExecutable = artifact?.isExecutable;
 
     return dto
   }
