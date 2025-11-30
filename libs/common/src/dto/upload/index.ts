@@ -9,3 +9,4 @@ export * from './dto/regulation-status.dto'
 
 export * from './stubs/upload-artifact.dto.stub'
 
+export * from './dto/update-file-properties.dto'

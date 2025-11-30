@@ -15,7 +15,9 @@ export const uploadArtifactDtoStub = (): UploadArtifactDto => {
         size: "12312",
         url: "/url/to/the/artifact",
         artifactType: "artifactType",
-        uploadToken: projectEntityStub().tokens[0].token
+        uploadToken: projectEntityStub().tokens[0].token,
+        isExecutable: false,
+        arguments: null
     }
   }
   

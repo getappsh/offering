@@ -27,6 +27,8 @@ export const UploadTopics = {
     SET_VERSION_REGULATION_STATUS: `getapp-upload.set-version-regulation-status${region}`,
     SET_VERSION_REGULATION_COMPLIANCE: `getapp-upload.set-version-regulation-compliance${region}`,
     DELETE_VERSION_REGULATION_STATUS: `getapp-upload.delete-version-regulation-status${region}`,
+    //update file metadata
+    UPDATE_FILE_METADATA: `getapp-upload.update-file-metadata${region}`,
 
 } as const
 
