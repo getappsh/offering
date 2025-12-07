@@ -54,7 +54,7 @@ export class OfferingService implements OnModuleInit {
       this.compOfferingRepo.find({
         select: {
           release: {
-            version: true, catalogId: true, releaseNotes: true, status: true, createdAt: true, updatedAt: true,
+            version: true, catalogId: true, releaseNotes: true, status: true, createdAt: true, updatedAt: true, metadata: {},
             project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true },
           }
         },
