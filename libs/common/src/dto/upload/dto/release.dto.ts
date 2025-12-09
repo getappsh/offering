@@ -147,6 +147,9 @@ export class ComponentV2Dto {
   version: string;
 
   @ApiProperty()
+  projectId: number;
+
+  @ApiProperty()
   projectName: string;
 
   @ApiProperty({ required: false })
@@ -176,6 +179,9 @@ export class ComponentV2Dto {
   @ApiProperty({ required: false })
   releasedAt?: Date
 
+  @ApiProperty({ required: false, type: ComponentV2Dto, isArray: true })
+  dependencies?: ComponentV2Dto[]
+
   static fromEntity(release: ReleaseEntity): ComponentV2Dto {
     const dto = new ComponentV2Dto();
     dto.version = release.version;
@@ -185,14 +191,21 @@ export class ComponentV2Dto {
     dto.status = release.status;
     dto.createdAt = release.createdAt;
     dto.updatedAt = release.updatedAt;
-    dto.projectName = release.project.name;
-    dto.type = release.project.projectType;
+    dto.projectId = release?.project?.id;
+    dto.projectName = release?.project?.name;
+    dto.type = release?.project?.projectType;
     dto.latest = release.latest;
     dto.releasedAt = release.releasedAt ?? undefined;
     dto.size = release?.artifacts
       ?.filter(a => a.isInstallationFile)
       ?.map(a => a?.fileUpload?.size ?? 0)
       ?.reduce((size, a) => size + a, 0);
+    
+    // Map dependencies recursively
+    if (release.dependencies && release.dependencies.length > 0) {
+      dto.dependencies = release.dependencies.map(dep => ComponentV2Dto.fromEntity(dep));
+    }
+    
     return dto;
   }
 

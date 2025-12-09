@@ -15,7 +15,7 @@ export class GetProjectsOfferingDto {
   @Type(() => String)
   query: string;
 
-  
+
   @ApiPropertyOptional({
     description: 'The page number to fetch (default: 1)',
     example: 1,
@@ -74,7 +74,7 @@ export class ProjectRefOfferingDto {
 export class DeviceTypeOfferingDto {
   @ApiProperty({ description: "ID of the device type" })
   deviceTypeId: number;
-  
+
   @ApiProperty({ description: "Name of the device type" })
   deviceTypeName: string;
 
@@ -99,8 +99,8 @@ export class PlatformOfferingDto {
 
   @ApiProperty({ description: "ID of the platform" })
   platformId: number;
-  
-  @ApiProperty({description: "Name of the platform"})
+
+  @ApiProperty({ description: "Name of the platform" })
   platformName: string;
 
   @ApiProperty({ type: DeviceTypeOfferingDto, isArray: true, required: false })
@@ -120,15 +120,15 @@ export class PlatformOfferingDto {
 }
 
 
-export class PlatformOfferingParams{
+export class PlatformOfferingParams  {
 
-  @ApiProperty({type: String, description: 'Platform identifier (ID or name)'})
+  @ApiProperty({ type: String, description: 'Platform identifier (ID or name)' })
   @ValidateIf((o) => typeof o.platformIdentifier === 'string')
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => {
     const isNum = (num) => Number.isFinite ? Number.isFinite(+num) : isFinite(+num)
-    
+
     if (isNum(value)) {
       return parseInt(value, 10);
     }
@@ -150,7 +150,7 @@ export class DeviceTypeOfferingParams {
   @IsNotEmpty()
   @Transform(({ value }) => {
     const isNum = (num) => Number.isFinite ? Number.isFinite(+num) : isFinite(+num)
-    
+
     if (isNum(value)) {
       return parseInt(value, 10);
     }
@@ -164,11 +164,22 @@ export class DeviceTypeOfferingParams {
   deviceTypeIdentifier: string | number
 }
 
+export class OfferingQueryParams {
+  @ApiProperty({ required: false, description: 'Indicates whether to include dependencies in the offering' })
+  @IsOptional()
+  withDependencies?: boolean;
+}
+
+export class OfferingParamsCombined extends IntersectionType(
+  PartialType(PlatformOfferingParams),
+  PartialType(OfferingQueryParams),
+) {}
 
 export class ProjectOfferingFilterQuery extends IntersectionType(
   PartialType(DeviceTypeOfferingParams),
-  PartialType(PlatformOfferingParams)
-){
+  PartialType(PlatformOfferingParams),
+  PartialType(OfferingQueryParams)
+) {
   @ValidateIf(o => o.platformIdentifier !== undefined && o.platformIdentifier !== null)
   @IsNotEmpty({ message: 'deviceTypeIdentifier is required when platformIdentifier is provided' })
   deviceTypeIdentifier?: string | number | undefined;
@@ -177,9 +188,8 @@ export class ProjectOfferingFilterQuery extends IntersectionType(
 }
 
 export class DeviceTypeOfferingFilterQuery extends IntersectionType(
-  PartialType(PlatformOfferingParams)
-){
-
-    deviceTypeIdentifier?: string | number  | undefined;
-
+  PartialType(PlatformOfferingParams),
+  PartialType(OfferingQueryParams)
+) {
+  deviceTypeIdentifier?: string | number | undefined;
 }

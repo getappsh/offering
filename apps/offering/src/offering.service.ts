@@ -6,7 +6,7 @@ import { DeviceTypeHierarchyDto, PlatformHierarchyDto } from "@app/common/dto/de
 import { AppError, ErrorCode } from "@app/common/dto/error";
 import { MapDto } from "@app/common/dto/map";
 import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto, OfferingTreePolicyParams } from "@app/common/dto/offering";
-import { DeviceTypeOfferingDto, DeviceTypeOfferingFilterQuery, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
+import { DeviceTypeOfferingDto, DeviceTypeOfferingFilterQuery, DeviceTypeOfferingParams, GetProjectsOfferingDto, OfferingParamsCombined, PlatformOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
@@ -388,10 +388,10 @@ export class OfferingService implements OnModuleInit {
   }
 
 
-  async getOfferingForPlatform(params: PlatformOfferingParams): Promise<PlatformOfferingDto> {
+  async getOfferingForPlatform(params: OfferingParamsCombined): Promise<PlatformOfferingDto> {
     this.logger.log(`get offering for platform: ${params.platformIdentifier}`);
-    let platformId = await this.getPlatformIdByParams(params);
-    
+    let platformId = await this.getPlatformIdByParams(params as PlatformOfferingParams);
+
 
     let tree: PlatformHierarchyDto
     try {
@@ -412,17 +412,17 @@ export class OfferingService implements OnModuleInit {
               policy.deviceTypeId === dt.deviceTypeId
           )).length > 0
       ).map(dt => dt.deviceTypeId);
-    
+
     const deviceTypePolicies = (await Promise.all(
       missingFromPolicies.map(dt => this.policyService.findBy({ deviceTypeId: dt }))
     )).flat()
 
     deviceTypePolicies.forEach(dtp => {
-      if (!policies.find(p => p.deviceTypeId === dtp.deviceTypeId && p.projectId === dtp.projectId)){
+      if (!policies.find(p => p.deviceTypeId === dtp.deviceTypeId && p.projectId === dtp.projectId)) {
         policies.push(dtp);
       }
     })
-    
+
     const projects = tree.deviceTypes
       .flatMap(dt =>
         dt.projects
@@ -435,8 +435,8 @@ export class OfferingService implements OnModuleInit {
       );
 
     const [policyOfferingProject, offering] = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId)),
-      this.getOfferingForProjectsByIds(projects)
+      this.getComponents(policies.map(p => p.catalogId), params.withDependencies),
+      this.getOfferingForProjectsByIds(projects, params.withDependencies)
     ]);
     let policyOfferingCatalog = new Map(Array.from(policyOfferingProject).map(([_, v]) => [v.id, v]));
 
@@ -446,11 +446,11 @@ export class OfferingService implements OnModuleInit {
     platformOffering.deviceTypes?.map(dt => {
       dt.projects?.map(p => {
         let catalogId = policies.find(po => po.projectId == p.projectId && po.deviceTypeId == dt.deviceTypeId)?.catalogId
-        if (catalogId){
+        if (catalogId) {
           p.release = policyOfferingCatalog.get(catalogId);
         }
 
-        if (!p.release){
+        if (!p.release) {
           p.release = offering.get(p.projectId);
         }
 
@@ -474,10 +474,10 @@ export class OfferingService implements OnModuleInit {
     const findByQuery = new OfferingTreePolicyParams()
     findByQuery.deviceTypeId = deviceTypeId
 
-    if (query.platformIdentifier){
-      findByQuery.platformId =  await this.getPlatformIdByParams(query as PlatformOfferingParams)
+    if (query.platformIdentifier) {
+      findByQuery.platformId = await this.getPlatformIdByParams(query as PlatformOfferingParams)
       this.logger.verbose(`Platform id: ${findByQuery.platformId}`)
-        
+
       this.logger.log(`Get hierarchy tree for platform`)
       let tree: PlatformHierarchyDto
       try {
@@ -487,13 +487,13 @@ export class OfferingService implements OnModuleInit {
         throw new InternalServerErrorException(`get offering for platform: ${query.platformIdentifier} error: ${e}`)
       }
 
-      if (!tree.deviceTypes.find(d => d.deviceTypeId === findByQuery.deviceTypeId)){
+      if (!tree.deviceTypes.find(d => d.deviceTypeId === findByQuery.deviceTypeId)) {
         throw new NotFoundException(`Platform: '${query.deviceTypeIdentifier}' dose not have DeviceType: '${query.deviceTypeIdentifier}' as offering`)
       }
     }
 
     let policies = await this.policyService.findBy(findByQuery);
-    if (!policies.length && findByQuery.platformId){
+    if (!policies.length && findByQuery.platformId) {
       findByQuery.platformId = undefined;
       policies = await this.policyService.findBy(findByQuery);
     }
@@ -503,8 +503,8 @@ export class OfferingService implements OnModuleInit {
     projectIds = projectIds.filter(p => !policies.some(policy => policy.projectId == p));
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId)),
-      this.getOfferingForProjectsByIds(projectIds)
+      this.getComponents(policies.map(p => p.catalogId), query.withDependencies),
+      this.getOfferingForProjectsByIds(projectIds, query.withDependencies)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
 
     let deviceTypeOffering = DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
@@ -516,7 +516,7 @@ export class OfferingService implements OnModuleInit {
     return deviceTypeOffering
   }
 
-  
+
 
   async getOfferingForProject(query: ProjectOfferingFilterQuery): Promise<ProjectRefOfferingDto> {
     this.logger.log(`get offering for project: ${query.projectIdentifier}, filter by ${JSON.stringify(query)}`);
@@ -536,19 +536,19 @@ export class OfferingService implements OnModuleInit {
 
     findByQuery.projectId = project?.id;
 
-    if (query.platformIdentifier){
-      findByQuery.platformId =  await this.getPlatformIdByParams(query as PlatformOfferingParams)
+    if (query.platformIdentifier) {
+      findByQuery.platformId = await this.getPlatformIdByParams(query as PlatformOfferingParams)
       this.logger.verbose(`Platform id: ${findByQuery.platformId}`)
     }
 
 
-    if (query.deviceTypeIdentifier){
+    if (query.deviceTypeIdentifier) {
       findByQuery.deviceTypeId = await this.getDeviceTypeIdByParams(query as DeviceTypeOfferingParams)
       this.logger.verbose(`DeviceType id: ${findByQuery.deviceTypeId}`)
     }
 
-    if (findByQuery.deviceTypeId){
-      if (findByQuery.platformId){
+    if (findByQuery.deviceTypeId) {
+      if (findByQuery.platformId) {
         this.logger.log(`Get hierarchy tree for platform`)
         let tree: PlatformHierarchyDto
         try {
@@ -558,11 +558,11 @@ export class OfferingService implements OnModuleInit {
           throw new InternalServerErrorException(`get offering for platform: ${query.platformIdentifier} error: ${e}`)
         }
 
-        if (!tree.deviceTypes.find(d => d.deviceTypeId === findByQuery.deviceTypeId)?.projects.find(p => p.projectId === project?.id)){
+        if (!tree.deviceTypes.find(d => d.deviceTypeId === findByQuery.deviceTypeId)?.projects.find(p => p.projectId === project?.id)) {
           throw new NotFoundException(`Platform: '${query.deviceTypeIdentifier}' dose not have DeviceType: '${query.deviceTypeIdentifier}' and project: '${query.projectIdentifier}' as offering`)
         }
 
-      }else {
+      } else {
         this.logger.log(`Get hierarchy tree for deviceType`)
 
         let tree: DeviceTypeHierarchyDto
@@ -572,31 +572,31 @@ export class OfferingService implements OnModuleInit {
           this.logger.error(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`);
           throw new InternalServerErrorException(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`)
         }
-        if (!tree.projects?.find(p => p.projectId === project?.id)){
+        if (!tree.projects?.find(p => p.projectId === project?.id)) {
           throw new NotFoundException(`Device type: '${query.deviceTypeIdentifier}' dose not have project: '${query.projectIdentifier}' as offering`)
         }
       }
     }
-  
+
     let policy = await this.policyService.findBy(findByQuery);
 
-    if (!policy.length && findByQuery.platformId){
+    if (!policy.length && findByQuery.platformId) {
       this.logger.debug(`Policy was not found with the following conditions: ${JSON.stringify(findByQuery)}, removing platform condition`)
       findByQuery.platformId = undefined;
       policy = await this.policyService.findBy(findByQuery);
     }
 
-    if(!policy.length && findByQuery.deviceTypeId){
+    if (!policy.length && findByQuery.deviceTypeId) {
       this.logger.debug(`Policy was not found with the following conditions: ${JSON.stringify(findByQuery)}, removing device-type condition`)
       findByQuery.deviceTypeId = undefined
       policy = await this.policyService.findBy(findByQuery);
     }
 
     let offering;
-    if (policy?.length > 0){
-      offering = await this.getComponents(policy.map(p => p.catalogId));
-    }else{
-      offering = await this.getLatestReleaseOfProjects([project.id]);
+    if (policy?.length > 0) {
+      offering = await this.getComponents(policy.map(p => p.catalogId), query.withDependencies);
+    } else {
+      offering = await this.getLatestReleaseOfProjects([project.id], query.withDependencies);
     }
 
     const projectOffering = new ProjectRefOfferingDto();
@@ -612,9 +612,9 @@ export class OfferingService implements OnModuleInit {
 
   async getOfferingForProjects(dto: GetProjectsOfferingDto): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     this.logger.log(`get offering for projects`);
-    
+
     const whereCondition: any = {};
-     if (dto.query && dto.query.trim() !== "") {
+    if (dto.query && dto.query.trim() !== "") {
       whereCondition.name = ILike(`%${dto.query}%`);
     }
 
@@ -627,7 +627,7 @@ export class OfferingService implements OnModuleInit {
       order: { id: "ASC" }
     });
     let projectIds = projects.map(p => p.id);
-    
+
     let policies = await this.policyService.findByProjects(projectIds);
 
     projectIds = projectIds.filter(id => !policies.some(policy => policy.projectId == id));
@@ -656,7 +656,7 @@ export class OfferingService implements OnModuleInit {
   }
 
 
-  private async getDeviceTypeIdByParams(params: DeviceTypeOfferingParams): Promise<number>{
+  private async getDeviceTypeIdByParams(params: DeviceTypeOfferingParams): Promise<number> {
     if (typeof params.deviceTypeIdentifier === 'string') {
       const deviceType = await this.deviceTypeRepo.findOneBy({ name: params.deviceTypeIdentifier });
       if (!deviceType) {
@@ -669,7 +669,7 @@ export class OfferingService implements OnModuleInit {
   }
 
 
-  private async getPlatformIdByParams(params: PlatformOfferingParams): Promise<number>{
+  private async getPlatformIdByParams(params: PlatformOfferingParams): Promise<number> {
     if (typeof params.platformIdentifier === 'string') {
       const platform = await this.platformRepo.findOneBy({ name: params.platformIdentifier });
       if (!platform) {
@@ -682,46 +682,109 @@ export class OfferingService implements OnModuleInit {
 
   }
 
-  private async getOfferingForProjectsByIds(projectIds: number[]): Promise<Map<number, ComponentV2Dto>>{
+  private async getOfferingForProjectsByIds(projectIds: number[], withDependencies: boolean): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`Get offering for projects by ids: ${JSON.stringify(projectIds)}`)
     let policies = await this.policyService.findByProjects(projectIds);
 
     projectIds = projectIds.filter(id => !policies.some(policy => policy.projectId == id));
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId)),
-      this.getLatestReleaseOfProjects(projectIds)
+      this.getComponents(policies.map(p => p.catalogId), withDependencies),
+      this.getLatestReleaseOfProjects(projectIds, withDependencies)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
     return componentOffering
   }
 
+  private async fetchReleasesByCatalogIds(catalogIds: string[], includeDependencies: boolean = false, visited: Set<string> = new Set()): Promise<ReleaseEntity[]> {
+    // Filter out already visited catalog IDs to avoid infinite loops
+    const toFetch = catalogIds.filter(id => !visited.has(id));
 
-  private async getLatestReleaseOfProjects(projects: number[]): Promise<Map<number, ComponentV2Dto>> {
+    if (toFetch.length === 0) {
+      return [];
+    }
+
+    // Mark these as visited
+    toFetch.forEach(id => visited.add(id));
+
+    const select: any = {
+      project: { id: true, name: true, projectType: true },
+      artifacts: { fileUpload: { size: true }, isInstallationFile: true }
+    };
+
+    if (includeDependencies) {
+      select.dependencies = { catalogId: true, version: true, project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } };
+    }
+
+    const relations: any = { project: true, artifacts: { fileUpload: true } };
+    if (includeDependencies) {
+      relations.dependencies = { project: true, artifacts: { fileUpload: true } };
+    }
+
+    const releases = await this.releaseRepo.find({
+      select,
+      where: {
+        status: ReleaseStatusEnum.RELEASED,
+        catalogId: In(toFetch),
+      },
+      relations,
+    });
+
+    // If we need to fetch dependencies recursively
+    if (includeDependencies) {
+      for (const release of releases) {
+        if (release.dependencies?.length > 0) {
+          const dependencyCatalogIds = release.dependencies.map(d => d.catalogId);
+          const nestedReleases = await this.fetchReleasesByCatalogIds(dependencyCatalogIds, true, visited);
+          release.dependencies = nestedReleases;
+        }
+      }
+    }
+
+    return releases;
+  }
+
+
+  private async getLatestReleaseOfProjects(projects: number[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
     const releases = await this.releaseRepo.find({
-      select: { project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } },
+      select: {
+        catalogId: true,
+        project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
+        artifacts: { fileUpload: { size: true }, isInstallationFile: true },
+        dependencies: { catalogId: true }
+      },
       where: {
         status: ReleaseStatusEnum.RELEASED,
         project: { id: In(projects) },
         latest: true
       },
-      relations: { project: { label: true }, artifacts: { fileUpload: true } },
+      relations: { project: { label: true }, artifacts: { fileUpload: true }, dependencies: true },
     });
+
+    // Fetch recursive dependencies for all releases
+    const catalogIds = releases.map(r => r.catalogId);
+    const releasesWithDeps = await this.fetchReleasesByCatalogIds(catalogIds, withDependencies);
+
     this.logger.verbose(`offering for projects: ${JSON.stringify(releases.map(r => r.catalogId))}`);
-    return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+    const resultMap = new Map<number, ComponentV2Dto>();
+    releasesWithDeps.forEach(r => {
+      if (r.project?.id) {
+        resultMap.set(r.project.id, ComponentV2Dto.fromEntity(r));
+      }
+    });
+    return resultMap;
   }
 
-  private async getComponents(catalogIds: string[]): Promise<Map<number, ComponentV2Dto>> {
+  private async getComponents(catalogIds: string[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get components: ${JSON.stringify(catalogIds)}`);
-    const releases = await this.releaseRepo.find({
-      select: { project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } },
-      where: {
-        status: ReleaseStatusEnum.RELEASED,
-        catalogId: In(catalogIds),
-      },
-      relations: { project: true, artifacts: { fileUpload: true } },
+    const releases = await this.fetchReleasesByCatalogIds(catalogIds, withDependencies);
+    const componentMap = new Map<number, ComponentV2Dto>();
+    releases.forEach(r => {
+      if (r.project?.id) {
+        componentMap.set(r.project.id, ComponentV2Dto.fromEntity(r));
+      }
     });
-    return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+    return componentMap;
   }
 
   @SafeCron({ cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering" })
