@@ -10,7 +10,7 @@ import { DeviceTypeOfferingDto, DeviceTypeOfferingFilterQuery, DeviceTypeOfferin
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
 import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-client";
-import { DevicesHierarchyTopics, DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
+import { DevicesHierarchyTopics, DeviceTopics, DeviceTopicsEmit, UploadTopics } from "@app/common/microservice-client/topics";
 import { SafeCron } from "@app/common/safe-cron";
 import { HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -34,6 +34,7 @@ export class OfferingService implements OnModuleInit {
     @InjectRepository(MapOfferingEntity) private readonly mapOfferingRepo: Repository<MapOfferingEntity>,
 
     @Inject(MicroserviceName.DISCOVERY_SERVICE) private readonly deviceClient: MicroserviceClient,
+    @Inject(MicroserviceName.UPLOAD_SERVICE) private readonly uploadClient: MicroserviceClient,
 
     private readonly policyService: OfferingTreePolicyService,
 
@@ -71,6 +72,10 @@ export class OfferingService implements OnModuleInit {
     res.push = push
       ?.filter(p => !dto.components?.includes(p.release.catalogId))
       ?.map(p => ComponentV2Dto.fromEntity(p.release));
+
+    // Fetch policies for all releases in offer and push
+    await this.enrichReleasesWithPolicies(res.offer);
+    await this.enrichReleasesWithPolicies(res.push);
 
     this.logger.log(`Get offering for device: ${dto.deviceId}, offer count: ${res.offer?.length}, push count: ${res.push?.length}`);
 
@@ -160,7 +165,38 @@ export class OfferingService implements OnModuleInit {
     if (!release) {
       throw new NotFoundException(`Release ${catalogId} not found`)
     }
-    return ComponentV2Dto.fromEntity(release);
+    const result = ComponentV2Dto.fromEntity(release);
+    await this.enrichReleasesWithPolicies([result]);
+    return result;
+  }
+
+  /**
+   * Fetches policies for each release and attaches them to the ComponentV2Dto objects
+   */
+  private async enrichReleasesWithPolicies(releases: ComponentV2Dto[]): Promise<void> {
+    if (!releases || releases.length === 0) {
+      return;
+    }
+
+    this.logger.debug(`Fetching policies for ${releases.length} releases`);
+    
+    // Fetch policies for all releases in parallel
+    const policiesPromises = releases.map(release => 
+      lastValueFrom(this.uploadClient.send(UploadTopics.GET_POLICIES_FOR_RELEASE, release.id))
+        .catch(err => {
+          this.logger.error(`Failed to fetch policies for release ${release.id}: ${err}`);
+          return [];
+        })
+    );
+
+    const policiesResults = await Promise.all(policiesPromises);
+
+    // Attach policies to each release
+    releases.forEach((release, index) => {
+      release.policies = policiesResults[index];
+    });
+
+    this.logger.debug(`Successfully attached policies to releases`);
   }
 
 
@@ -708,7 +744,13 @@ export class OfferingService implements OnModuleInit {
       relations: { project: { label: true }, artifacts: { fileUpload: true } },
     });
     this.logger.verbose(`offering for projects: ${JSON.stringify(releases.map(r => r.catalogId))}`);
-    return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+    const releasesMap = new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+    
+    // Enrich all releases with policies
+    const components = Array.from(releasesMap.values());
+    await this.enrichReleasesWithPolicies(components);
+    
+    return releasesMap;
   }
 
   private async getComponents(catalogIds: string[]): Promise<Map<number, ComponentV2Dto>> {
@@ -721,7 +763,13 @@ export class OfferingService implements OnModuleInit {
       },
       relations: { project: true, artifacts: { fileUpload: true } },
     });
-    return new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+    const componentsMap = new Map(releases.map(r => [r.project.id, ComponentV2Dto.fromEntity(r)]));
+    
+    // Enrich all components with policies
+    const components = Array.from(componentsMap.values());
+    await this.enrichReleasesWithPolicies(components);
+    
+    return componentsMap;
   }
 
   @SafeCron({ cronTime: process.env.COMPONENT_OFFERING_JOB_TIME ?? "0 0 * * * *", name: "device-component-offering" })
@@ -755,6 +803,11 @@ export class OfferingService implements OnModuleInit {
       DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE
     ])
     await this.deviceClient.connect()
+
+    this.uploadClient.subscribeToResponseOf([
+      UploadTopics.GET_POLICIES_FOR_RELEASE
+    ])
+    await this.uploadClient.connect()
   }
 
 }
