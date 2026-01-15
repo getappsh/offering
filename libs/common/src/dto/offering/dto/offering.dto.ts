@@ -179,7 +179,6 @@ export class ProjectOfferingFilterQuery extends IntersectionType(
 export class DeviceTypeOfferingFilterQuery extends IntersectionType(
   PartialType(PlatformOfferingParams)
 ){
-
     deviceTypeIdentifier?: string | number  | undefined;
-
+    deviceTypeTree?: DeviceTypeHierarchyDto
 }

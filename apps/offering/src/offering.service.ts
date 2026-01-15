@@ -502,7 +502,8 @@ export class OfferingService implements OnModuleInit {
 
     let tree: DeviceTypeHierarchyDto
     try {
-      tree = await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE, { deviceTypeId: deviceTypeId }));
+      tree = (query.deviceTypeTree && Object.keys(query.deviceTypeTree).length > 0 ) ? query.deviceTypeTree : await lastValueFrom(this.deviceClient.send(DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE, { deviceTypeId: deviceTypeId }));
+      delete query.deviceTypeTree;
     } catch (e) {
       this.logger.error(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`);
       throw new InternalServerErrorException(`get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`)
