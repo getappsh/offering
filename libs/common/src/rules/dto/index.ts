@@ -1,1 +1,1 @@
-export * from './rule-query.dto';
+export * from './policy-query.dto';

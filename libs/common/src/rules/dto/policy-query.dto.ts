@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { RuleType } from '../enums/rule.enums';
 
-export class RuleQueryDto {
+export class PolicyQueryDto {
   @ApiPropertyOptional({ description: 'Project identifier (ID or name)' })
   @IsOptional()
   projectIdentifier?: string | number;
