@@ -13,6 +13,7 @@ import { MicroserviceClient, MicroserviceName } from "@app/common/microservice-c
 import { DevicesHierarchyTopics, DeviceTopics, DeviceTopicsEmit } from "@app/common/microservice-client/topics";
 import { SafeCron } from "@app/common/safe-cron";
 import { HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { lastValueFrom } from "rxjs";
 import { ArrayOverlap, ILike, In, Repository } from "typeorm";
@@ -36,21 +37,17 @@ export class OfferingService implements OnModuleInit {
     @Inject(MicroserviceName.DISCOVERY_SERVICE) private readonly deviceClient: MicroserviceClient,
 
     private readonly policyService: OfferingTreePolicyService,
+    private readonly config: ConfigService
 
   ) { }
 
   async getDeviceComponentOffering(dto: ComponentOfferingRequestDto): Promise<DeviceComponentsOfferingDto> {
     this.logger.log(`Get offering for device: ${dto.deviceId}`);
 
-    // const [updates, offering] = await Promise.all([
-    //   this.getUpdatesForComponents(dto),
-    //   this.getOfferingFromFormationsAndComponents(dto)
-    // ])
-    // const uniqueOffering = offering.filter(o => !updates.some(u => u.catalogId == o.catalogId))
-    // const res = [...uniqueOffering, ...updates].filter(r => !dto.products.includes(r.catalogId));
-
     const [offering, push] = await Promise.all([
-      this.getOfferingFromFormationsPlatformsAndComponents(dto),
+      this.config.get("ALLOW_OFFERING_BY_EXISTING_COMPS") === 'true'
+        ? this.getOfferingFromFormationsPlatformsAndComponents(dto)
+        : [] as ReleaseEntity[],
       this.compOfferingRepo.find({
         select: {
           release: {
