@@ -51,6 +51,11 @@ export class DeliveryItemDto {
   @ApiProperty({ required: false })
   signature?: string
   
+  @ApiProperty({ required: false })
+  isExecutable: boolean
+  
+  @ApiProperty({ required: false, type: String })
+  arguments?: string | null
 
   toString() {
     return JSON.stringify(this);
