@@ -287,7 +287,7 @@ export class AndroidConfigDto extends BaseConfigDto {
   @IsString()
   @Expose()
   controlMapPath: string
-
+  
   @ApiProperty({ required: false, description: 'Substring to match in ortophoto map filename' })
   @IsOptional()
   @IsString()

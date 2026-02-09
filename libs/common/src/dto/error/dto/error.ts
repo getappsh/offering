@@ -37,6 +37,7 @@ export enum ErrorCode {
 
   // devices
   DEVICE_NOT_FOUND = "DEVICE.notFound",
+  DEVICE_HAS_CHILDREN = "DEVICE.hasChildren",
   DEVICE_DT_NOT_FOUND = "DEVICE_TYPE.notFound",
   DEVICE_DT_ALREADY_EXISTS = "DEVICE_TYPE.alreadyExists",
   DEVICE_PLATFORM_NOT_FOUND = "DEVICE_PLATFORM.notFound",
@@ -49,6 +50,15 @@ export enum ErrorCode {
   GROUP_ORG_ID_NOT_ALLOWED = "GROUP.orgIdNotAllowed",
   GROUP_ORG_ID_CONFLICT = "GROUP.orgIdConflict",
   GROUP_ORG_ID_NOT_FOUND = "GROUP.orgIdNotFound",
+
+  // rules
+  RULE_VALIDATION_FAILED = "RULE.validationFailed",
+  RULE_FIELD_NOT_SUPPORTED = "RULE.fieldNotSupported",
+  RULE_FIELD_ALREADY_EXISTS = "RULE.fieldAlreadyExists",
+  RULE_FIELD_NOT_FOUND = "RULE.fieldNotFound",
+
+  // releases
+  RELEASE_HAS_DEPENDENTS = "RELEASE.hasDependents",
 }
 
 export class ErrorDto {
@@ -84,6 +94,7 @@ export class ErrorDto {
 
 
       "`DEVICE.notFound`: Device with given id not found.<br/>" +
+      "`DEVICE.hasChildren`: Cannot delete device because it has child devices.<br/>" +
       "`DEVICE_DT_NOT_FOUND`: Device type with given id not found.<br/>" +
       "`DEVICE_DT_ALREADY_EXISTS`: Device type with given name already exists.<br/>" +
       "`DEVICE_PLATFORM.notFound`: Platform with given id or name not found.<br/>" +
@@ -94,7 +105,14 @@ export class ErrorDto {
       "`GROUP.orgIdUnknown`: Organization ID is unknown, see message for cause.<br/>" +
       "`GROUP.orgIdNotAllowed`: Organization ID is not allowed to be used, see message for cause.<br/>" +
       "`GROUP.orgIdConflict`: Organization ID conflict occurred.<br/>" +
-      "`GROUP.orgIdNotFound`: Organization ID not found.",
+      "`GROUP.orgIdNotFound`: Organization ID not found.<br/>" +
+
+      "`RULE.validationFailed`: Rule validation against rule engine failed.<br/>" +
+      "`RULE.fieldNotSupported`: One or more fields in the rule are not supported.<br/>" +
+      "`RULE.fieldAlreadyExists`: Rule field with the given name already exists.<br/>" +
+      "`RULE.fieldNotFound`: Rule field with the given name was not found.<br/>" +
+
+      "`RELEASE.hasDependents`: Cannot delete release because other releases depend on it.",
     required: false
   })
   @IsEnum(ErrorCode)
@@ -124,12 +142,14 @@ export class ErrorDto {
 export class AppError extends Error {
   errorCode: ErrorCode;
   statusCode?: number;
+  data?: any;
 
-  constructor(errorCode: ErrorCode, message?: string, statusCode?: number) {
+  constructor(errorCode: ErrorCode, message?: string, statusCode?: number, data?: any) {
     super(message);
     this.name = "AppError";
     this.errorCode = errorCode;
     this.statusCode = statusCode;
+    this.data = data;
     Object.setPrototypeOf(this, AppError.prototype);
   }
 }

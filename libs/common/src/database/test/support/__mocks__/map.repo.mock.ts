@@ -6,6 +6,7 @@ export const mockMapRepo = () => {
     find: jest.fn().mockResolvedValue([mapEntityStub()]),
     findOne: jest.fn(),
     save: jest.fn().mockImplementation(map => map),
+    create: jest.fn().mockImplementation(map => map || {}),
 
     // mapRepo implementations
     findOneBy: jest.fn().mockResolvedValue(mapEntityStub()),

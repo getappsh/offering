@@ -139,20 +139,20 @@ export class GeneralDiscoveryDto {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PersonalDiscoveryDto)
-  personalDevice: PersonalDiscoveryDto;
+  personalDevice?: PersonalDiscoveryDto;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => SituationalDiscoveryDto)
-  situationalDevice: SituationalDiscoveryDto;
+  situationalDevice?: SituationalDiscoveryDto;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PhysicalDiscoveryDto)
-  physicalDevice: PhysicalDiscoveryDto;
+  physicalDevice?: PhysicalDiscoveryDto;
 
 }

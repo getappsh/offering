@@ -8,6 +8,7 @@ import { DiscoveryMapDto } from "./discovery-map.dto";
 import { PlatformDiscoverDto } from "./discovery-platform";
 import { EitherIdPresentConstraint } from "@app/common/validators/id-presentation";
 import { RestrictionDto } from "./restriction.dto";
+import { DeviceFieldDto } from "./device-field.dto";
 
 export class DiscoveryMessageDto {
 
@@ -122,6 +123,16 @@ export class DiscoveryMessageV2Dto {
   @ValidateNested({ each: true })
   @Type(() => RestrictionDto)
   restrictions?: RestrictionDto[];
+
+  @ApiProperty({ 
+    required: false, 
+    type: [DeviceFieldDto],
+    description: 'List of fields that the device supports for evaluation, including their types (e.g., number, string, boolean)'
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => DeviceFieldDto)
+  supportedFields?: DeviceFieldDto[];
 
 
   toString() {

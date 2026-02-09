@@ -4,6 +4,8 @@ export * from './dto/discovery-message.dto'
 export * from './dto/discovery-res.dto'
 export * from './dto/discovery-software.dto'
 export * from './dto/restriction.dto'
+export * from './dto/pending-version.dto'
+export * from './dto/device-field.dto'
 
 export * from './stubs/discovery-general.dto.stub'
 export * from './stubs/discovery-message.dto.stub'

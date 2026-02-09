@@ -32,17 +32,17 @@ export class MapProductResDto {
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty()
+  @ApiProperty({ description: "Unique identifier for the product (at polygon part method, it the specific polygon part id)" })
   id: string
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty()
+  @ApiProperty({ description: "Unique identifier for the product" })
   productId: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, description: "Unique identifier for the product (not the specific polygon part id)" })
   catalogId: string;
 
   @IsString()
@@ -55,7 +55,7 @@ export class MapProductResDto {
   @ApiProperty({ required: false })
   cities: string;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
   @ApiProperty({ required: false })
   resolutionMeter: number;

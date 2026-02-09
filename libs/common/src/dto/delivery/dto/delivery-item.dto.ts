@@ -71,6 +71,8 @@ export class DeliveryItemDto {
     dto.size = diE.size;
     dto.artifactType = diE.artifactType;
     dto.signature = diE.signature;
+    dto.isExecutable = diE.isExecutable;
+    dto.arguments = diE.arguments;
     
     return dto
   }
@@ -85,6 +87,8 @@ export class DeliveryItemDto {
     dto.size = diDto.size;
     dto.artifactType = diDto.artifactType;
     dto.signature = diDto.signature;
+    dto.isExecutable = diDto.isExecutable;
+    dto.arguments = diDto.arguments;
 
     if(diDto.hash){
       dto.hash = HashDto.fromHashDto(diDto.hash)

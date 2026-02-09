@@ -32,6 +32,8 @@ export class ImportStatusResDto extends ImportResDto {
     res.metaData.size = mE.size
     res.metaData.area = mE.area
     res.metaData.footprint = mE.footprint
+    res.metaData.imagingStart = mE.imagingStart
+    res.metaData.imagingEnd = mE.imagingEnd
 
     return res
   }

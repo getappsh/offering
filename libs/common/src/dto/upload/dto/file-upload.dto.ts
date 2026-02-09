@@ -1,6 +1,6 @@
 import { FileUPloadStatusEnum } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, NotContains } from "class-validator";
 
 export class CreateFileUploadUrlDto{
   userId: string
@@ -8,6 +8,7 @@ export class CreateFileUploadUrlDto{
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @NotContains(' ', { message: 'Filename cannot contain spaces' })
   fileName: string
 
   @ApiProperty({required: false, description: 'Optional object key without the filename to be used in the bucket'})

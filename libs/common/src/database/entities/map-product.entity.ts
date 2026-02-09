@@ -8,7 +8,7 @@ export class ProductEntity {
   PK_Id: string;
   
   @CreateDateColumn({name: 'create_date'})
-  createDateTime: Date;
+  createDateTime: Date; 
 
   @UpdateDateColumn()
   lastUpdatedDate: Date;
