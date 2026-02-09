@@ -22,9 +22,9 @@ export class CombinedRulesQueryDto {
   // Fields for policies (release-associated rules)
   @ApiPropertyOptional({ description: 'Filter by release ID (policies only)' })
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  releaseId?: number;
+  @IsString()
+  @Type(() => String)
+  releaseId?: string;
 
   // Fields for restrictions (device/os-associated rules)
   @ApiPropertyOptional({ description: 'Filter by device type name (restrictions only)' })
