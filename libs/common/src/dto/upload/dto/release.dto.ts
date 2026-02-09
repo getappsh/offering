@@ -311,13 +311,9 @@ export class ComponentV2Dto {
   @ApiProperty({ required: false })
   releasedAt?: Date
 
-<<<<<<< HEAD
-  @ApiProperty({ required: false, type: [Object] })
-  policies?: any[]
-=======
   @ApiProperty({ required: false, type: [ReleasePolicyDto], description: 'Policies associated with this release' })
   policies?: ReleasePolicyDto[]
->>>>>>> 13f359d9668144cefdf91b2658db5fe2d8639573
+
 
   static fromEntity(release: ReleaseEntity): ComponentV2Dto {
     const dto = new ComponentV2Dto();

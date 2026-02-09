@@ -96,6 +96,7 @@ export class ErrorDto {
 
 
       "`DEVICE.notFound`: Device with given id not found.<br/>" +
+      "`DEVICE.hasChildren`: Device has child devices and cannot be deleted.<br/>" +
       "`DEVICE.hasChildren`: Cannot delete device because it has child devices.<br/>" +
       "`DEVICE_DT_NOT_FOUND`: Device type with given id not found.<br/>" +
       "`DEVICE_DT_ALREADY_EXISTS`: Device type with given name already exists.<br/>" +

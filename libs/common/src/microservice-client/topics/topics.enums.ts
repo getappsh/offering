@@ -19,8 +19,6 @@ export const UploadTopics = {
 
     SET_RELEASE_ARTIFACT: `getapp-upload.set-release-artifact${region}`,
 
-    // Rules - Policies
-    GET_POLICIES_FOR_RELEASE: `getapp-upload.get-policies-for-release${region}`,
     DELETE_RELEASE_ARTIFACT: `getapp-upload.delete-release-artifact${region}`,
     GET_ARTIFACT_DOWNLOAD_URL: 'getapp-upload.get-artifact-download-url',
     GET_ARTIFACT_UPLOAD_URL: 'getapp-upload.get-artifact-upload-url',
@@ -43,7 +41,6 @@ export const UploadTopics = {
     GET_RULE_FIELDS: `getapp-upload.get-rule-fields${region}`,
     ADD_RULE_FIELD: `getapp-upload.add-rule-field${region}`,
     REMOVE_RULE_FIELD: `getapp-upload.remove-rule-field${region}`,
-    
     // Export/Import
     EXPORT_RELEASE: `getapp-upload.export-release${region}`,
     IMPORT_RELEASE: `getapp-upload.import-release${region}`,

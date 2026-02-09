@@ -129,10 +129,6 @@ export class DiscoveryMessageV2Dto {
     type: [DeviceFieldDto],
     description: 'List of fields that the device supports for evaluation, including their types (e.g., number, string, boolean)'
   })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => DeviceFieldDto)
-  supportedFields?: DeviceFieldDto[];
 
 
   toString() {
