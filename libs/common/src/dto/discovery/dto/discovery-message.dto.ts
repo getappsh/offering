@@ -113,13 +113,15 @@ export class DiscoveryMessageV2Dto {
   @Type(() => DiscoveryMapDto)
   mapData: DiscoveryMapDto;
 
-
   @ApiProperty({ 
     required: false, 
     type: [DeviceFieldDto],
     description: 'List of fields that the device supports for evaluation, including their types (e.g., number, string, boolean)'
   })
-
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => DeviceFieldDto)
+  supportedFields?: DeviceFieldDto[];
 
   toString() {
     return JSON.stringify(this)

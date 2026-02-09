@@ -1,6 +1,7 @@
-import { IsOptional, IsBoolean, IsString } from 'class-validator';
+import { IsOptional, IsBoolean, IsString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { RuleType } from '../enums/rule.enums';
 
 export class RestrictionQueryDto {
   @ApiPropertyOptional({ description: 'Project identifier (ID or name)' })
@@ -27,4 +28,9 @@ export class RestrictionQueryDto {
   @IsOptional()
   @IsString()
   osType?: string;
+
+  @ApiPropertyOptional({ description: 'Rule type filter', enum: RuleType })
+  @IsOptional()
+  @IsEnum(RuleType)
+  type?: RuleType;
 }
