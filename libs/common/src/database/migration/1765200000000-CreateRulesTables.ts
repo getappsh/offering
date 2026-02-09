@@ -141,7 +141,7 @@ export class CreateRulesTables1765200000000 implements MigrationInterface {
                 'policy',
                 1,
                 true,
-                '{"all": [{"fact": "$.device.any", "operator": "equal", "value": true}]}'::jsonb
+                '{"conditions":[{"and":[{"field":"$.device.any","value":true,"operator":"equals"}]}]}'::jsonb
             )
             ON CONFLICT ("id") DO NOTHING
         `);

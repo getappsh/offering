@@ -225,10 +225,19 @@ export class RuleService {
   private async createAssociations(rule: RuleEntity, association: any): Promise<void> {
     // Release associations (for policies)
     if (association.releases && association.releases.length > 0) {
-      this.logger.debug(`Creating associations for ${association.releases.length} release(s)`);
+      const uniqueReleaseMap = new Map<string, any>();
+      for (const release of association.releases) {
+        const projectKey = release.projectId && typeof release.projectId === 'string' && release.projectId.trim() !== ''
+          ? `projectId:${release.projectId.trim()}`
+          : `projectName:${release.projectName}`;
+        const versionKey = release.version ?? '';
+        uniqueReleaseMap.set(`${projectKey}|version:${versionKey}`, release);
+      }
+      const uniqueReleases = Array.from(uniqueReleaseMap.values());
+      this.logger.debug(`Creating associations for ${uniqueReleases.length} unique release(s)`);
       
       // Build where conditions - prefer projectId over projectName
-      const whereConditions = association.releases.map(r => {
+      const whereConditions = uniqueReleases.map(r => {
         // Check if projectId is provided and is a non-empty string
         if (r.projectId && typeof r.projectId === 'string' && r.projectId.trim() !== '') {
           // Use projectId if provided (preferred since names can change)
@@ -256,8 +265,8 @@ export class RuleService {
 
       this.logger.debug(`Found ${releases.length} release(s) in database`);
 
-      if (releases.length !== association.releases.length) {
-        const requestedReleases = association.releases.map(r => 
+      if (releases.length !== uniqueReleases.length) {
+        const requestedReleases = uniqueReleases.map(r => 
           r.projectId ? `projectId=${r.projectId}, version=${r.version}` : `projectName=${r.projectName}, version=${r.version}`
         );
         const foundReleases = releases.map(r => 
@@ -265,7 +274,7 @@ export class RuleService {
         );
         this.logger.error(`Requested releases: ${JSON.stringify(requestedReleases)}`);
         this.logger.error(`Found releases: ${JSON.stringify(foundReleases)}`);
-        throw new BadRequestException(`One or more releases not found. Requested: ${association.releases.length}, Found: ${releases.length}`);
+        throw new BadRequestException(`One or more releases not found. Requested: ${uniqueReleases.length}, Found: ${releases.length}`);
       }
 
       const ruleReleases = releases.map(release =>
@@ -276,11 +285,14 @@ export class RuleService {
 
     // Device type associations (for restrictions)
     if (association.deviceTypeNames && association.deviceTypeNames.length > 0) {
+      const uniqueDeviceTypeNames = [...new Set(association.deviceTypeNames)];
+      this.logger.debug(`Creating associations for ${uniqueDeviceTypeNames.length} unique device type(s)`);
+      
       const deviceTypes = await this.deviceTypeRepository.find({
-        where: { name: In(association.deviceTypeNames) },
+        where: { name: In(uniqueDeviceTypeNames) },
       });
 
-      if (deviceTypes.length !== association.deviceTypeNames.length) {
+      if (deviceTypes.length !== uniqueDeviceTypeNames.length) {
         throw new BadRequestException('One or more device types not found');
       }
 
@@ -292,11 +304,14 @@ export class RuleService {
 
     // Device associations (for restrictions)
     if (association.deviceIds && association.deviceIds.length > 0) {
+      const uniqueDeviceIds = [...new Set(association.deviceIds)];
+      this.logger.debug(`Creating associations for ${uniqueDeviceIds.length} unique device(s)`);
+      
       const devices = await this.deviceRepository.find({
-        where: { ID: In(association.deviceIds) },
+        where: { ID: In(uniqueDeviceIds) },
       });
 
-      if (devices.length !== association.deviceIds.length) {
+      if (devices.length !== uniqueDeviceIds.length) {
         throw new BadRequestException('One or more devices not found');
       }
 
@@ -308,7 +323,10 @@ export class RuleService {
 
     // OS associations (for restrictions)
     if (association.osTypes && association.osTypes.length > 0) {
-      const ruleOsList = association.osTypes.map(osType =>
+      const uniqueOsTypes = [...new Set(association.osTypes as string[])] as string[];
+      this.logger.debug(`Creating associations for ${uniqueOsTypes.length} unique OS type(s)`);
+      
+      const ruleOsList = uniqueOsTypes.map((osType: string) =>
         this.ruleOsRepository.create({ rule, osType }),
       );
       await this.ruleOsRepository.save(ruleOsList);

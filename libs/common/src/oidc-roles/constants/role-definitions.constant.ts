@@ -160,9 +160,6 @@ export const COMPOSITE_ROLES: RoleDefinition[] = [
       ApiRole.VIEW_OFFERING,
       // Pushing a release to devices
       ApiRole.PUSH_RELEASE,
-      
-      // Special release permissions
-      ApiRole.EDIT_IMPORTED_RELEASE,
 
       // User Management
       ApiRole.VIEW_USER,
