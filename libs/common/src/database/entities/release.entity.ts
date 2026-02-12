@@ -3,6 +3,7 @@ import { ProjectEntity } from './project.entity';
 import { ReleaseArtifactEntity } from './release-artifact.entity';
 import { ReleaseStatusEnum } from './enums.entity';
 import { DeviceComponentEntity } from './device-component-state.entity';
+import { RuleReleaseEntity } from './rule-release.entity';
 
 @Entity('release')
 @Index(['project', 'version'], { unique: true })
@@ -44,8 +45,17 @@ export class ReleaseEntity {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
+  @Column({ name: 'created_by', type: 'varchar', nullable: true })
+  createdBy: string | null;
+
+  @Column({ name: 'updated_by', type: 'varchar', nullable: true })
+  updatedBy: string | null;
+
   @Column({ name: 'released_at', type: 'timestamptz', nullable: true })
   releasedAt: Date | null;
+
+  @Column({ name: 'is_imported', type: 'boolean', default: false })
+  isImported: boolean;
 
   @ManyToMany(() => ReleaseEntity, (release) => release.dependentReleases, { cascade: true })
   @JoinTable({
@@ -68,4 +78,7 @@ export class ReleaseEntity {
 
   @OneToMany(() => DeviceComponentEntity, deviceCompEntity => deviceCompEntity.release)
   devices: DeviceComponentEntity[]
+
+  @OneToMany(() => RuleReleaseEntity, ruleRelease => ruleRelease.release)
+  policyAssociations: RuleReleaseEntity[];
 }

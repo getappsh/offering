@@ -33,6 +33,10 @@ export class SoftwareStateDto {
   @ApiProperty({ required: false})
   error?: string;
 
+  @ApiProperty({ required: false, description: 'Indicates if this version is unknown (not registered in getapp)' })
+  @IsOptional()
+  isUnknown?: boolean;
+
   static fromDeviceComponentEntity(componentState: DeviceComponentEntity) {
 
     let softwareState = new SoftwareStateDto();
@@ -41,6 +45,7 @@ export class SoftwareStateDto {
     softwareState.error = componentState?.error;
     softwareState.downloadDate = componentState?.downloadedAt;
     softwareState.deployDate = componentState?.deployedAt;
+    softwareState.isUnknown = false; // Known versions from components
 
     return softwareState;
   }
@@ -50,6 +55,7 @@ export class SoftwareStateDto {
   }
   
 }
+
 export class DeviceSoftwareDto extends DeviceDto {
 
   @ApiProperty({ isArray: true, type: SoftwareStateDto })

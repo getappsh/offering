@@ -40,3 +40,6 @@ temp_docker_images/*
 .gitlab-ci.yml
 
 manifest.json
+._.DS_Store
+._.env
+.vscode/launch.json

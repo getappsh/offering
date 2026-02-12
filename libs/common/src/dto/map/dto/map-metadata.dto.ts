@@ -54,5 +54,11 @@ export class MapMetadatatDto{
   @IsNotEmpty()
   fileName : string;
 
+ @ApiProperty({ required: false })
+  imagingStart: Date;
+  
+  @ApiProperty({ required: false })
+  imagingEnd: Date;
+
 
 }

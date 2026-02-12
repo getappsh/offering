@@ -53,4 +53,10 @@ export class DeliveryItemEntity extends BaseEntity {
   @Column({ name: "signature", type: 'text', nullable: true })
   signature: string
   
+  @Column({ name: 'is_executable', type: 'boolean', default: false})
+  isExecutable: boolean
+
+  @Column({ name: 'arguments', type: 'text', nullable: true, default: null})
+  arguments?: string | null
+  
 }

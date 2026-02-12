@@ -20,6 +20,11 @@ import { OfferingTreePolicyService } from './offering-tree-policy.service';
       type: MicroserviceType.DISCOVERY,
       id: "offering"
     }),
+    MicroserviceModule.register({
+      name: MicroserviceName.UPLOAD_SERVICE,
+      type: MicroserviceType.UPLOAD,
+      id: "offering"
+    }),
     ApmModule,
     DatabaseModule,
     TypeOrmModule.forFeature([

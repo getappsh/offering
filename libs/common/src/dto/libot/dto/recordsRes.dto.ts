@@ -23,7 +23,6 @@ export class MCRasterRecordDto {
   'mc:productId': string
   'mc:productName': string
   'mc:classification': string
-  'mc:creationDateUTC': string
   'mc:description': string
   'mc:footprint': string
   'mc:ingestionDate': string
@@ -72,7 +71,6 @@ export class CatalogRecordDto {
   footprint: string
   imagingTimeBeginUTC: string
   imagingTimeEndUTC: string
-  creationDateUTC: string
   insertDate: string
   maxResolutionDeg: string
   productSubType: string

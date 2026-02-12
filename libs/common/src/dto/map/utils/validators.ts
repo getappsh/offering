@@ -72,6 +72,7 @@ export class Validators {
 
   static isValidStringForPolygon(polyStr: string): false | number[][] {
     const polygon = Validators.stringToPolygon(polyStr)
+    
     return Validators.isValidPolygon(polygon) ? polygon : false
   }
 
@@ -116,6 +117,27 @@ export class Validators {
     const polyArea = area(poly) / 1000000
     const maxArea = maxSize ?? 100
     return polyArea < 0 || polyArea <= maxArea
+  }
+
+  static pointStringToFeature(pointsString: string): Feature<Polygon | MultiPolygon> {
+    let poly: number[][] | number[][][] | false;
+    
+    if (Validators.isValidStringForBBox(pointsString)) {
+      const bboxArray = Validators.bBoxStringToBboxArray(pointsString);
+      return bboxPolygon(bboxArray);
+    } else if ((poly = Validators.isValidStringForPolygon(pointsString))) {
+      return polygon([poly as number[][]]);
+    } else if ((poly = Validators.isValidStringForMultiPolygon(pointsString))) {
+      return polygon([(poly as number[][][])[0]]);
+    } else {
+      throw new Error("Points string values are invalid.");
+    }
+  }
+
+  static isValidStringForAnyGeometry(geomStr: string): boolean {
+    return Validators.isValidStringForBBox(geomStr) ||
+      Validators.isValidStringForPolygon(geomStr) !== false ||
+      Validators.isValidStringForMultiPolygon(geomStr) !== false
   }
 
 }

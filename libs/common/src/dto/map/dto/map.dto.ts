@@ -1,4 +1,4 @@
-import { MapEntity } from "@app/common/database/entities";
+import { MapEntity, MapImportStatusEnum } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 import { MapProductResDto } from "./map-product-res.dto";
 
@@ -18,24 +18,30 @@ export class MapDto {
 
   @ApiProperty({ required: false })
   boundingBox: string;
-  
+
   @ApiProperty({ required: false })
   footprint: string;
 
   @ApiProperty({ required: false })
   size: number;
-  
+
   @ApiProperty({ required: false })
   area: number;
 
-  @ApiProperty({ required: false })
-  status: string;
+  @ApiProperty({ required: false, enum: MapImportStatusEnum })
+  status: MapImportStatusEnum;
 
   @ApiProperty({ required: false })
   fileName: string;
 
   @ApiProperty({ required: false })
   packageUrl: string;
+
+  @ApiProperty({ required: false })
+  imagingStart: Date;
+
+  @ApiProperty({ required: false })
+  imagingEnd: Date;
 
   @ApiProperty({ required: false })
   isUpdate: boolean;
@@ -56,6 +62,8 @@ export class MapDto {
     map.status = mapEntity.status;
     map.fileName = mapEntity.fileName;
     map.packageUrl = mapEntity.packageUrl;
+    map.imagingStart = mapEntity.imagingStart
+    map.imagingEnd = mapEntity.imagingEnd
     map.isUpdate = mapEntity.isUpdated
     map.product = MapProductResDto.fromProductEntity(mapEntity.mapProduct)
 

@@ -1,4 +1,5 @@
-import { ApiProperty, IntersectionType } from "@nestjs/swagger";
+import { IntersectionType } from "@nestjs/swagger";
+
 import { OfferingMapProductsResDto } from "./offering-map-products-res.dto";
 import { OfferingMapPushResDto } from "./offering-map-push-res.dto";
 

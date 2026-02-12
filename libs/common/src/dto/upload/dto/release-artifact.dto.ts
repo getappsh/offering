@@ -1,7 +1,7 @@
 import { ArtifactTypeEnum, FileUPloadStatusEnum, ReleaseArtifactEntity } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsBoolean, IsNumber, IsSemVer } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsBoolean, IsNumber, IsSemVer, NotContains } from "class-validator";
 import { ProjectIdentifierParams } from "../../project-management";
 
 export class SetReleaseArtifactDto {
@@ -16,6 +16,7 @@ export class SetReleaseArtifactDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @NotContains(' ', { message: 'Artifact name cannot contain spaces' })
   artifactName: string
 
   @ApiProperty({ required: false, type: 'enum', enum: ArtifactTypeEnum, default: ArtifactTypeEnum.FILE })
@@ -46,6 +47,8 @@ export class SetReleaseArtifactDto {
   @IsOptional()
   @ApiProperty({ required: false})
   arguments: string
+
+  
 
 }
 
@@ -118,6 +121,31 @@ export class ReleaseArtifactDto {
   @ApiProperty({ required: false, type: 'integer', format: 'int64' })
   size?: number
 
+  @ApiProperty({ 
+    required: false, 
+    type: 'number', 
+    minimum: 0, 
+    maximum: 100, 
+    description: 'Upload/download progress percentage (0-100). Check status field for errors.' 
+  })
+  @IsOptional()
+  @IsNumber()
+  progress?: number
+
+  @ApiProperty({ 
+    required: false, 
+    type: 'string',
+    description: 'Error message when status indicates an error' 
+  })
+  @IsOptional()
+  @IsString()
+  error?: string
+
+  @ApiProperty({ required: false, type: 'string', description: 'SHA256 hash of the file' })
+  @IsOptional()
+  @IsString()
+  sha256?: string
+
 
   static fromEntity(artifact: ReleaseArtifactEntity): ReleaseArtifactDto {
     const dto = new ReleaseArtifactDto();
@@ -130,6 +158,9 @@ export class ReleaseArtifactDto {
     dto.uploadId = artifact.fileUpload ? artifact.fileUpload.id : undefined;
     dto.status = artifact?.fileUpload?.status
     dto.size = artifact?.fileUpload?.size
+    dto.progress = artifact?.fileUpload?.progress ?? 0
+    dto.error = artifact?.fileUpload?.error
+    dto.sha256 = artifact?.fileUpload?.sha256
     dto.arguments = artifact?.arguments;
     dto.isExecutable = artifact?.isExecutable;
 
