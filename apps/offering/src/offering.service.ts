@@ -169,6 +169,7 @@ export class OfferingService implements OnModuleInit {
 
   /**
    * Fetches policies for each release and attaches them to the ComponentV2Dto objects
+   * Also recursively enriches any dependencies with their policies
    */
   private async enrichReleasesWithPolicies(releases: ComponentV2Dto[]): Promise<void> {
     if (!releases || releases.length === 0) {
@@ -194,6 +195,13 @@ export class OfferingService implements OnModuleInit {
     });
 
     this.logger.debug(`Successfully attached policies to releases`);
+
+    // Recursively enrich dependencies
+    for (const release of releases) {
+      if (release.dependencies && release.dependencies.length > 0) {
+        await this.enrichReleasesWithPolicies(release.dependencies);
+      }
+    }
   }
 
 
@@ -801,11 +809,12 @@ export class OfferingService implements OnModuleInit {
 
     this.logger.verbose(`offering for projects: ${JSON.stringify(releases.map(r => r.catalogId))}`);
     const resultMap = new Map<number, ComponentV2Dto>();
+    
     releasesWithDeps.forEach(r => {
       if (r.project?.id) {
         resultMap.set(r.project.id, ComponentV2Dto.fromEntity(r));
       }
-    });
+    });    
     
     // Enrich all releases with policies
     const components = Array.from(resultMap.values());
