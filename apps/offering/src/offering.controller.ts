@@ -71,6 +71,16 @@ export class OfferingController {
     }
   }
 
+  @EventPattern(OfferingTopicsEmit.OFFERING_UNPUSH)
+  async unpushOffering(@RpcPayload() po: PushOfferingDto) {
+    this.logger.log(`Unpush offering of catalogId: ${po.catalogId}, type: ${po.itemType}`);
+    if (po.itemType == ItemTypeEnum.SOFTWARE) {
+      await this.offeringService.unpushSoftwareOffering(po);
+    } else if (po.itemType == ItemTypeEnum.MAP) {
+      await this.offeringService.unpushMapOffering(po);
+    }
+  }
+
   @EventPattern(OfferingTopicsEmit.RELEASE_CHANGED_EVENT)
   releaseChangedEvent(@RpcPayload() event: ReleaseChangedEventDto) {
     this.logger.log(`Release changed event for catalogId: ${event.catalogId}, event: ${event.event}`);

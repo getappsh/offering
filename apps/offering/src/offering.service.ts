@@ -1,5 +1,6 @@
 import {
   ComponentOfferingEntity,
+  DeviceComponentEntity,
   DeviceComponentStateEnum,
   DeviceEntity,
   DeviceMapStateEnum,
@@ -12,6 +13,7 @@ import {
   ProjectType,
   ReleaseEntity,
   ReleaseStatusEnum,
+  DeviceMapStateEntity,
 } from '@app/common/database/entities';
 import { DeviceMapStateDto } from '@app/common/dto/device';
 import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
@@ -85,8 +87,12 @@ export class OfferingService implements OnModuleInit {
     private readonly deviceRepo: Repository<DeviceEntity>,
     @InjectRepository(ComponentOfferingEntity)
     private readonly compOfferingRepo: Repository<ComponentOfferingEntity>,
+    @InjectRepository(DeviceComponentEntity)
+    private readonly deviceComponentRepo: Repository<DeviceComponentEntity>,
     @InjectRepository(MapOfferingEntity)
     private readonly mapOfferingRepo: Repository<MapOfferingEntity>,
+    @InjectRepository(DeviceMapStateEntity)
+    private readonly deviceMapRepo: Repository<DeviceMapStateEntity>,
 
     @Inject(MicroserviceName.DISCOVERY_SERVICE)
     private readonly deviceClient: MicroserviceClient,
@@ -369,6 +375,225 @@ export class OfferingService implements OnModuleInit {
       DeviceTopicsEmit.UPDATE_DEVICE_MAP_STATE,
       devicesState,
     );
+  }
+
+  async unpushSoftwareOffering(po: PushOfferingDto) {
+    this.logger.debug(`unpush software offering`);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+
+    // Deduplicate devices (a device may appear in both devices array and a group)
+    const uniqueDevices = [...new Set(devices)];
+
+    this.logger.log(
+      `Unpush software offering - catalogId: ${po.catalogId}, number of devices: ${uniqueDevices.length}`,
+    );
+
+    // Batch-load all push offerings and device component states upfront to avoid N+1 queries
+    const [offerings, deviceComponents] = await Promise.all([
+      this.compOfferingRepo.find({
+        where: {
+          device: { ID: In(uniqueDevices) },
+          release: { catalogId: po.catalogId },
+          action: OfferingActionEnum.PUSH,
+        },
+        relations: { device: true },
+      }),
+      this.deviceComponentRepo.find({
+        where: {
+          device: { ID: In(uniqueDevices) },
+          release: { catalogId: po.catalogId },
+        },
+        relations: { device: true },
+      }),
+    ]);
+
+    const offeringByDevice = new Map(
+      offerings.map((o) => [o.device.ID, o]),
+    );
+    const componentByDevice = new Map(
+      deviceComponents.map((c) => [c.device.ID, c]),
+    );
+
+    const devicesState: DeviceComponentStateDto[] = [];
+
+    for (const deviceId of uniqueDevices) {
+      try {
+        const offering = offeringByDevice.get(deviceId);
+        if (!offering) {
+          this.logger.warn(
+            `No active push found for device: ${deviceId}, catalogId: ${po.catalogId}`,
+          );
+          continue;
+        }
+
+        const deviceComponent = componentByDevice.get(deviceId);
+
+        // Validate state allows unpush
+        const canUnpush =
+          deviceComponent?.state === DeviceComponentStateEnum.PUSH ||
+          deviceComponent?.state === DeviceComponentStateEnum.DELIVERY;
+
+        if (!canUnpush) {
+          this.logger.warn(
+            `Cannot unpush for device: ${deviceId}, catalogId: ${po.catalogId}. ` +
+              `Current state: ${deviceComponent?.state}. Unpush only allowed for PUSH or DELIVERY states.`,
+          );
+          continue;
+        }
+
+        // Delete offering and update state in a transaction to prevent race conditions
+        await this.compOfferingRepo.manager.transaction(async (entityManager) => {
+          await entityManager.delete(ComponentOfferingEntity, offering.id);
+          await entityManager.update(
+            DeviceComponentEntity,
+            {
+              device: { ID: deviceId },
+              release: { catalogId: po.catalogId },
+            },
+            { state: DeviceComponentStateEnum.OFFERING, error: null },
+          );
+        });
+        this.logger.debug(
+          `Unpushed offering for device: ${deviceId}, catalogId: ${po.catalogId}`,
+        );
+
+        // Collect state update to batch-emit
+        const deviceState = new DeviceComponentStateDto();
+        deviceState.deviceId = deviceId;
+        deviceState.catalogId = po.catalogId;
+        deviceState.state = DeviceComponentStateEnum.OFFERING;
+        deviceState.error = null;
+        devicesState.push(deviceState);
+      } catch (error) {
+        this.logger.error(
+          `Error unpushing software offering for device: ${deviceId}, catalogId: ${po.catalogId}. Error: ${error}`,
+        );
+      }
+    }
+
+    // Batch-emit state updates (using same batch size pattern as sendDeviceSoftwareState)
+    if (devicesState.length > 0) {
+      this.logger.log(`Send device software state updates for ${devicesState.length} devices`);
+      const batchSize = 15;
+      for (let i = 0; i < devicesState.length; i += batchSize) {
+        const batch = devicesState.slice(i, i + batchSize);
+        this.deviceClient.emit(
+          DeviceTopicsEmit.UPDATE_DEVICE_SOFTWARE_STATE,
+          batch,
+        );
+      }
+    }
+  }
+
+  async unpushMapOffering(po: PushOfferingDto) {
+    this.logger.debug(`unpush map offering`);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+
+    // Deduplicate devices (a device may appear in both devices array and a group)
+    const uniqueDevices = [...new Set(devices)];
+
+    this.logger.log(
+      `Unpush map offering - catalogId: ${po.catalogId}, number of devices: ${uniqueDevices.length}`,
+    );
+
+    // Batch-load all map push offerings and device map states upfront to avoid N+1 queries
+    const [offerings, deviceMaps] = await Promise.all([
+      this.mapOfferingRepo.find({
+        where: {
+          device: { ID: In(uniqueDevices) },
+          map: { catalogId: po.catalogId },
+          action: OfferingActionEnum.PUSH,
+        },
+        relations: { device: true },
+      }),
+      this.deviceMapRepo.find({
+        where: {
+          device: { ID: In(uniqueDevices) },
+          map: { catalogId: po.catalogId },
+        },
+        relations: { device: true },
+      }),
+    ]);
+
+    const offeringByDevice = new Map(
+      offerings.map((o) => [o.device.ID, o]),
+    );
+    const mapStateByDevice = new Map(
+      deviceMaps.map((m) => [m.device.ID, m]),
+    );
+
+    const devicesState: DeviceMapStateDto[] = [];
+
+    for (const deviceId of uniqueDevices) {
+      try {
+        const offering = offeringByDevice.get(deviceId);
+        if (!offering) {
+          this.logger.warn(
+            `No active map push found for device: ${deviceId}, catalogId: ${po.catalogId}`,
+          );
+          continue;
+        }
+
+        const deviceMap = mapStateByDevice.get(deviceId);
+
+        // Validate state allows unpush
+        const canUnpush =
+          deviceMap?.state === DeviceMapStateEnum.PUSH ||
+          deviceMap?.state === DeviceMapStateEnum.DELIVERY;
+
+        if (!canUnpush) {
+          this.logger.warn(
+            `Cannot unpush map for device: ${deviceId}, catalogId: ${po.catalogId}. ` +
+              `Current state: ${deviceMap?.state}. Unpush only allowed for PUSH or DELIVERY states.`,
+          );
+          continue;
+        }
+
+        // Delete offering and update state in a transaction to prevent race conditions
+        await this.mapOfferingRepo.manager.transaction(async (entityManager) => {
+          await entityManager.delete(MapOfferingEntity, offering.id);
+          await entityManager.update(
+            DeviceMapStateEntity,
+            {
+              device: { ID: deviceId },
+              map: { catalogId: po.catalogId },
+            },
+            { state: DeviceMapStateEnum.OFFERING, error: null },
+          );
+        });
+        this.logger.debug(
+          `Unpushed map offering for device: ${deviceId}, catalogId: ${po.catalogId}`,
+        );
+
+        // Collect state update to batch-emit
+        const deviceState = new DeviceMapStateDto();
+        deviceState.state = DeviceMapStateEnum.OFFERING;
+        deviceState.catalogId = po.catalogId;
+        deviceState.deviceId = deviceId;
+        deviceState.error = null;
+        devicesState.push(deviceState);
+      } catch (error) {
+        this.logger.error(
+          `Error unpushing map offering for device: ${deviceId}, catalogId: ${po.catalogId}. Error: ${error}`,
+        );
+      }
+    }
+
+    if (devicesState.length > 0) {
+      this.logger.log('Send device map state updates');
+      this.deviceClient.emit(
+        DeviceTopicsEmit.UPDATE_DEVICE_MAP_STATE,
+        devicesState,
+      );
+    }
   }
 
   private async setDeviceSoftwaresOffering(
