@@ -5,7 +5,7 @@ import { DeviceDto } from "@app/common/dto/device/dto/device.dto";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto } from "@app/common/dto/devices-hierarchy";
 import { AppError, ErrorCode } from "@app/common/dto/error";
 import { MapDto } from "@app/common/dto/map";
-import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto, OfferingTreePolicyParams } from "@app/common/dto/offering";
+import { DeviceComponentsOfferingDto, ComponentOfferingRequestDto, PushOfferingDto, OfferingMapPushResDto, OfferingTreePolicyParams, PushOfferingDeviceDto } from "@app/common/dto/offering";
 import { DeviceTypeOfferingDto, DeviceTypeOfferingFilterQuery, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery, ProjectRefOfferingDto } from "@app/common/dto/offering/dto/offering.dto";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { ComponentV2Dto, ReleaseChangedEventDto } from "@app/common/dto/upload";
@@ -165,6 +165,18 @@ export class OfferingService implements OnModuleInit {
     const result = ComponentV2Dto.fromEntity(release);
     await this.enrichReleasesWithPolicies([result]);
     return result;
+  }
+
+  async getPushOfferingDevices(catalogId: any): Promise<PushOfferingDeviceDto[]> {
+    this.logger.debug(`Getting push offering devices for catalogId: ${catalogId}`);
+    const offerings = await this.compOfferingRepo.find({
+      where: { release: { catalogId }, 
+      action: OfferingActionEnum.PUSH },
+      relations: { device: true },
+    });
+    return offerings
+      .filter(o => !!o.device?.ID)
+      .map(o => ({ deviceId: o.device.ID, deviceName: o.device.name }));
   }
 
   /**
