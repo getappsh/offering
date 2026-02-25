@@ -432,42 +432,42 @@ export class OfferingService implements OnModuleInit {
 
         const deviceComponent = componentByDevice.get(deviceId);
 
-        // Validate state allows unpush
-        const canUnpush =
-          deviceComponent?.state === DeviceComponentStateEnum.PUSH ||
-          deviceComponent?.state === DeviceComponentStateEnum.DELIVERY;
-
-        if (!canUnpush) {
+        if (!deviceComponent) {
+          // No component record exists (data inconsistency or race condition) —
+          // just remove the push offering
+          await this.compOfferingRepo.delete(offering.id);
           this.logger.warn(
-            `Cannot unpush for device: ${deviceId}, catalogId: ${po.catalogId}. ` +
-              `Current state: ${deviceComponent?.state}. Unpush only allowed for PUSH or DELIVERY states.`,
+            `No component record found for device: ${deviceId}, catalogId: ${po.catalogId}. Removed push offering only.`,
           );
-          continue;
-        }
-
-        // Delete offering and update state in a transaction to prevent race conditions
-        await this.compOfferingRepo.manager.transaction(async (entityManager) => {
-          await entityManager.delete(ComponentOfferingEntity, offering.id);
-          await entityManager.update(
-            DeviceComponentEntity,
-            {
+        } else if (deviceComponent.state === DeviceComponentStateEnum.PUSH) {
+          // The device did not update this record — it's still a server-side
+          // change from the push, so we can safely delete both records
+          await this.compOfferingRepo.manager.transaction(async (entityManager) => {
+            await entityManager.delete(ComponentOfferingEntity, offering.id);
+            await entityManager.delete(DeviceComponentEntity, {
               device: { ID: deviceId },
               release: { catalogId: po.catalogId },
-            },
-            { state: DeviceComponentStateEnum.OFFERING, error: null },
+            });
+          });
+          this.logger.debug(
+            `Unpushed and deleted component for device: ${deviceId}, catalogId: ${po.catalogId}`,
           );
-        });
-        this.logger.debug(
-          `Unpushed offering for device: ${deviceId}, catalogId: ${po.catalogId}`,
-        );
 
-        // Collect state update to batch-emit
-        const deviceState = new DeviceComponentStateDto();
-        deviceState.deviceId = deviceId;
-        deviceState.catalogId = po.catalogId;
-        deviceState.state = DeviceComponentStateEnum.OFFERING;
-        deviceState.error = null;
-        devicesState.push(deviceState);
+          const deviceState = new DeviceComponentStateDto();
+          deviceState.deviceId = deviceId;
+          deviceState.catalogId = po.catalogId;
+          deviceState.state = DeviceComponentStateEnum.OFFERING;
+          devicesState.push(deviceState);
+        } else {
+          // Device has progressed beyond PUSH (e.g. DELIVERY, DOWNLOADED, etc.) —
+          // another service / the device itself updated the record, so only remove the push offering.
+          // The component record is deliberately left as-is to avoid interrupting an in-progress operation.
+          await this.compOfferingRepo.delete(offering.id);
+          this.logger.debug(
+            `Unpushed offering for device: ${deviceId}, catalogId: ${po.catalogId} ` +
+              `(component state: ${deviceComponent.state}, left as-is)`,
+          );
+        }
       } catch (error) {
         this.logger.error(
           `Error unpushing software offering for device: ${deviceId}, catalogId: ${po.catalogId}. Error: ${error}`,
@@ -475,7 +475,7 @@ export class OfferingService implements OnModuleInit {
       }
     }
 
-    // Batch-emit state updates (using same batch size pattern as sendDeviceSoftwareState)
+    // Batch-emit state updates for devices whose push was fully cancelled
     if (devicesState.length > 0) {
       this.logger.log(`Send device software state updates for ${devicesState.length} devices`);
       const batchSize = 15;
@@ -544,42 +544,47 @@ export class OfferingService implements OnModuleInit {
 
         const deviceMap = mapStateByDevice.get(deviceId);
 
-        // Validate state allows unpush
-        const canUnpush =
-          deviceMap?.state === DeviceMapStateEnum.PUSH ||
-          deviceMap?.state === DeviceMapStateEnum.DELIVERY;
-
-        if (!canUnpush) {
+        if (!deviceMap) {
+          // No map state record exists — just remove the push offering
+          await this.mapOfferingRepo.delete(offering.id);
           this.logger.warn(
-            `Cannot unpush map for device: ${deviceId}, catalogId: ${po.catalogId}. ` +
-              `Current state: ${deviceMap?.state}. Unpush only allowed for PUSH or DELIVERY states.`,
+            `No map state record found for device: ${deviceId}, catalogId: ${po.catalogId}. Removed push offering only.`,
           );
-          continue;
-        }
-
-        // Delete offering and update state in a transaction to prevent race conditions
-        await this.mapOfferingRepo.manager.transaction(async (entityManager) => {
-          await entityManager.delete(MapOfferingEntity, offering.id);
-          await entityManager.update(
-            DeviceMapStateEntity,
-            {
+        } else if (deviceMap.state === DeviceMapStateEnum.PUSH) {
+          // The device did not act on this push yet — safe to delete both records
+          await this.mapOfferingRepo.manager.transaction(async (entityManager) => {
+            await entityManager.delete(MapOfferingEntity, offering.id);
+            await entityManager.delete(DeviceMapStateEntity, {
               device: { ID: deviceId },
               map: { catalogId: po.catalogId },
-            },
-            { state: DeviceMapStateEnum.OFFERING, error: null },
+            });
+          });
+          this.logger.debug(
+            `Unpushed and deleted map state for device: ${deviceId}, catalogId: ${po.catalogId}`,
           );
-        });
-        this.logger.debug(
-          `Unpushed map offering for device: ${deviceId}, catalogId: ${po.catalogId}`,
-        );
 
-        // Collect state update to batch-emit
-        const deviceState = new DeviceMapStateDto();
-        deviceState.state = DeviceMapStateEnum.OFFERING;
-        deviceState.catalogId = po.catalogId;
-        deviceState.deviceId = deviceId;
-        deviceState.error = null;
-        devicesState.push(deviceState);
+          const deviceState = new DeviceMapStateDto();
+          deviceState.state = DeviceMapStateEnum.OFFERING;
+          deviceState.catalogId = po.catalogId;
+          deviceState.deviceId = deviceId;
+          deviceState.error = null;
+          devicesState.push(deviceState);
+        } else if (deviceMap.state === DeviceMapStateEnum.DELIVERY) {
+          // Device is in DELIVERY state — remove the push offering but leave the map state as-is.
+          await this.mapOfferingRepo.delete(offering.id);
+          this.logger.debug(
+            `Unpushed map offering for device: ${deviceId}, catalogId: ${po.catalogId} ` +
+              `(map state: ${deviceMap.state}, left as-is)`,
+          );
+        } else {
+          // Device has progressed beyond DELIVERY (e.g. DOWNLOADED, etc.) —
+          // another service / the device itself updated the record, so leave everything as-is
+          // to avoid interrupting an in-progress operation.
+          this.logger.debug(
+            `Skipped unpush for device: ${deviceId}, catalogId: ${po.catalogId} ` +
+              `(map state: ${deviceMap.state}, left as-is)`,
+          );
+        }
       } catch (error) {
         this.logger.error(
           `Error unpushing map offering for device: ${deviceId}, catalogId: ${po.catalogId}. Error: ${error}`,
