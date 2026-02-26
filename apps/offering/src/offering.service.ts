@@ -456,7 +456,7 @@ export class OfferingService implements OnModuleInit {
           const deviceState = new DeviceComponentStateDto();
           deviceState.deviceId = deviceId;
           deviceState.catalogId = po.catalogId;
-          deviceState.state = DeviceComponentStateEnum.OFFERING;
+          deviceState.state = DeviceComponentStateEnum.DELETED;
           devicesState.push(deviceState);
         } else {
           // Device has progressed beyond PUSH (e.g. DELIVERY, DOWNLOADED, etc.) —
