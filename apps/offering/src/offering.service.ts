@@ -418,8 +418,6 @@ export class OfferingService implements OnModuleInit {
       deviceComponents.map((c) => [c.device.ID, c]),
     );
 
-    const devicesState: DeviceComponentStateDto[] = [];
-
     for (const deviceId of uniqueDevices) {
       try {
         const offering = offeringByDevice.get(deviceId);
@@ -452,12 +450,6 @@ export class OfferingService implements OnModuleInit {
           this.logger.debug(
             `Unpushed and deleted component for device: ${deviceId}, catalogId: ${po.catalogId}`,
           );
-
-          const deviceState = new DeviceComponentStateDto();
-          deviceState.deviceId = deviceId;
-          deviceState.catalogId = po.catalogId;
-          deviceState.state = DeviceComponentStateEnum.DELETED;
-          devicesState.push(deviceState);
         } else {
           // Device has progressed beyond PUSH (e.g. DELIVERY, DOWNLOADED, etc.) —
           // another service / the device itself updated the record, so only remove the push offering.
@@ -471,19 +463,6 @@ export class OfferingService implements OnModuleInit {
       } catch (error) {
         this.logger.error(
           `Error unpushing software offering for device: ${deviceId}, catalogId: ${po.catalogId}. Error: ${error}`,
-        );
-      }
-    }
-
-    // Batch-emit state updates for devices whose push was fully cancelled
-    if (devicesState.length > 0) {
-      this.logger.log(`Send device software state updates for ${devicesState.length} devices`);
-      const batchSize = 15;
-      for (let i = 0; i < devicesState.length; i += batchSize) {
-        const batch = devicesState.slice(i, i + batchSize);
-        this.deviceClient.emit(
-          DeviceTopicsEmit.UPDATE_DEVICE_SOFTWARE_STATE,
-          batch,
         );
       }
     }
