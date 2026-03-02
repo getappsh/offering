@@ -53,6 +53,12 @@ export class OfferingController {
     return this.offeringService.getOfferOfComp(catalogId)
   }
 
+  @MessagePattern(OfferingTopics.GET_PUSH_OFFERING_DEVICES)
+  getPushOfferingDevices(@RpcPayload("stringValue") catalogId: string) {
+    this.logger.debug(`get push offering devices for catalogId: ${catalogId}`);
+    return this.offeringService.getPushOfferingDevices(catalogId);
+  }
+
 
   @MessagePattern(OfferingTopics.DEVICE_MAP_OFFERING)
   getDeviceMapOffering(@RpcPayload("stringValue") deviceId: string) {
@@ -67,6 +73,16 @@ export class OfferingController {
       this.offeringService.pushSoftwareOffering(po);
     } else if (po.itemType == ItemTypeEnum.MAP) {
       this.offeringService.pushMapOffering(po);
+    }
+  }
+
+  @EventPattern(OfferingTopicsEmit.OFFERING_UNPUSH)
+  async unpushOffering(@RpcPayload() po: PushOfferingDto) {
+    this.logger.log(`Unpush offering of catalogId: ${po.catalogId}, type: ${po.itemType}`);
+    if (po.itemType == ItemTypeEnum.SOFTWARE) {
+      await this.offeringService.unpushSoftwareOffering(po);
+    } else if (po.itemType == ItemTypeEnum.MAP) {
+      await this.offeringService.unpushMapOffering(po);
     }
   }
 
