@@ -1,4 +1,4 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
 import { ComponentOfferingRequestDto, UpsertOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto } from '@app/common/dto/offering';
@@ -9,8 +9,7 @@ import { DeviceMapStateDto } from '@app/common/dto/device';
 import { RpcPayload } from '@app/common/microservice-client';
 import * as fs from 'fs';
 import { OfferingService } from './offering.service';
-import { ProjectIdentifierParams } from '@app/common/dto/project-management';
-import { DeviceTypeOfferingFilterQuery, DeviceTypeOfferingParams, GetProjectsOfferingDto, PlatformOfferingParams, ProjectOfferingFilterQuery } from '@app/common/dto/offering/dto/offering.dto';
+import { DeviceTypeOfferingFilterQuery, GetProjectsOfferingDto, OfferingParamsCombined, ProjectOfferingFilterQuery } from '@app/common/dto/offering/dto/offering.dto';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 
 @Controller()
@@ -24,7 +23,7 @@ export class OfferingController {
   ) { }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_PLATFORM)
-  getOfferingForPlatform(@RpcPayload() params: PlatformOfferingParams) {
+  getOfferingForPlatform(@RpcPayload() params: OfferingParamsCombined) {
     return this.offeringService.getOfferingForPlatform(params);
   }
 
@@ -54,6 +53,12 @@ export class OfferingController {
     return this.offeringService.getOfferOfComp(catalogId)
   }
 
+  @MessagePattern(OfferingTopics.GET_PUSH_OFFERING_DEVICES)
+  getPushOfferingDevices(@RpcPayload("stringValue") catalogId: string) {
+    this.logger.debug(`get push offering devices for catalogId: ${catalogId}`);
+    return this.offeringService.getPushOfferingDevices(catalogId);
+  }
+
 
   @MessagePattern(OfferingTopics.DEVICE_MAP_OFFERING)
   getDeviceMapOffering(@RpcPayload("stringValue") deviceId: string) {
@@ -68,6 +73,16 @@ export class OfferingController {
       this.offeringService.pushSoftwareOffering(po);
     } else if (po.itemType == ItemTypeEnum.MAP) {
       this.offeringService.pushMapOffering(po);
+    }
+  }
+
+  @EventPattern(OfferingTopicsEmit.OFFERING_UNPUSH)
+  async unpushOffering(@RpcPayload() po: PushOfferingDto) {
+    this.logger.log(`Unpush offering of catalogId: ${po.catalogId}, type: ${po.itemType}`);
+    if (po.itemType == ItemTypeEnum.SOFTWARE) {
+      await this.offeringService.unpushSoftwareOffering(po);
+    } else if (po.itemType == ItemTypeEnum.MAP) {
+      await this.offeringService.unpushMapOffering(po);
     }
   }
 
