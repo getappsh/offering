@@ -37,6 +37,7 @@ import {
   DeviceTypeOfferingFilterQuery,
   DeviceTypeOfferingParams,
   GetProjectsOfferingDto,
+  OfferingParamsCombined,
   PlatformOfferingDto,
   PlatformOfferingParams,
   ProjectOfferingFilterQuery,
@@ -851,7 +852,7 @@ export class OfferingService implements OnModuleInit {
   }
 
   async getOfferingForPlatform(
-    params: PlatformOfferingParams,
+    params: OfferingParamsCombined,
   ): Promise<PlatformOfferingDto> {
     this.logger.log(`get offering for platform: ${params.platformIdentifier}`);
     const platformId = await this.getPlatformIdByParams(params);
@@ -1249,7 +1250,7 @@ export class OfferingService implements OnModuleInit {
   }
 
   private async getPlatformIdByParams(
-    params: PlatformOfferingParams,
+    params: OfferingParamsCombined,
   ): Promise<number> {
     if (typeof params.platformIdentifier === 'string') {
       const platform = await this.platformRepo.findOneBy({
