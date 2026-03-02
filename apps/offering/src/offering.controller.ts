@@ -54,6 +54,12 @@ export class OfferingController {
     return this.offeringService.getOfferOfComp(catalogId)
   }
 
+  @MessagePattern(OfferingTopics.GET_PUSH_OFFERING_DEVICES)
+  getPushOfferingDevices(@RpcPayload("stringValue") catalogId: string) {
+    this.logger.debug(`get push offering devices for catalogId: ${catalogId}`);
+    return this.offeringService.getPushOfferingDevices(catalogId);
+  }
+
 
   @MessagePattern(OfferingTopics.DEVICE_MAP_OFFERING)
   getDeviceMapOffering(@RpcPayload("stringValue") deviceId: string) {

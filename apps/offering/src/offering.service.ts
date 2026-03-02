@@ -30,6 +30,7 @@ import {
   PushOfferingDto,
   OfferingMapPushResDto,
   OfferingTreePolicyParams,
+  BaseDeviceDto
 } from '@app/common/dto/offering';
 import {
   DeviceTypeOfferingDto,
@@ -272,6 +273,18 @@ export class OfferingService implements OnModuleInit {
     const result = ComponentV2Dto.fromEntity(release);
     await this.enrichReleasesWithPolicies([result]);
     return result;
+  }
+
+  async getPushOfferingDevices(catalogId: any): Promise<BaseDeviceDto[]> {
+    this.logger.debug(`Getting push offering devices for catalogId: ${catalogId}`);
+    const offerings = await this.compOfferingRepo.find({
+      where: { release: { catalogId }, 
+      action: OfferingActionEnum.PUSH },
+      relations: { device: true },
+    });
+    return offerings
+      .filter(o => !!o.device?.ID)
+      .map(o => ({ deviceId: o.device.ID, deviceName: o.device.name }));
   }
 
   /**

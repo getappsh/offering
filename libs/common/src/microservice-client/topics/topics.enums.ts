@@ -81,6 +81,7 @@ export const OfferingTopics = {
     // Policies
     UPSERT_OFFERING_TREE_POLICY: `getapp-offering.upsert-offering-tree-policy${region}`,
     GET_OFFERING_TREE_POLICIES: `getapp-offering.get-offering-tree-policies${region}`,
+    GET_PUSH_OFFERING_DEVICES: `getapp-offering.get-push-offering-devices${region}`,
     
 } as const
 
