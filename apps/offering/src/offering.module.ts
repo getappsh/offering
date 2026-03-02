@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { OfferingController } from './offering.controller';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@app/common';
-import { ComponentOfferingEntity, DeviceEntity, OfferingTreePolicyEntity, DeviceTypeEntity, MapOfferingEntity, PlatformEntity, ProjectEntity, ReleaseEntity } from '@app/common/database/entities';
+import { ComponentOfferingEntity, DeviceComponentEntity, DeviceEntity, OfferingTreePolicyEntity, DeviceTypeEntity, MapOfferingEntity, PlatformEntity, ProjectEntity, ReleaseEntity, DeviceMapStateEntity } from '@app/common/database/entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from '@app/common/logger/logger.module';
 import { ApmModule } from '@app/common/apm/apm.module';
@@ -28,8 +28,8 @@ import { OfferingTreePolicyService } from './offering-tree-policy.service';
     ApmModule,
     DatabaseModule,
     TypeOrmModule.forFeature([
-      ComponentOfferingEntity, MapOfferingEntity, DeviceEntity, ReleaseEntity,
-      ProjectEntity, PlatformEntity, DeviceTypeEntity, OfferingTreePolicyEntity
+      ComponentOfferingEntity, DeviceComponentEntity, MapOfferingEntity, DeviceEntity, ReleaseEntity,
+      ProjectEntity, PlatformEntity, DeviceTypeEntity, OfferingTreePolicyEntity, DeviceMapStateEntity
     ]),
     SafeCronModule,
   ],
