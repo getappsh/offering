@@ -49,7 +49,7 @@ export enum ApiRole {
    * Permission to edit imported releases that are in released status
    * This is a special permission for users who can modify imported releases
    */
-  EDIT_IMPORTED_RELEASE = 'edit-imported-release',
+  EDIT_RELEASED_RELEASE = 'edit-released-release',
 
   /**
    * Permission to delete releases
@@ -267,7 +267,7 @@ export const PROJECT_TOKEN_ROLES: ApiRole[] = [
   ApiRole.CREATE_RELEASE,
   ApiRole.VIEW_RELEASE,
   ApiRole.UPDATE_RELEASE,
-  ApiRole.EDIT_IMPORTED_RELEASE,
+  ApiRole.EDIT_RELEASED_RELEASE,
   ApiRole.DELETE_RELEASE,
   ApiRole.PUBLISH_RELEASE,
   ApiRole.LIST_RELEASES,

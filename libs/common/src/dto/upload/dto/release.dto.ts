@@ -228,7 +228,7 @@ export class ReleaseDto {
     dto.updatedBy = release.updatedBy ?? undefined;
     dto.isImported = release.isImported ?? false;
     // Readonly if it's imported AND released, but user doesn't have edit permission
-    dto.readonly = dto.isImported && release.status === ReleaseStatusEnum.RELEASED && !userCanEditImported;
+    dto.readonly = release.status === ReleaseStatusEnum.RELEASED && !userCanEditImported;
 
     return dto;
   }

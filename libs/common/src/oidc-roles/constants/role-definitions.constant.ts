@@ -19,7 +19,7 @@ export const ROLE_DESCRIPTIONS: Partial<Record<ApiRole, string>> = {
   [ApiRole.CREATE_RELEASE]: 'Permission to create new releases',
   [ApiRole.VIEW_RELEASE]: 'Permission to view release details',
   [ApiRole.UPDATE_RELEASE]: 'Permission to update existing releases',
-  [ApiRole.EDIT_IMPORTED_RELEASE]: 'Permission to edit imported releases that are in released status',
+  [ApiRole.EDIT_RELEASED_RELEASE]: 'Permission to edit released releases that are in released status',
   [ApiRole.DELETE_RELEASE]: 'Permission to delete releases',
   [ApiRole.PUSH_RELEASE]: 'Permission to push/deploy releases',
   [ApiRole.PUBLISH_RELEASE]: 'Permission to publish releases',
