@@ -86,6 +86,16 @@ export class ReleaseOfferingDto {
   @Type(() => PlatformDeviceTypeTreeDto)
   hierarchyTrees: PlatformDeviceTypeTreeDto[];
 
+  @ApiProperty({ 
+    type: [String], 
+    description: "Array of catalog IDs of releases that directly depend on this release",
+    required: false
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  dependedOnBy?: string[];
+
   toString() {
     return JSON.stringify(this);
   }

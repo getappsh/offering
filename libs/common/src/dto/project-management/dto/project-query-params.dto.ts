@@ -42,6 +42,15 @@ export class GetProjectsQueryDto {
   @Type(() => Number)
   perPage?: number = 15;
 
+  @ApiPropertyOptional({
+    description: 'Filter by specific project names',
+    example: ['project1', 'project2'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsString({ each: true })
+  @Type(() => String)
+  projectNames?: string[];
  
 }
 
