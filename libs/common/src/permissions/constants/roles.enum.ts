@@ -251,3 +251,33 @@ export enum ApiRole {
  * Type for any valid API role
  */
 export type ApiRoleType = `${ApiRole}`;
+
+/**
+ * Roles that are automatically granted when authenticating with a project token
+ * These roles cover project and release management operations
+ */
+export const PROJECT_TOKEN_ROLES: ApiRole[] = [
+  // Project management
+  ApiRole.VIEW_PROJECT,
+  ApiRole.UPDATE_PROJECT,
+  ApiRole.DELETE_PROJECT,
+  ApiRole.LIST_PROJECTS,
+  
+  // Release management
+  ApiRole.CREATE_RELEASE,
+  ApiRole.VIEW_RELEASE,
+  ApiRole.UPDATE_RELEASE,
+  ApiRole.EDIT_IMPORTED_RELEASE,
+  ApiRole.DELETE_RELEASE,
+  ApiRole.PUBLISH_RELEASE,
+  ApiRole.LIST_RELEASES,
+  
+  // Artifact management
+  ApiRole.UPLOAD_ARTIFACT,
+  ApiRole.DOWNLOAD_ARTIFACT,
+  ApiRole.DELETE_ARTIFACT,
+  ApiRole.VIEW_ARTIFACT,
+  ApiRole.LIST_ARTIFACTS,
+  
+
+];

@@ -120,13 +120,6 @@ export class CreateRulesTables1765200000000 implements MigrationInterface {
         // Insert default rule fields (using ON CONFLICT DO NOTHING to handle duplicates)
         await queryRunner.query(`
             INSERT INTO "rule_fields" ("name", "type", "label", "description") VALUES
-            ('$.battery.level', 'number', 'Battery Level', 'Device battery level percentage'),
-            ('$.battery.isCharging', 'boolean', 'Is Charging', 'Whether device is currently charging'),
-            ('$.os.name', 'string', 'OS Name', 'Operating system name'),
-            ('$.os.version', 'string', 'OS Version', 'Operating system version'),
-            ('$.location.latitude', 'number', 'Latitude', 'Device location latitude'),
-            ('$.location.longitude', 'number', 'Longitude', 'Device location longitude'),
-            ('$.device.type', 'string', 'Device Type', 'Type of device'),
             ('$.device.any', 'boolean', 'Any Device', 'When set to true, policy evaluation will pass regardless of other conditions. Use this to display components without special checks.')
             ON CONFLICT ("name") DO NOTHING
         `);

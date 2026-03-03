@@ -21,6 +21,27 @@ export class RuleValidationService {
    * Validates a rule against the rule engine and checks field existence
    */
   async validateRule(rule: any): Promise<void> {
+    // Debug: Log the type and value of rule
+    console.log('[RuleValidationService] Rule type:', typeof rule);
+    console.log('[RuleValidationService] Rule value:', JSON.stringify(rule));
+    
+    // Check if rule is a string and needs parsing
+    let parsedRule = rule;
+    if (typeof rule === 'string') {
+      console.log('[RuleValidationService] Rule is a string, attempting to parse...');
+      try {
+        parsedRule = JSON.parse(rule);
+        console.log('[RuleValidationService] Successfully parsed rule');
+      } catch (e) {
+        console.log('[RuleValidationService] Failed to parse rule:', e.message);
+        throw new AppError(
+          ErrorCode.RULE_VALIDATION_FAILED,
+          `Rule validation failed: The rule must be a valid JSON object.`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+    
     // Step 1: Validate against rule engine
     try {
       // Get RuleEngine class from dynamic import
@@ -30,7 +51,7 @@ export class RuleValidationService {
       const ruleEngine = RuleEngine.getInstance();
       
       // Validate the rule structure using the public validate method
-      const validationResult = ruleEngine.validate(rule);
+      const validationResult = ruleEngine.validate(parsedRule);
       
       // Check if validation failed
       if (validationResult && !validationResult.isValid) {
@@ -47,8 +68,8 @@ export class RuleValidationService {
       );
     }
 
-    // Step 2: Extract all field references from the rule
-    const fieldNames = this.extractFieldNames(rule);
+    // Step 2: Extract all field references from the parsedRule
+    const fieldNames = this.extractFieldNames(parsedRule);
 
     // Step 3: Validate that all fields exist in the database
     await this.validateFieldsExist(fieldNames);

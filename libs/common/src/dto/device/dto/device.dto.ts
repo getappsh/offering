@@ -42,6 +42,10 @@ export class DeviceDto {
   @ApiProperty({ required: false })
   @IsBoolean()
   operativeState?: true
+  
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  metaData?: Record<string, any>;
 
 
   @ApiProperty({ required: false })
@@ -61,6 +65,9 @@ export class DeviceDto {
   @IsOptional()
   uid?: number
 
+  /**
+   * @deprecated This property is deprecated and will be removed in future versions.
+   */
   @ApiProperty({ required: false, type: 'string', isArray: true })
   formations?: string[]
 
@@ -100,11 +107,12 @@ export class DeviceDto {
     device.lastConnectionDate = deviceE.lastConnectionDate
     device.name = deviceE.name
     device.OS = deviceE.OS
-    device.availableStorage = deviceE.availableStorage;
+    device.availableStorage = deviceE.availableStorage || discoveryE?.situationalDevice?.availableStorage;
     device.formations = deviceE.formations;
-    device.power = discoveryE?.situationalDevice.power;
-    device.bandwidth = discoveryE?.situationalDevice.bandwidth;
-    device.operativeState = discoveryE?.situationalDevice.operativeState;
+    device.power = discoveryE?.situationalDevice?.power;
+    device.bandwidth = discoveryE?.situationalDevice?.bandwidth;
+    device.operativeState = discoveryE?.situationalDevice?.operativeState;
+    device.metaData = discoveryE?.metaData;
 
     // Group relation
     device.uid = deviceE?.orgUID?.UID;

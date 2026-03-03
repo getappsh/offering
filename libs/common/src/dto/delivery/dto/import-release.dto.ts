@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ImportArtifactDto {
@@ -25,6 +25,16 @@ export class ImportArtifactDto {
   @IsOptional()
   @IsString()
   downloadUrl: string;
+
+  @ApiProperty({ description: 'Whether the artifact is executable', required: false })
+  @IsOptional()
+  @IsBoolean()
+  isExecutable?: boolean;
+
+  @ApiProperty({ description: 'Command-line arguments for executable artifacts', required: false })
+  @IsOptional()
+  @IsString()
+  arguments?: string;
 
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()
