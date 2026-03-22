@@ -239,6 +239,27 @@ export enum ApiRole {
    */
   LIST_RESTRICTIONS = 'list-restrictions',
 
+  // ========== SBOM ==========
+  /**
+   * Permission to request a new SBOM scan for a docker image, binary file, or directory
+   */
+  CREATE_SBOM_SCAN = 'create-sbom-scan',
+
+  /**
+   * Permission to view SBOM scan status, results, and download reports
+   */
+  VIEW_SBOM_SCAN = 'view-sbom-scan',
+
+  /**
+   * Permission to delete an SBOM scan (cancels it if still queued)
+   */
+  DELETE_SBOM_SCAN = 'delete-sbom-scan',
+
+  /**
+   * Permission to retry a failed or completed SBOM scan
+   */
+  RETRY_SBOM_SCAN = 'retry-sbom-scan',
+
   // ========== SPECIAL STAMP ==========
   /**
    * Special stamp role that enables permission validation when present

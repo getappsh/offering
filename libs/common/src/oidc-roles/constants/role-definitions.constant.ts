@@ -70,6 +70,12 @@ export const ROLE_DESCRIPTIONS: Partial<Record<ApiRole, string>> = {
   [ApiRole.LIST_RESTRICTIONS]: 'Permission to list/browse all restrictions',
   [ApiRole.MANAGE_CONFIG]: 'Permission to manage system configuration',
   [ApiRole.VIEW_CONFIG]: 'Permission to view system configuration',
+
+  // SBOM
+  [ApiRole.CREATE_SBOM_SCAN]: 'Permission to request a new SBOM scan for a docker image, binary file, or directory',
+  [ApiRole.VIEW_SBOM_SCAN]: 'Permission to view SBOM scan status, results, and download reports',
+  [ApiRole.DELETE_SBOM_SCAN]: 'Permission to delete an SBOM scan (cancels it if still queued)',
+  [ApiRole.RETRY_SBOM_SCAN]: 'Permission to retry a failed or completed SBOM scan',
 };
 
 /**
@@ -136,6 +142,10 @@ export const COMPOSITE_ROLES: RoleDefinition[] = [
       ApiRole.LIST_POLICIES,
       
       ApiRole.VIEW_OFFERING,
+      // SBOM
+      ApiRole.CREATE_SBOM_SCAN,
+      ApiRole.VIEW_SBOM_SCAN,
+      ApiRole.RETRY_SBOM_SCAN,
       // Enable permissions
       ApiRole.PERMISSIONS_ENABLED,
     ],
@@ -189,6 +199,11 @@ export const COMPOSITE_ROLES: RoleDefinition[] = [
       ApiRole.LIST_RELEASES,
       ApiRole.VIEW_ARTIFACT,
       ApiRole.LIST_ARTIFACTS,
+      // SBOM
+      ApiRole.CREATE_SBOM_SCAN,
+      ApiRole.VIEW_SBOM_SCAN,
+      ApiRole.DELETE_SBOM_SCAN,
+      ApiRole.RETRY_SBOM_SCAN,
       // Enable permissions
       ApiRole.PERMISSIONS_ENABLED,
     ],

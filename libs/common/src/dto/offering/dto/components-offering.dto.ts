@@ -129,12 +129,10 @@ export class DeviceComponentsOfferingDto {
 
   @ApiProperty({ 
     type: () => [RestrictionDto],
-    required: false,
     description: 'List of applicable restrictions for the device based on device ID, device type, OS, and other metadata'
   })
   @IsArray()
-  @IsOptional()
-  restrictions?: RestrictionDto[]
+  restrictions: RestrictionDto[]
 
 
   toString() {

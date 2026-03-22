@@ -100,10 +100,10 @@ export class ReleaseMetadata {
   @ApiProperty({ required: false, type: PostInstallAction, description: 'Post-installation action configuration' })
   postInstallAction?: PostInstallAction;
 
-  @ApiProperty({ required: false, type: 'integer', description: 'Installation size in bytes - disk space required after installation (user-specified)' })
+  @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Installation size in bytes - disk space required after installation (user-specified)' })
   installationSize?: number;
 
-  @ApiProperty({ required: false, type: 'integer', description: 'Total size in bytes - automatically calculated as installationSize + artifactsSize' })
+  @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Total size in bytes - automatically calculated as installationSize + artifactsSize' })
   totalSize?: number;
 
   //@ApiProperty({ required: false, description: 'Additional user-defined metadata properties (flexible structure)' })
@@ -281,7 +281,7 @@ export class ComponentV2Dto {
   @ApiProperty()
   version: string;
 
-  @ApiProperty()
+  @ApiProperty({type: "integer"})
   projectId: number;
 
   @ApiProperty()
