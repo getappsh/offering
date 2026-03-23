@@ -134,7 +134,7 @@ export class PlatformOfferingParams  {
     }
 
     if (typeof value === 'string' && value.trim() !== '') {
-      return value.toLowerCase().trim().replace(/\s+/g, "-");
+      return value.trim().replace(/\s+/g, "-");
     }
 
     throw new BadRequestException('Invalid platform identifier');
@@ -156,7 +156,7 @@ export class DeviceTypeOfferingParams {
     }
 
     if (typeof value === 'string' && value.trim() !== '') {
-      return value.toLowerCase().trim().replace(/\s+/g, "-");
+      return value.trim().replace(/\s+/g, "-");
     }
 
     throw new BadRequestException('Invalid device type identifier');

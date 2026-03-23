@@ -5,4 +5,4 @@ import ormConfig from "./config/ormconfig";
 @Module({
     imports: [TypeOrmModule.forRootAsync({useFactory: () => ormConfig.options})],
 })
-export class TngDatabaseModule {}
+export class ProxyDatabaseModule {}

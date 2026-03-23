@@ -1,4 +1,4 @@
-import { DeliveryItemEntity } from "@app/common/database-tng/entities";
+import { DeliveryItemEntity } from "@app/common/database-proxy/entities";
 import { HashAlgorithmEnum } from "@app/common/database/entities/enums.entity";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional } from "class-validator";

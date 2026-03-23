@@ -40,13 +40,9 @@ export class DiscoveryMessageDto {
 
 export class DiscoveryMessageV2Dto {
 
-  @ApiProperty({ required: false })
+  @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  /**
-   * In the future, this field will be required
-  */
-  @IsOptional()
   id: string
 
   /**
@@ -108,7 +104,7 @@ export class DiscoveryMessageV2Dto {
   @Type(() => DiscoverySoftwareV2Dto)
   softwareData: DiscoverySoftwareV2Dto;
 
-  @ApiProperty({ required: false, type: DiscoveryMapDto })
+  // @ApiProperty({ required: false, type: DiscoveryMapDto })
   @ValidateNested()
   @Type(() => DiscoveryMapDto)
   mapData: DiscoveryMapDto;

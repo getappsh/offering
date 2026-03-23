@@ -49,7 +49,7 @@ export enum ApiRole {
    * Permission to edit imported releases that are in released status
    * This is a special permission for users who can modify imported releases
    */
-  EDIT_IMPORTED_RELEASE = 'edit-imported-release',
+  EDIT_RELEASED_RELEASE = 'edit-released-release',
 
   /**
    * Permission to delete releases
@@ -239,6 +239,27 @@ export enum ApiRole {
    */
   LIST_RESTRICTIONS = 'list-restrictions',
 
+  // ========== SBOM ==========
+  /**
+   * Permission to request a new SBOM scan for a docker image, binary file, or directory
+   */
+  CREATE_SBOM_SCAN = 'create-sbom-scan',
+
+  /**
+   * Permission to view SBOM scan status, results, and download reports
+   */
+  VIEW_SBOM_SCAN = 'view-sbom-scan',
+
+  /**
+   * Permission to delete an SBOM scan (cancels it if still queued)
+   */
+  DELETE_SBOM_SCAN = 'delete-sbom-scan',
+
+  /**
+   * Permission to retry a failed or completed SBOM scan
+   */
+  RETRY_SBOM_SCAN = 'retry-sbom-scan',
+
   // ========== SPECIAL STAMP ==========
   /**
    * Special stamp role that enables permission validation when present
@@ -251,3 +272,33 @@ export enum ApiRole {
  * Type for any valid API role
  */
 export type ApiRoleType = `${ApiRole}`;
+
+/**
+ * Roles that are automatically granted when authenticating with a project token
+ * These roles cover project and release management operations
+ */
+export const PROJECT_TOKEN_ROLES: ApiRole[] = [
+  // Project management
+  ApiRole.VIEW_PROJECT,
+  ApiRole.UPDATE_PROJECT,
+  ApiRole.DELETE_PROJECT,
+  ApiRole.LIST_PROJECTS,
+  
+  // Release management
+  ApiRole.CREATE_RELEASE,
+  ApiRole.VIEW_RELEASE,
+  ApiRole.UPDATE_RELEASE,
+  ApiRole.EDIT_RELEASED_RELEASE,
+  ApiRole.DELETE_RELEASE,
+  ApiRole.PUBLISH_RELEASE,
+  ApiRole.LIST_RELEASES,
+  
+  // Artifact management
+  ApiRole.UPLOAD_ARTIFACT,
+  ApiRole.DOWNLOAD_ARTIFACT,
+  ApiRole.DELETE_ARTIFACT,
+  ApiRole.VIEW_ARTIFACT,
+  ApiRole.LIST_ARTIFACTS,
+  
+
+];

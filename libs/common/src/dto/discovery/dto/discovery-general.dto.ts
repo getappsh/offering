@@ -155,4 +155,8 @@ export class GeneralDiscoveryDto {
   @Type(() => PhysicalDiscoveryDto)
   physicalDevice?: PhysicalDiscoveryDto;
 
+  @ApiProperty({ required: false, type: Object })
+  @IsOptional()
+  metaData: Record<string, any> = {};
+
 }

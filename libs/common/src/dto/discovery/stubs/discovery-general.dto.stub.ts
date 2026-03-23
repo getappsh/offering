@@ -46,6 +46,7 @@ export const generalDiscoveryDtoStub = (): GeneralDiscoveryDto => {
   return {
     personalDevice: personalDiscoveryDtoStub(),
     situationalDevice: situationalDiscoveryDtoStub(),
-    physicalDevice: physicalDiscoveryDtoStub()
+    physicalDevice: physicalDiscoveryDtoStub(),
+    metaData: { exampleKey: "exampleValue" }
   }
 }

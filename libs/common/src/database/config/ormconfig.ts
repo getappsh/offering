@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import { PlatformEntity, DocEntity, FileUploadEntity, UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, DiscoveryMessageEntity, DeployStatusEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity, RegulationEntity, RegulationTypeEntity, RegulationStatusEntity, ReleaseEntity, ReleaseArtifactEntity, ProjectTokenEntity, DeviceTypeEntity, LabelEntity, OfferingTreePolicyEntity, RuleFieldEntity, RuleEntity, RuleReleaseEntity, RuleDeviceTypeEntity, RuleDeviceEntity, RuleOsEntity, PendingVersionEntity} from '../entities';
+import { PlatformEntity, DocEntity, FileUploadEntity, UploadVersionEntity, OrgGroupEntity, ProjectEntity, MemberProjectEntity, MemberEntity, DiscoveryMessageEntity, DeployStatusEntity, DeviceEntity, DeliveryStatusEntity, MapEntity, DeviceMapStateEntity, ProductEntity, BugReportEntity, OrgUIDEntity, DeviceComponentEntity, ComponentOfferingEntity, DeviceConfigEntity, MapOfferingEntity, RegulationEntity, RegulationTypeEntity, RegulationStatusEntity, ReleaseEntity, ReleaseArtifactEntity, ProjectTokenEntity, DeviceTypeEntity, LabelEntity, OfferingTreePolicyEntity, RuleFieldEntity, RuleEntity, RuleReleaseEntity, RuleDeviceTypeEntity, RuleDeviceEntity, RuleOsEntity, PendingVersionEntity, OSEntity} from '../entities';
 import { join } from 'path';
 import { readFileSync } from 'fs'
 import { JobsEntity } from '../entities/map-updatesCronJob';
-import { DeliveryEntity, DeliveryItemEntity, CacheConfigEntity } from '../../database-tng/entities';
+import { DeliveryEntity, DeliveryItemEntity, CacheConfigEntity } from '../../database-proxy/entities';
 import { ReleaseSubscriber } from '../subscribers';
 
 const region = process.env.REGION ? `_${process.env.REGION}` : '';
@@ -67,6 +67,7 @@ const ormConfig = new DataSource({
     RuleDeviceEntity,
     RuleOsEntity,
     PendingVersionEntity,
+    OSEntity,
   ],
   migrations: [join(__dirname, '../migration/*.{js,ts}')],
   logging: false,
@@ -77,8 +78,10 @@ const ormConfig = new DataSource({
 
 function getDBAuthParams() {
   switch (process.env.DEPLOY_ENV) {
-    case "CTS":
-    case "TNG":
+    case "CTS":  //todo: remove in the future
+    case "TNG":  //todo: remove in the future
+    case "ORIGIN":
+    case "PROXY":
       return {
         ssl: {
           ca: [readFileSync(process.env.DB_PEM_PATH ?? "")],

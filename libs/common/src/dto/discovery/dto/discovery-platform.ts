@@ -6,12 +6,21 @@ import { DiscoveryMessageV2Dto } from "./discovery-message.dto"
 export class PlatformDiscoverDto {
 
   @ApiProperty({
-    description: 'Name or ID (as string) of the platformType or system being discovered.',
+    description: 'Name or ID (as string) of the platform **type** being discovered.',
   })
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => value.toLowerCase().trim().replace(/\s+/g, "-"))
   token: string
+  
+  @ApiProperty({
+    required: false,
+    description: 'ID (as string) of system or machine being discovered.',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  platformId?: string
 
   @ApiProperty({
     required: false,
