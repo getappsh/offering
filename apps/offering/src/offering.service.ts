@@ -937,6 +937,21 @@ export class OfferingService implements OnModuleInit {
     return platformOffering;
   }
 
+  async getAllPlatformsOffering(options?: { withDependencies?: boolean }): Promise<PlatformOfferingDto[]> {
+    this.logger.log('getAllPlatformsOffering: fetching offering for all platforms');
+    const platforms = await this.platformRepo.find();
+    const results = await Promise.allSettled(
+      platforms.map(p =>
+        this.getOfferingForPlatform(
+          { platformIdentifier: p.id, withDependencies: options?.withDependencies ?? true },
+        ),
+      ),
+    );
+    return results
+      .filter((r): r is PromiseFulfilledResult<PlatformOfferingDto> => r.status === 'fulfilled')
+      .map(r => r.value);
+  }
+
   async getOfferingForDeviceType(
     query: DeviceTypeOfferingFilterQuery,
   ): Promise<DeviceTypeOfferingDto> {
