@@ -68,7 +68,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
-import { ArrayOverlap, ILike, In, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 
@@ -184,10 +184,6 @@ export class OfferingService implements OnModuleInit {
       where: [
         {
           releases: { catalogId: In(dto.components ?? []) },
-        },
-        {
-          projectType: ProjectType.FORMATION,
-          name: In(dto.formations ?? []),
         },
         {
           projectType: ProjectType.PRODUCT,
@@ -800,7 +796,6 @@ export class OfferingService implements OnModuleInit {
   // // TODO pagination
   private getDevicesByPlatformsFormationsAndComponents(
     platforms: string[],
-    formations: string[],
     projects: number[],
   ): Promise<DeviceEntity[]> {
     return this.deviceRepo.find({
@@ -808,7 +803,6 @@ export class OfferingService implements OnModuleInit {
       where: [
         { components: { release: { project: { id: In(projects) } } } },
         { platform: { name: In(platforms) } },
-        { formations: ArrayOverlap(formations) },
       ],
     });
   }
@@ -820,12 +814,9 @@ export class OfferingService implements OnModuleInit {
       });
 
       const platforms = project.platforms?.map((p) => p.name);
-      const formation =
-        project.projectType == ProjectType.FORMATION ? project.name : null;
 
       const device = await this.getDevicesByPlatformsFormationsAndComponents(
         platforms,
-        [formation],
         [project.id],
       );
 
@@ -1401,11 +1392,8 @@ export class OfferingService implements OnModuleInit {
 
     for (const project of projects) {
       const platforms = project.platforms?.map((p) => p.name);
-      const formation =
-        project.projectType == ProjectType.FORMATION ? project.name : null;
       const devices = await this.getDevicesByPlatformsFormationsAndComponents(
         platforms,
-        [formation],
         [project.id],
       );
 

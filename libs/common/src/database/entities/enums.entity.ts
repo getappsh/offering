@@ -170,7 +170,6 @@ export enum ArtifactTypeEnum {
 
 export enum ProjectType {
     PRODUCT = "product",
-    FORMATION = "formation",
     APPLICATION = "application",
     LIB = "lib",
     BUNDLE = "bundle",

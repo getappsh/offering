@@ -9,6 +9,6 @@ export const projectEntityStub = (): ProjectEntity => {
     description: 'Project description',
     regulations: [],
     tokens: [projectTokenEntityStub()],
-    projectType: ProjectType.FORMATION
+    projectType: ProjectType.PRODUCT
   } as unknown as ProjectEntity
 };
