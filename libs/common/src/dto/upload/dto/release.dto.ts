@@ -299,6 +299,9 @@ export class ComponentV2Dto {
   @ApiProperty({ type: 'enum', enum: ProjectType })
   type: ProjectType
 
+  @ApiProperty({ type: 'enum', enum: ProjectType, required: false, description: 'The actual project type, regardless of agent compatibility' })
+  typeV2?: ProjectType
+
   @ApiProperty({ type: 'integer', format: 'int64', required: false })
   size?: number
 
@@ -333,6 +336,7 @@ export class ComponentV2Dto {
     dto.projectId = release?.project?.id;
     dto.projectName = release?.project?.name;
     const agentUnsupportedTypes = [ProjectType.APPLICATION, ProjectType.LIB, ProjectType.BUNDLE, ProjectType.INFRA];
+    dto.typeV2 = release?.project?.projectType;
     dto.type = agentUnsupportedTypes.includes(release?.project?.projectType)
       ? ProjectType.PRODUCT
       : release?.project?.projectType;
