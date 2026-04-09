@@ -295,7 +295,8 @@ export class ComponentV2Dto {
 
   @ApiProperty({ type: 'enum', enum: ReleaseStatusEnum })
   status: ReleaseStatusEnum;
-
+  
+  /** @deprecated Use projectTypeV2 instead */
   @ApiProperty({ type: 'enum', enum: ProjectType })
   type: ProjectType
 
