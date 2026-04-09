@@ -100,10 +100,10 @@ export class ReleaseMetadata {
   @ApiProperty({ required: false, type: PostInstallAction, description: 'Post-installation action configuration' })
   postInstallAction?: PostInstallAction;
 
-  @ApiProperty({ required: false, type: 'integer', description: 'Installation size in bytes - disk space required after installation (user-specified)' })
+  @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Installation size in bytes - disk space required after installation (user-specified)' })
   installationSize?: number;
 
-  @ApiProperty({ required: false, type: 'integer', description: 'Total size in bytes - automatically calculated as installationSize + artifactsSize' })
+  @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Total size in bytes - automatically calculated as installationSize + artifactsSize' })
   totalSize?: number;
 
   //@ApiProperty({ required: false, description: 'Additional user-defined metadata properties (flexible structure)' })
@@ -214,7 +214,7 @@ export class ReleaseDto {
     dto.id = release.catalogId;
     dto.projectId = release?.project?.id;
     dto.projectName = release?.project?.name;
-    dto.name = release.name || "";
+    dto.name = release.name ?? "";
     dto.releaseNotes = release.releaseNotes ?? "";
     dto.metadata = release.metadata;
     dto.status = release.status;
@@ -228,7 +228,7 @@ export class ReleaseDto {
     dto.updatedBy = release.updatedBy ?? undefined;
     dto.isImported = release.isImported ?? false;
     // Readonly if it's imported AND released, but user doesn't have edit permission
-    dto.readonly = dto.isImported && release.status === ReleaseStatusEnum.RELEASED && !userCanEditImported;
+    dto.readonly = release.status === ReleaseStatusEnum.RELEASED && !userCanEditImported;
 
     return dto;
   }
@@ -281,7 +281,7 @@ export class ComponentV2Dto {
   @ApiProperty()
   version: string;
 
-  @ApiProperty()
+  @ApiProperty({type: "integer"})
   projectId: number;
 
   @ApiProperty()
@@ -295,9 +295,9 @@ export class ComponentV2Dto {
 
   @ApiProperty({ type: 'enum', enum: ReleaseStatusEnum })
   status: ReleaseStatusEnum;
-  
+
   /** @deprecated Use projectTypeV2 instead */
-  @ApiProperty({ type: 'enum', enum: ProjectType })
+  @ApiProperty({ type: 'enum', enum: ProjectType, deprecated: true })
   type: ProjectType
 
   @ApiProperty({ type: 'enum', enum: ProjectType, required: false, description: 'The actual project type, regardless of agent compatibility' })
@@ -324,7 +324,6 @@ export class ComponentV2Dto {
   @ApiProperty({ required: false, type: [ReleasePolicyDto], description: 'Policies associated with this release' })
   policies?: ReleasePolicyDto[]
 
-
   static fromEntity(release: ReleaseEntity): ComponentV2Dto {
     const dto = new ComponentV2Dto();
     dto.version = release.version;
@@ -334,10 +333,10 @@ export class ComponentV2Dto {
     dto.status = release.status;
     dto.createdAt = release.createdAt;
     dto.updatedAt = release.updatedAt;
-    dto.projectId = release?.project?.id;
-    dto.projectName = release?.project?.name;
-    dto.projectTypeV2 = release?.project?.projectType;
+    dto.projectName = release.project.name;
+    dto.projectTypeV2 = release.project.projectType;
     dto.type = ProjectType.PRODUCT;
+    dto.projectId = release?.project?.id;
     dto.latest = release.latest;
     dto.releasedAt = release.releasedAt ?? undefined;
     dto.size = release?.artifacts
