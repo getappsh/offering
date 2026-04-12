@@ -296,8 +296,12 @@ export class ComponentV2Dto {
   @ApiProperty({ type: 'enum', enum: ReleaseStatusEnum })
   status: ReleaseStatusEnum;
 
-  @ApiProperty({ type: 'enum', enum: ProjectType })
+  /** @deprecated Use projectTypeV2 instead */
+  @ApiProperty({ type: 'enum', enum: ProjectType, deprecated: true })
   type: ProjectType
+
+  @ApiProperty({ type: 'enum', enum: ProjectType, required: false, description: 'The actual project type, regardless of agent compatibility' })
+  projectTypeV2?: ProjectType
 
   @ApiProperty({ type: 'integer', format: 'int64', required: false })
   size?: number
@@ -329,9 +333,10 @@ export class ComponentV2Dto {
     dto.status = release.status;
     dto.createdAt = release.createdAt;
     dto.updatedAt = release.updatedAt;
+    dto.projectName = release.project.name;
+    dto.projectTypeV2 = release.project.projectType;
+    dto.type = ProjectType.PRODUCT;
     dto.projectId = release?.project?.id;
-    dto.projectName = release?.project?.name;
-    dto.type = release?.project?.projectType;
     dto.latest = release.latest;
     dto.releasedAt = release.releasedAt ?? undefined;
     dto.size = release?.artifacts
