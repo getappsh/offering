@@ -287,6 +287,12 @@ export class ComponentV2Dto {
   @ApiProperty()
   projectName: string;
 
+  @ApiProperty({ required: false, description: 'Human-readable display name of the project' })
+  displayName?: string;
+
+  @ApiProperty({ required: false, description: 'Label associated with the project' })
+  label?: string;
+
   @ApiProperty({ required: false })
   releaseNotes?: string;
 
@@ -331,6 +337,8 @@ export class ComponentV2Dto {
     dto.updatedAt = release.updatedAt;
     dto.projectId = release?.project?.id;
     dto.projectName = release?.project?.name;
+    dto.displayName = release?.project?.projectName ?? undefined;
+    dto.label = release?.project?.label?.name ?? undefined;
     dto.type = release?.project?.projectType;
     dto.latest = release.latest;
     dto.releasedAt = release.releasedAt ?? undefined;
