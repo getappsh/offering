@@ -3,6 +3,7 @@ import { PrepareDeliveryReqDto } from "@app/common/dto/delivery";
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn, UpdateDateColumn } from "typeorm";
 import { DeliveryItemEntity } from "./delivery-item.entity";
 import { PrepareStatusEnum } from "../../database/entities/enums.entity";
+import { StringNumberTransformer } from "../../database/entities/transformers/string-number.transformer";
 import { Deprecated } from "../../decorators";
 
 @Entity("delivery")
@@ -48,7 +49,7 @@ export class DeliveryEntity {
   @Column({ name: "err_msg", nullable: true })
   errMsg: string;
 
-  @Column({ name: "size", nullable: true })
+  @Column({ name: "size", type: "bigint", nullable: true, transformer: new StringNumberTransformer() })
   size: number;
 
   @OneToMany(() => DeliveryItemEntity, item => item.delivery)

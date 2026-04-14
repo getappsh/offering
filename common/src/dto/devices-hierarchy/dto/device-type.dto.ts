@@ -8,7 +8,7 @@ export class CreateDeviceTypeDto {
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) =>
-    value.toLowerCase().trim().replace(/\s+/g, "-")
+    value.trim().replace(/\s+/g, "-")
   )
   name: string;
 

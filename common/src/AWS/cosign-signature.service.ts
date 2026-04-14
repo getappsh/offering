@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { spawn } from 'child_process';
 import stream from 'stream';
+import * as fs from 'fs';
 
 @Injectable()
 export class CosignSignatureService {
@@ -16,8 +17,8 @@ export class CosignSignatureService {
   constructor(
     private readonly configService: ConfigService,
   ) {
-    try{
-      this.password = this.configService.getOrThrow<string>('COSIGN_PASSWORD'); 
+    try {
+      this.password = this.configService.getOrThrow<string>('COSIGN_PASSWORD');
       this.privateKeyPath = this.configService.getOrThrow<string>('COSIGN_PRIVATE_KEY_PATH');
       this.publicKeyPath = this.configService.getOrThrow<string>('COSIGN_PUBLIC_KEY_PATH');
     } catch (error) {
@@ -28,41 +29,54 @@ export class CosignSignatureService {
   async signFile(fileStream: stream.Readable): Promise<Buffer> {
     this.logger.debug(`Signing file`);
 
-    const env = { ...process.env};
-    env.COSIGN_PASSWORD = this.password;
+    const tmpSig = join(tmpdir(), `cosign-${Date.now()}.sig`);
+
+    const env = {
+      COSIGN_PASSWORD: this.password,
+    };
 
     return new Promise<Buffer>((resolve, reject) => {
-      const cosign = spawn('cosign', ['sign-blob', '-', '--key', this.privateKeyPath,  "--tlog-upload=false"], { env });
-    
-      let signature = Buffer.alloc(0);
+      const cosign = spawn(
+        'cosign',
+        [
+          'sign-blob',
+          '--key', this.privateKeyPath,
+          '--tlog-upload=false',
+          '--output-signature', tmpSig,
+          '--use-signing-config=false',
+          '-' // stdin payload
+        ],
+        { env }
+      );
 
-      cosign.stdout.on('data', (chunk) => {
-        this.logger.log(`Received chunk of size: ${chunk.length}`);
-        signature = Buffer.concat([signature, chunk]);
+      cosign.on('error', reject);
+      cosign.stderr.on('data', d => this.logger.warn(d.toString()));
+
+      cosign.on('exit', code => {
+        if (code !== 0) {
+          return reject(new Error(`cosign exited with ${code}`));
+        }
+
+        fs.readFile(tmpSig, (err, sig) => {
+          if (err) return reject(err);
+          resolve(sig);
+          fs.unlink(tmpSig, () => { });
+        });
       });
 
-      cosign.stderr.on('data', (chunk) => this.logger.warn(chunk.toString()));
-
-      cosign.on('exit', (code) => {
-        if (code === 0) resolve(signature);
-        else reject(new Error(`Cosign exited with code ${code}`));
-      });
-
-      // Pipe MinIO file stream into Cosign stdin
       fileStream.pipe(cosign.stdin);
-      fileStream.on('error', (err) => reject(err));
+      fileStream.on('error', reject);
     });
   }
 
-
   async verifySignature(fileStream: stream.Readable, signature: string): Promise<boolean> {
     this.logger.debug(`Verifying signature for file`);
-    
-    const env = { ...process.env};
+
+    const env = { ...process.env };
     env.COSIGN_PASSWORD = this.password;
-    
+
     return new Promise<boolean>((resolve, reject) => {
-      
+
       const dir = mkdtempSync(join(tmpdir(), 'cosign-'));
       const tmpFilePath = join(dir, 'sigfile.sig');
       writeFileSync(tmpFilePath, signature);
@@ -72,6 +86,12 @@ export class CosignSignatureService {
 
       let verificationOutput = '';
       let verificationError = '';
+
+      cosign.on('error', (err) => {
+        this.logger.error(`Failed to spawn cosign process: ${err.message}`);
+        unlinkSync(tmpFilePath);
+        reject(new Error(`Cosign spawn failed: ${err.message}`));
+      });
 
       cosign.stdout.on('data', (chunk) => {
         verificationOutput += chunk.toString();

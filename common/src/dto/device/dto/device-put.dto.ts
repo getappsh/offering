@@ -1,8 +1,11 @@
 import { DeviceEntity } from "@app/common/database/entities";
+import { Logger } from "@nestjs/common";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNumber, IsOptional, IsString } from "class-validator";
+import { DiscoveryMessageV2Dto } from "../../discovery";
 
 export class DevicePutDto {
+  static logger = new Logger(DevicePutDto.name)
 
   deviceId: string
 
@@ -43,6 +46,22 @@ export class DevicePutDto {
     if (dE.orgUID && dE.orgUID.UID) {
       device.orgUID = dE.orgUID.UID
       device.groupId = dE.orgUID.group?.id || null;
+    }
+
+    return device
+  }
+
+  static fromDeviceDiscovery(dto: DiscoveryMessageV2Dto) {
+    const device = new DevicePutDto()
+    device.deviceId = dto.id
+    device.name = dto?.general?.personalDevice?.name
+
+    if (dto?.general?.physicalDevice?.serialNumber) {
+      device.orgUID = parseInt(dto.general.physicalDevice.serialNumber)
+      if (isNaN(device.orgUID)) {
+        this.logger.warn(`Cannot parse serialNumber ${dto.general.physicalDevice.serialNumber} to number for orgUID from device ${device.deviceId} - setting orgUID to null`)
+        device.orgUID = null
+      }
     }
 
     return device

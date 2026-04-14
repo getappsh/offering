@@ -1,4 +1,4 @@
-import { CacheConfigEntity } from "@app/common/database-tng/entities/cache-config.entity";
+import { CacheConfigEntity } from "@app/common/database-proxy/entities/cache-config.entity";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional } from "class-validator";
 

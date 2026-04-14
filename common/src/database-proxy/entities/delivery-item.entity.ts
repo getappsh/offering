@@ -3,6 +3,7 @@ import { BaseEntity } from "../../database/entities/base.entity";
 import { Column, Entity, ManyToOne, Unique } from "typeorm";
 import { DeliveryEntity } from "./delivery.entity";
 import { HashAlgorithmEnum, PrepareStatusEnum } from "../../database/entities/enums.entity";
+import { StringNumberTransformer } from "../../database/entities/transformers/string-number.transformer";
 
 @Entity("delivery_item")
 @Unique(['itemKey', 'delivery'])
@@ -35,7 +36,7 @@ export class DeliveryItemEntity extends BaseEntity {
   @Column({ name: "err_msg", nullable: true })
   errMsg: string;
 
-  @Column({ name: "size", nullable: true })
+  @Column({ name: "size", type: 'bigint', nullable: true, transformer: new StringNumberTransformer() })
   size: number;
 
   @Column({ name: "path", nullable: true })
@@ -52,5 +53,11 @@ export class DeliveryItemEntity extends BaseEntity {
 
   @Column({ name: "signature", type: 'text', nullable: true })
   signature: string
+  
+  @Column({ name: 'is_executable', type: 'boolean', default: false})
+  isExecutable: boolean
+
+  @Column({ name: 'arguments', type: 'text', nullable: true, default: null})
+  arguments?: string | null
   
 }

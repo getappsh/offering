@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { PlatformEntity } from "./platform.entity";
 import { ProjectEntity } from "./project.entity";
 import { CPUArchitecture, DiskType, NetworkType, OS } from "./enums.entity";
@@ -6,7 +6,7 @@ import { CPUArchitecture, DiskType, NetworkType, OS } from "./enums.entity";
 @Entity("device_type")
 export class DeviceTypeEntity {
 
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn({ type: "integer"})
   id: number
 
   @Column({ name: "name", unique: true })

@@ -7,6 +7,7 @@ import { DiscoveryType } from "@app/common/database/entities";
 import { DiscoveryMapDto } from "./discovery-map.dto";
 import { PlatformDiscoverDto } from "./discovery-platform";
 import { EitherIdPresentConstraint } from "@app/common/validators/id-presentation";
+import { DeviceFieldDto } from "./device-field.dto";
 
 export class DiscoveryMessageDto {
 
@@ -39,13 +40,9 @@ export class DiscoveryMessageDto {
 
 export class DiscoveryMessageV2Dto {
 
-  @ApiProperty({ required: false })
+  @ApiProperty()
   @IsNotEmpty()
   @IsString()
-  /**
-   * In the future, this field will be required
-  */
-  @IsOptional()
   id: string
 
   /**
@@ -57,7 +54,6 @@ export class DiscoveryMessageV2Dto {
     required: false,
     description: 'Timestamp when the discovery snapshot was taken',
     type: String, // Important for Swagger to document this as a string
-    example: new Date(),
   })
   @IsOptional()
   @IsDate()
@@ -108,11 +104,26 @@ export class DiscoveryMessageV2Dto {
   @Type(() => DiscoverySoftwareV2Dto)
   softwareData: DiscoverySoftwareV2Dto;
 
-  @ApiProperty({ required: false, type: DiscoveryMapDto })
+  // @ApiProperty({ required: false, type: DiscoveryMapDto })
   @ValidateNested()
   @Type(() => DiscoveryMapDto)
   mapData: DiscoveryMapDto;
 
+  @ApiProperty({ 
+    required: false, 
+    type: [DeviceFieldDto],
+    description: 'List of fields that the device supports for evaluation, including their types (e.g., number, string, boolean)'
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => DeviceFieldDto)
+  supportedFields?: DeviceFieldDto[];
+
+  /**
+   * Device rule-evaluation context built by the discovery microservice.
+   * Populated on the top-level device only (not sub-devices).
+   */
+  deviceContext?: Record<string, any>;
 
   toString() {
     return JSON.stringify(this)

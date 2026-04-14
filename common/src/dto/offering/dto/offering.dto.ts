@@ -1,9 +1,45 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
 import { ComponentV2Dto } from "../../upload";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto, ProjectRefDto } from "../../devices-hierarchy";
 import { BadRequestException } from "@nestjs/common";
-import { ValidateIf, IsString, IsNotEmpty } from "class-validator";
-import { Transform } from "class-transformer";
+import { ValidateIf, IsString, IsNotEmpty, IsInt, IsOptional, IsPositive } from "class-validator";
+import { Transform, Type } from "class-transformer";
+
+export class GetProjectsOfferingDto {
+  @ApiProperty({
+    description: 'The search term (matches project name or partial match)',
+    required: false
+  })
+  @IsString()
+  @IsOptional()
+  @Type(() => String)
+  query: string;
+
+
+  @ApiPropertyOptional({
+    description: 'The page number to fetch (default: 1)',
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Number of projects per page (default: 20)',
+    example: 20,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  perPage?: number = 20;
+
+  toString() {
+    return JSON.stringify(this);
+  }
+}
 
 export class ProjectRefOfferingDto {
   @ApiProperty({ description: "Name of the project" })
@@ -12,6 +48,12 @@ export class ProjectRefOfferingDto {
   @ApiProperty({ description: "Identifier of the project" })
   projectId: number;
 
+  @ApiProperty({ required: false, description: "Display name of the project" })
+  displayName?: string;
+
+  @ApiProperty({ required: false, description: "Label of the project" })
+  label?: string;
+
   @ApiProperty({ type: ComponentV2Dto, required: false })
   release?: ComponentV2Dto;
 
@@ -19,6 +61,8 @@ export class ProjectRefOfferingDto {
     const dto = new ProjectRefOfferingDto();
     dto.projectId = projectRef.projectId;
     dto.projectName = projectRef.projectName;
+    dto.displayName = projectRef.displayName;
+    dto.label = projectRef.label;
     return dto;
   }
 
@@ -30,7 +74,7 @@ export class ProjectRefOfferingDto {
 export class DeviceTypeOfferingDto {
   @ApiProperty({ description: "ID of the device type" })
   deviceTypeId: number;
-  
+
   @ApiProperty({ description: "Name of the device type" })
   deviceTypeName: string;
 
@@ -55,8 +99,8 @@ export class PlatformOfferingDto {
 
   @ApiProperty({ description: "ID of the platform" })
   platformId: number;
-  
-  @ApiProperty({description: "Name of the platform"})
+
+  @ApiProperty({ description: "Name of the platform" })
   platformName: string;
 
   @ApiProperty({ type: DeviceTypeOfferingDto, isArray: true, required: false })
@@ -76,21 +120,21 @@ export class PlatformOfferingDto {
 }
 
 
-export class PlatformOfferingParams{
+export class PlatformOfferingParams  {
 
-  @ApiProperty({type: String, description: 'Platform identifier (ID or name)'})
+  @ApiProperty({ type: String, description: 'Platform identifier (ID or name)' })
   @ValidateIf((o) => typeof o.platformIdentifier === 'string')
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) => {
     const isNum = (num) => Number.isFinite ? Number.isFinite(+num) : isFinite(+num)
-    
+
     if (isNum(value)) {
       return parseInt(value, 10);
     }
 
     if (typeof value === 'string' && value.trim() !== '') {
-      return value.toLowerCase().trim().replace(/\s+/g, "-");
+      return value.trim().replace(/\s+/g, "-");
     }
 
     throw new BadRequestException('Invalid platform identifier');
@@ -106,16 +150,47 @@ export class DeviceTypeOfferingParams {
   @IsNotEmpty()
   @Transform(({ value }) => {
     const isNum = (num) => Number.isFinite ? Number.isFinite(+num) : isFinite(+num)
-    
+
     if (isNum(value)) {
       return parseInt(value, 10);
     }
 
     if (typeof value === 'string' && value.trim() !== '') {
-      return value.toLowerCase().trim().replace(/\s+/g, "-");
+      return value.trim().replace(/\s+/g, "-");
     }
 
     throw new BadRequestException('Invalid device type identifier');
   })
   deviceTypeIdentifier: string | number
+}
+
+export class OfferingQueryParams {
+  @ApiProperty({ required: false, description: 'Indicates whether to include dependencies in the offering' })
+  @IsOptional()
+  withDependencies?: boolean;
+}
+
+export class OfferingParamsCombined extends IntersectionType(
+  PartialType(PlatformOfferingParams),
+  PartialType(OfferingQueryParams),
+) {}
+
+export class ProjectOfferingFilterQuery extends IntersectionType(
+  PartialType(DeviceTypeOfferingParams),
+  PartialType(PlatformOfferingParams),
+  PartialType(OfferingQueryParams)
+) {
+  @ValidateIf(o => o.platformIdentifier !== undefined && o.platformIdentifier !== null)
+  @IsNotEmpty({ message: 'deviceTypeIdentifier is required when platformIdentifier is provided' })
+  deviceTypeIdentifier?: string | number | undefined;
+
+  projectIdentifier?: string | number | undefined;
+}
+
+export class DeviceTypeOfferingFilterQuery extends IntersectionType(
+  PartialType(PlatformOfferingParams),
+  PartialType(OfferingQueryParams)
+) {
+    deviceTypeIdentifier?: string | number  | undefined;
+    deviceTypeTree?: DeviceTypeHierarchyDto
 }

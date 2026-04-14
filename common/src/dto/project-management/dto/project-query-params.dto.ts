@@ -33,15 +33,24 @@ export class GetProjectsQueryDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Number of projects per page (default: 10)',
-    example: 10,
+    description: 'Number of projects per page (default: 15)',
+    example: 15,
   })
   @IsOptional()
   @IsInt()
   @IsPositive()
   @Type(() => Number)
-  perPage?: number = 10;
+  perPage?: number = 15;
 
+  @ApiPropertyOptional({
+    description: 'Filter by specific project names',
+    example: ['project1', 'project2'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsString({ each: true })
+  @Type(() => String)
+  projectNames?: string[];
  
 }
 
@@ -49,8 +58,10 @@ export class GetProjectsQueryDto {
 export class SearchProjectsQueryDto {
   @ApiProperty({
     description: 'The search term (matches project name or partial match)',
+    required: false
   })
   @IsString()
+  @IsOptional()
   @Type(() => String)
   query: string;
 
@@ -63,13 +74,17 @@ export class SearchProjectsQueryDto {
   @Type(() => String)
   status?: string;
 
+
   @ApiPropertyOptional({
-    description: 'Filter by project type',
-    enum: ProjectType,
+    description: 'Include projects not owned or associated with the user',
+    example: false,
+    default: false,
+    required: false,
   })
   @IsOptional()
-  @IsEnum(ProjectType)
-  type?: ProjectType;
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  includeUnassociated?: boolean = false;
 
   @ApiPropertyOptional({
     description: 'The page number to fetch (default: 1)',
@@ -82,8 +97,8 @@ export class SearchProjectsQueryDto {
   page?: number = 1;
 
   @ApiPropertyOptional({
-    description: 'Number of projects per page (default: 10)',
-    example: 10,
+    description: 'Number of projects per page (default: 15)',
+    example: 15,
   })
   @IsOptional()
   @IsInt()

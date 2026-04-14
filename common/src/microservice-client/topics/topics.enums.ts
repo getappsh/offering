@@ -18,6 +18,7 @@ export const UploadTopics = {
     DELETE_RELEASE: `getapp-upload.delete-release${region}`,
 
     SET_RELEASE_ARTIFACT: `getapp-upload.set-release-artifact${region}`,
+
     DELETE_RELEASE_ARTIFACT: `getapp-upload.delete-release-artifact${region}`,
     GET_ARTIFACT_DOWNLOAD_URL: 'getapp-upload.get-artifact-download-url',
     GET_ARTIFACT_UPLOAD_URL: 'getapp-upload.get-artifact-upload-url',
@@ -27,12 +28,34 @@ export const UploadTopics = {
     SET_VERSION_REGULATION_STATUS: `getapp-upload.set-version-regulation-status${region}`,
     SET_VERSION_REGULATION_COMPLIANCE: `getapp-upload.set-version-regulation-compliance${region}`,
     DELETE_VERSION_REGULATION_STATUS: `getapp-upload.delete-version-regulation-status${region}`,
+    //update file metadata
+    UPDATE_FILE_METADATA: `getapp-upload.update-file-metadata${region}`,
+
+    // Rules - Policies
+    GET_POLICIES: `getapp-upload.get-policies${region}`,
+    GET_POLICIES_FOR_RELEASE: `getapp-upload.get-policies-for-release${region}`,
+    CREATE_POLICY: `getapp-upload.create-policy${region}`,
+    GET_POLICY: `getapp-upload.get-policy${region}`,
+    GET_POLICY_INTERNAL: `getapp-upload.get-policy-internal${region}`,
+    UPDATE_POLICY: `getapp-upload.update-policy${region}`,
+    DELETE_POLICY: `getapp-upload.delete-policy${region}`,
+    GET_RULE_FIELDS: `getapp-upload.get-rule-fields${region}`,
+    ADD_RULE_FIELD: `getapp-upload.add-rule-field${region}`,
+    REMOVE_RULE_FIELD: `getapp-upload.remove-rule-field${region}`,
+    // Export/Import
+    EXPORT_RELEASE: `getapp-upload.export-release${region}`,
+    IMPORT_RELEASE: `getapp-upload.import-release${region}`,
+    // Deployment Report
+    GET_DEPLOYMENT_REPORT: `getapp-upload.get-deployment-report${region}`,
+    // Settings
+    GET_SBOM_ENABLED: `getapp-upload.get-sbom-enabled${region}`,
 
 } as const
 
 export const UploadTopicsEmit = {
     PROJECT_REGULATION_CHANGED: `getapp-upload.project-regulation-changed${region}`,
     UPDATE_FILE_UPLOAD: `getapp-upload.update-file-upload${region}`,
+    SYNC_DEVICE_RULE_FIELDS: `getapp-upload.sync-device-rule-fields${region}`,
 }
 
 export const DeliveryTopics = {
@@ -40,7 +63,8 @@ export const DeliveryTopics = {
     PREPARED_DELIVERY_STATUS: `getapp-delivery.prepared-status${region}`,
     GET_CACHE_CONFIG: `getapp-delivery.get-cache-config${region}`,
     SET_CACHE_CONFIG: `getapp-delivery.set-cache-config${region}`,
-    CHECK_HEALTH: `getapp-delivery.check-health${region}`
+    CHECK_HEALTH: `getapp-delivery.check-health${region}`,
+    GET_DELIVERY_STATUSES: `getapp-delivery.get-delivery-statuses${region}`,
 } as const
 
 export const DeliveryTopicsEmit = {
@@ -57,18 +81,27 @@ export const OfferingTopics = {
     GET_OFFERING_FOR_PLATFORM: `getapp-offering.get-offering-for-platform${region}`,
     GET_OFFERING_FOR_DEVICE_TYPE: `getapp-offering.get-offering-for-device-type${region}`,
     GET_OFFERING_FOR_PROJECT: `getapp-offering.get-offering-for-project${region}`,
+    GET_OFFERING_FOR_ALL_PROJECTS: `getapp-offering.get-offering-for-all-project${region}`,
     GET_OFFER_OF_COMP: `getapp-offering.get-offering-of-comp${region}`,
+
+    // Policies
+    UPSERT_OFFERING_TREE_POLICY: `getapp-offering.upsert-offering-tree-policy${region}`,
+    GET_OFFERING_TREE_POLICIES: `getapp-offering.get-offering-tree-policies${region}`,
+    GET_PUSH_OFFERING_DEVICES: `getapp-offering.get-push-offering-devices${region}`,
+    
 } as const
 
 export const OfferingTopicsEmit = {
     COMPONENT_UPLOAD_EVENT: `getapp-offering.component-upload-event${region}`,
     RELEASE_CHANGED_EVENT: `getapp-offering.release-changed-event${region}`,
     OFFERING_PUSH: `getapp-offering.push${region}`,
+    OFFERING_UNPUSH: `getapp-offering.unpush${region}`,
     DEVICE_SOFTWARE_EVENT: `getapp-offering.device.software-event${region}`,
     DEVICE_MAP_EVENT: `getapp-offering.device.map-event${region}`,
 }
 export const DeployTopics = {
-    CHECK_HEALTH: `getapp-deploy.check-health${region}`
+    CHECK_HEALTH: `getapp-deploy.check-health${region}`,
+    GET_DEPLOY_STATUSES: `getapp-deploy.get-deploy-statuses${region}`,
 } as const
 
 export const DeployTopicsEmit = {
@@ -78,6 +111,10 @@ export const DeployTopicsEmit = {
 export const ProjectManagementTopics = {
     GET_USERS: `getapp-project-management.get-users${region}`,
     GET_USER_PROJECTS: `getapp-project-management.get-user-projects${region}`,
+    GET_USER_PROJECT_IDS: `getapp-project-management.get-user-project-ids${region}`,
+    GET_PROJECT_IDS_BY_NAMES: `getapp-project-management.get-project-ids-by-names${region}`,
+    GET_MEMBER_IN_PROJECT: `getapp-project-management.get-member-in-project${region}`,
+    GET_PROJECT_FROM_TOKEN: `getapp-project-management.get-project-from-token${region}`,
 
     CREATE_PROJECT: `getapp-project-management.create-project${region}`,
     EDIT_PROJECT: `getapp-project-management.edit-project${region}`,
@@ -127,11 +164,21 @@ export const ProjectManagementTopics = {
     UPDATE_LABEL: `getapp-project-management.update-label${region}`,
     DELETE_LABEL: `getapp-project-management.delete-label${region}`,
 
+    // Git Integration
+    TRIGGER_GIT_SYNC: `getapp-project-management.trigger-git-sync${region}`,
+    TRIGGER_GIT_SYNC_BY_WEBHOOK: `getapp-project-management.trigger-git-sync-by-webhook${region}`,
+    CHECK_RELEASE_EXISTS: `getapp-project-management.check-release-exists${region}`,
+    // Deployment Report
+    GET_SYSTEM_WIDE_DEPLOYMENT_REPORT: `getapp-project-management.get-system-wide-deployment-report${region}`,
+    GET_PROJECT_DEPLOYMENT_REPORT: `getapp-project-management.get-project-deployment-report${region}`,
+
     CHECK_HEALTH: `getapp-project-management.check-health${region}`
 } as const
 
 export const ProjectManagementTopicsEmit = {
     PROJECT_RELEASES_CHANGED: `getapp-project-management.project-releases-changed${region}`,
+    GIT_SYNC_COMPLETED: `getapp-project-management.git-sync-completed${region}`,
+    DEPLOYMENT_REPORT_REQUESTED: `getapp-project-management.deployment-report-requested${region}`,
 }
 
 export const GetMapTopics = {
@@ -145,6 +192,7 @@ export const GetMapTopics = {
     EXPORT_NOTIFICATION: `getapp-map.export.notify${region}`,
     // Inventory
     GET_INVENTORY_UPDATES: `getapp-map.inventory.updates${region}`,
+    GET_INVENTORY_UPDATES_V2: `getapp-map.inventory.updates.v2${region}`,
     // admin
     MAP_PUT: `getapp-map.put${region}`,
     // Device
@@ -168,6 +216,7 @@ export const DeviceTopics = {
     DEVICES_SOFTWARE_STATISTIC_INFO: `getapp-device.device.software.statistic.info${region}`,
     DEVICES_MAP_STATISTIC_INFO: `getapp-device.device.map.statistic.info${region}`,
     DEVICES_PUT: `getapp-device.put${region}`,
+    DELETE_DEVICE: `getapp-device.delete${region}`,
     DEVICE_MAPS: `getapp-device.device.maps${region}`,
     All_MAPS: `getapp-map.maps${region}`,
     GET_MAP: `getapp-map.map.id${region}`,
@@ -177,12 +226,31 @@ export const DeviceTopics = {
     // Config
     GET_DEVICE_CONFIG: `getapp-device.config.get${region}`,
     SET_DEVICE_CONFIG: `getapp-device.config.set${region}`,
-    CHECK_HEALTH: `getapp-device.check-health${region}`
+    
+    // Rules - Restrictions
+    GET_RESTRICTIONS: `getapp-device.get-restrictions${region}`,
+    CREATE_RESTRICTION: `getapp-device.create-restriction${region}`,
+    GET_RESTRICTION: `getapp-device.get-restriction${region}`,
+    UPDATE_RESTRICTION: `getapp-device.update-restriction${region}`,
+    DELETE_RESTRICTION: `getapp-device.delete-restriction${region}`,
+    GET_RULE_FIELDS: `getapp-device.get-rule-fields${region}`,
+    ADD_RULE_FIELD: `getapp-device.add-rule-field${region}`,
+    REMOVE_RULE_FIELD: `getapp-device.remove-rule-field${region}`,
+    EVALUATE_RESTRICTION: `getapp-device.evaluate-restriction${region}`,
+    GET_DEVICE_CONTEXT: `getapp-device.get-device-context${region}`,
+    
+    DISCOVER_DEVICE_CONTEXT_V2: `getapp-device.discover.device-context-V2${region}`,
+    CHECK_HEALTH: `getapp-device.check-health${region}`, 
+    // Pending Versions
+    LIST_PENDING_VERSIONS: `getapp-device.pending-versions.list${region}`,
+    // Device Restrictions
+    GET_DEVICE_RESTRICTIONS: `getapp-device.get-device-restrictions${region}`,
+    // OS
+    GET_ALL_OS: `getapp-device.get-all-os${region}`,
 } as const
 
 export const DeviceTopicsEmit = {
     DISCOVER_DEVICE_CONTEXT: `getapp-device.discover.device-context${region}`,
-    DISCOVER_DEVICE_CONTEXT_V2: `getapp-device.discover.device-context-V2${region}`,
     UPDATE_DEVICE_SOFTWARE_STATE: `getapp-device.device.update-software-state${region}`,
     UPDATE_DEVICE_MAP_STATE: `getapp-device.device.update-map-state${region}`,
     REGISTER_MAP_TO_DEVICE: `getapp-device.map.register-to-device${region}`,
@@ -191,6 +259,9 @@ export const DeviceTopicsEmit = {
     UPDATE_TLS_STATUS: `getapp-device.update.tls.status${region}`,
     IM_PUSH_DISCOVERY: `getapp-device.im.push.discovery${region}`,
     RELEASE_CHANGED_EVENT: `getapp-device.release-changed-event${region}`,
+    // Pending Versions
+    ACCEPT_PENDING_VERSION: `getapp-device.pending-versions.accept${region}`,
+    REJECT_PENDING_VERSION: `getapp-device.pending-versions.reject${region}`,
 } as const
 
 
@@ -236,4 +307,20 @@ export const DevicesHierarchyTopics = {
 export const DeviceBugReportTopics = {
     NEW_BUG_REPORT: `getapp-device.bug-report.new${region}`,
     GET_BUG_REPORT: `getapp-device.bug-report.get${region}`,
+} as const
+
+export const SbomTopics = {
+    SCAN_REQUEST: `getapp-sbom-generator.scan.request${region}`,
+    RETRY_SCAN: `getapp-sbom-generator.scan.retry${region}`,
+    GET_SCAN_STATUS: `getapp-sbom-generator.scan.status${region}`,
+    GET_SCAN_RESULT: `getapp-sbom-generator.scan.result${region}`,
+    GET_SCANS: `getapp-sbom-generator.scan.list${region}`,
+    DELETE_SCAN: `getapp-sbom-generator.scan.delete${region}`,
+    CHECK_HEALTH: `getapp-sbom-generator.check-health${region}`,
+} as const
+
+export const SbomTopicsEmit = {
+    SCAN_FILE: `getapp-sbom-generator.scan.file${region}`,
+    SCAN_COMPLETE: `getapp-sbom-generator.scan.complete${region}`,
+    SCAN_FAILED: `getapp-sbom-generator.scan.failed${region}`,
 } as const

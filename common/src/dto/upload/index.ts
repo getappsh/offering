@@ -6,6 +6,8 @@ export * from './dto/file-upload.dto'
 export * from './dto/release.dto'
 export * from './dto/release-artifact.dto'
 export * from './dto/regulation-status.dto'
+export * from './dto/deployment-report.dto'
 
 export * from './stubs/upload-artifact.dto.stub'
 
+export * from './dto/update-file-properties.dto'

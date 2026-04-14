@@ -15,15 +15,15 @@ export const resPayloadFullComplete = (): ImportResPayload => {
   importRes.artifacts = []
   importRes.artifacts[0] = {} as Artifact
   importRes.artifacts[0].type = ArtifactsLibotEnum.GPKG
-  importRes.artifacts[0].url = "some url"
-  importRes.artifacts[0].name = "some name"
+  importRes.artifacts[0].url = "some url.gpkg"
+  importRes.artifacts[0].name = "some name.gpkg"
   importRes.artifacts[0].size = 2222
   importRes.artifacts[1] = {} as Artifact
   importRes.artifacts[1].type = ArtifactsLibotEnum.METADATA
-  importRes.artifacts[0].url = "some url"
-  importRes.artifacts[0].name = "some name"
-  importRes.artifacts[0].size = 2222
-
+  importRes.artifacts[1].url = "some url.json"
+  importRes.artifacts[1].name = "some name.json"
+  importRes.artifacts[1].size = 2222
+  
   return importRes
 }
 
@@ -33,8 +33,9 @@ export const resPayloadOnlyWithPackageUrl = (): ImportResPayload => {
   importRes.artifacts = []
   importRes.artifacts[0] = {} as Artifact
   importRes.artifacts[0].type = ArtifactsLibotEnum.GPKG
-  importRes.artifacts[0].url = "some url"
-
+  importRes.artifacts[0].url = "some url.gpkg"
+  importRes.artifacts[0].name = "some name.gpkg"
+  
   return importRes
 }
 
@@ -44,7 +45,8 @@ export const resPayloadOnyWithMateData = (): ImportResPayload => {
   importRes.artifacts = []
   importRes.artifacts[0] = {} as Artifact
   importRes.artifacts[0].type = ArtifactsLibotEnum.METADATA
-  importRes.artifacts[0].url = "some url"
-
+  importRes.artifacts[0].url = "some url.json"
+  importRes.artifacts[0].name = "some name.json"
+  
   return importRes
 }

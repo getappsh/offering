@@ -287,6 +287,18 @@ export class AndroidConfigDto extends BaseConfigDto {
   @IsString()
   @Expose()
   controlMapPath: string
+  
+  @ApiProperty({ required: false, description: 'Substring to match in ortophoto map filename' })
+  @IsOptional()
+  @IsString()
+  @Expose()
+  ortophotoMapPattern?: string
+  
+  @ApiProperty({ required: false, description: 'Substring to match in control map filename' })
+  @IsOptional()
+  @IsString()
+  @Expose()
+  controlMapPattern?: string
 
   static fromConfigEntity(cE: DeviceConfigEntity) {
     const config = new AndroidConfigDto()

@@ -2,7 +2,7 @@ import { IsDate, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { DeviceDto } from "./device.dto";
 import { ApiProperty } from "@nestjs/swagger";
 import { ComponentStateDto } from "../../discovery";
-import { DeviceComponentEntity, DeviceComponentStateEnum } from "@app/common/database/entities";
+import { DeviceComponentEntity, DeviceComponentStateEnum, OfferingActionEnum } from "@app/common/database/entities";
 import { Type } from "class-transformer";
 import { ComponentV2Dto } from "../../upload";
 
@@ -33,6 +33,14 @@ export class SoftwareStateDto {
   @ApiProperty({ required: false})
   error?: string;
 
+  @ApiProperty({ required: false, description: 'Indicates if this version is unknown (not registered in getapp)' })
+  @IsOptional()
+  isUnknown?: boolean;
+
+  @ApiProperty({ required: false, enum: OfferingActionEnum, description: 'How this software was offered to the device. "offering" = automatically available, "push" = explicitly pushed by an admin. Undefined if the software was unpushed or was never directly offered/pushed to this device.' })
+  @IsOptional()
+  action?: OfferingActionEnum;
+
   static fromDeviceComponentEntity(componentState: DeviceComponentEntity) {
 
     let softwareState = new SoftwareStateDto();
@@ -41,6 +49,7 @@ export class SoftwareStateDto {
     softwareState.error = componentState?.error;
     softwareState.downloadDate = componentState?.downloadedAt;
     softwareState.deployDate = componentState?.deployedAt;
+    softwareState.isUnknown = false; // Known versions from components
 
     return softwareState;
   }
@@ -50,6 +59,7 @@ export class SoftwareStateDto {
   }
   
 }
+
 export class DeviceSoftwareDto extends DeviceDto {
 
   @ApiProperty({ isArray: true, type: SoftwareStateDto })

@@ -1,4 +1,4 @@
-import { DeliveryItemEntity } from "@app/common/database-tng/entities";
+import { DeliveryItemEntity } from "@app/common/database-proxy/entities";
 import { HashAlgorithmEnum } from "@app/common/database/entities/enums.entity";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional } from "class-validator";
@@ -51,6 +51,11 @@ export class DeliveryItemDto {
   @ApiProperty({ required: false })
   signature?: string
   
+  @ApiProperty({ required: false })
+  isExecutable: boolean
+  
+  @ApiProperty({ required: false, type: String })
+  arguments?: string | null
 
   toString() {
     return JSON.stringify(this);
@@ -66,6 +71,8 @@ export class DeliveryItemDto {
     dto.size = diE.size;
     dto.artifactType = diE.artifactType;
     dto.signature = diE.signature;
+    dto.isExecutable = diE.isExecutable;
+    dto.arguments = diE.arguments;
     
     return dto
   }
@@ -80,6 +87,8 @@ export class DeliveryItemDto {
     dto.size = diDto.size;
     dto.artifactType = diDto.artifactType;
     dto.signature = diDto.signature;
+    dto.isExecutable = diDto.isExecutable;
+    dto.arguments = diDto.arguments;
 
     if(diDto.hash){
       dto.hash = HashDto.fromHashDto(diDto.hash)

@@ -1,6 +1,7 @@
 import { Column, Entity, Index } from "typeorm";
 import { BaseEntity } from "./base.entity";
 import { FileUPloadStatusEnum } from "./enums.entity";
+import { StringNumberTransformer } from "./transformers/string-number.transformer";
 
 @Entity('file_upload')
 export class FileUploadEntity extends BaseEntity{
@@ -21,7 +22,7 @@ export class FileUploadEntity extends BaseEntity{
   @Column({ name: 'bucket_name' })
   bucketName: string
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'bigint', transformer: new StringNumberTransformer() })
   size?: number
   
   @Column({ name: 'content_type', nullable: true })
@@ -32,5 +33,14 @@ export class FileUploadEntity extends BaseEntity{
 
   @Column({ name: 'signature', type: 'text', nullable: true})
   signature?: string
+
+  @Column({ name: 'sha256', type: 'text', nullable: true})
+  sha256?: string
+
+  @Column({ name: 'progress', type: 'integer', default: 0 })
+  progress?: number
+
+  @Column({ name: 'error', type: 'text', nullable: true})
+  error?: string
 
 }

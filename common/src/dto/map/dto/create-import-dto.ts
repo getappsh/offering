@@ -44,6 +44,18 @@ export class MapProperties {
   @IsNumber()
   lastUpdateAfter: number;
 
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  catalogId?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  fileName?: string;
+
   toString() {
     return JSON.stringify(this);
   }

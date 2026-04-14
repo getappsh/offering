@@ -3,6 +3,11 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 
+export class BaseDeviceDto {
+  deviceId: string;
+  deviceName?: string;
+}
+
 export class PushOfferingDto {
   @ApiProperty()
   @IsString()
