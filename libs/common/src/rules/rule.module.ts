@@ -11,6 +11,7 @@ import { DeviceTypeEntity } from '../database/entities/device-type.entity';
 import { DeviceEntity } from '../database/entities/device.entity';
 import { RuleService } from './services/rule.service';
 import { RuleValidationService } from './services/rule-validation.service';
+import { RuleEvaluationService } from './services/rule-evaluation.service';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { RuleValidationService } from './services/rule-validation.service';
       DeviceEntity,
     ]),
   ],
-  providers: [RuleService, RuleValidationService],
-  exports: [RuleService, RuleValidationService],
+  providers: [RuleService, RuleValidationService, RuleEvaluationService],
+  exports: [RuleService, RuleValidationService, RuleEvaluationService],
 })
 export class RuleModule {}

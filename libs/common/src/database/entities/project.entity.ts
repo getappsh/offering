@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinTable, ManyToMany, OneToMany, ManyToOne, JoinColumn } from "typeorm";
+import { Column, Entity, Index, JoinTable, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne } from "typeorm";
 import { BaseEntity } from "./base.entity";
 import { MemberProjectEntity } from "./member_project.entity";
 import { RegulationEntity } from "./regulation.entity";
@@ -9,6 +9,7 @@ import { ProjectType } from "./enums.entity";
 import { DeviceTypeEntity } from "./device-type.entity";
 import { PlatformEntity } from "./platform.entity";
 import { LabelEntity } from "./label.entity";
+import { ProjectGitSourceEntity } from "./project-git-source.entity";
 
 @Entity("project")
 export class ProjectEntity extends BaseEntity {
@@ -52,7 +53,7 @@ export class ProjectEntity extends BaseEntity {
     @OneToMany(() => DocEntity, (doc) => doc.project, { lazy: true })
     docs: Promise<DocEntity[]>;
 
-    @Column({ name: "project_type", type: "enum", enum: ProjectType, default: ProjectType.PRODUCT })
+    @Column({ name: "project_type", type: "enum", enum: ProjectType, default: ProjectType.APPLICATION })
     projectType: ProjectType;
 
     @ManyToMany(() => DeviceTypeEntity, deviceType => deviceType.projects)
@@ -61,6 +62,9 @@ export class ProjectEntity extends BaseEntity {
     @ManyToOne(() => LabelEntity, label => label.projects, { nullable: true })
     @JoinColumn({ name: "label_id" })
     label: LabelEntity | null;
+
+    @OneToOne(() => ProjectGitSourceEntity, gs => gs.project, { nullable: true })
+    gitSource?: ProjectGitSourceEntity | null;
 
     toString() {
         return JSON.stringify(this)
