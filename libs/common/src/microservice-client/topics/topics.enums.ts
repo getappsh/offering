@@ -82,6 +82,7 @@ export const OfferingTopics = {
     GET_OFFERING_FOR_DEVICE_TYPE: `getapp-offering.get-offering-for-device-type${region}`,
     GET_OFFERING_FOR_PROJECT: `getapp-offering.get-offering-for-project${region}`,
     GET_OFFERING_FOR_ALL_PROJECTS: `getapp-offering.get-offering-for-all-project${region}`,
+    GET_OFFERING_FOR_ALL_PLATFORMS: `getapp-offering.get-offering-for-all-platforms${region}`,
     GET_OFFER_OF_COMP: `getapp-offering.get-offering-of-comp${region}`,
 
     // Policies
