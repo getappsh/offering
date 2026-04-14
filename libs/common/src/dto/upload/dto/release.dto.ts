@@ -287,6 +287,12 @@ export class ComponentV2Dto {
   @ApiProperty()
   projectName: string;
 
+  @ApiProperty({ required: false, description: 'Human-readable display name of the project' })
+  displayName?: string;
+
+  @ApiProperty({ required: false, description: 'Label associated with the project' })
+  label?: string;
+
   @ApiProperty({ required: false })
   releaseNotes?: string;
 
@@ -324,25 +330,29 @@ export class ComponentV2Dto {
   @ApiProperty({ required: false, type: [ReleasePolicyDto], description: 'Policies associated with this release' })
   policies?: ReleasePolicyDto[]
 
-  static fromEntity(release: ReleaseEntity): ComponentV2Dto {
+ static fromEntity(release: ReleaseEntity): ComponentV2Dto {
     const dto = new ComponentV2Dto();
-    dto.version = release.version;
-    dto.id = release.catalogId;
-    dto.releaseNotes = release.releaseNotes;
-    dto.metadata = release.metadata;
-    dto.status = release.status;
-    dto.createdAt = release.createdAt;
-    dto.updatedAt = release.updatedAt;
+    // project data
     dto.projectName = release.project.name;
+    dto.projectId = release?.project?.id;
+    dto.displayName = release?.project?.projectName ?? undefined;
+    dto.label = release?.project?.label?.name ?? undefined;
     dto.projectTypeV2 = release.project.projectType;
     dto.type = ProjectType.PRODUCT;
-    dto.projectId = release?.project?.id;
+    // release data
+    dto.id = release.catalogId;
+    dto.version = release.version;
+    dto.status = release.status;
     dto.latest = release.latest;
-    dto.releasedAt = release.releasedAt ?? undefined;
     dto.size = release?.artifacts
       ?.filter(a => a.isInstallationFile)
       ?.map(a => Number(a?.fileUpload?.size) || 0)
       ?.reduce((size, a) => size + a, 0);
+    dto.releaseNotes = release.releaseNotes;
+    dto.metadata = release.metadata;
+    dto.createdAt = release.createdAt;
+    dto.updatedAt = release.updatedAt;
+    dto.releasedAt = release.releasedAt ?? undefined;
     
     // Map dependencies recursively
     if (release.dependencies && release.dependencies.length > 0) {
