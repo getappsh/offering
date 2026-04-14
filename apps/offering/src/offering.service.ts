@@ -124,7 +124,7 @@ export class OfferingService implements OnModuleInit {
             createdAt: true,
             updatedAt: true,
             metadata: {},
-            project: { id: true, name: true, projectType: true },
+            project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
             artifacts: { fileUpload: { size: true }, isInstallationFile: true },
           },
         },
@@ -133,7 +133,7 @@ export class OfferingService implements OnModuleInit {
           action: OfferingActionEnum.PUSH,
         },
         relations: {
-          release: { project: true, artifacts: { fileUpload: true } },
+          release: { project: { label: true }, artifacts: { fileUpload: true } },
         },
       }),
     ]);
@@ -202,14 +202,14 @@ export class OfferingService implements OnModuleInit {
 
     const offering = await this.releaseRepo.find({
       select: {
-        project: { id: true, name: true, projectType: true },
+        project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
         artifacts: { fileUpload: { size: true }, isInstallationFile: true },
       },
       where: {
         status: ReleaseStatusEnum.RELEASED,
         project: { id: In(projectIds) },
       },
-      relations: { project: true, artifacts: { fileUpload: true } },
+      relations: { project: { label: true }, artifacts: { fileUpload: true } },
     });
 
     return offering;
@@ -257,9 +257,9 @@ export class OfferingService implements OnModuleInit {
         catalogId: catalogId,
         status: ReleaseStatusEnum.RELEASED,
       },
-      relations: { project: true, artifacts: { fileUpload: true } },
+      relations: { project: { label: true }, artifacts: { fileUpload: true } },
       select: {
-        project: { id: true, name: true, projectType: true },
+        project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
         artifacts: { fileUpload: { size: true }, isInstallationFile: true },
       },
     });
@@ -1296,17 +1296,17 @@ export class OfferingService implements OnModuleInit {
     }
 
     const select: any = {
-      project: { id: true, name: true, projectType: true },
+      project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
       artifacts: { fileUpload: { size: true }, isInstallationFile: true }
     };
 
     if (includeDependencies) {
-      select.dependencies = { catalogId: true, version: true, project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } };
+      select.dependencies = { catalogId: true, version: true, project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } };
     }
 
-    const relations: any = { project: true, artifacts: { fileUpload: true } };
+    const relations: any = { project: { label: true }, artifacts: { fileUpload: true } };
     if (includeDependencies) {
-      relations.dependencies = { project: true, artifacts: { fileUpload: true } };
+      relations.dependencies = { project: { label: true }, artifacts: { fileUpload: true } };
     }
 
     const releases = await this.releaseRepo.find({
