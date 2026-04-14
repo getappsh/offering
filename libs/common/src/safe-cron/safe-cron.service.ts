@@ -119,7 +119,7 @@ export class SafeCronService implements OnModuleDestroy {
     }
     try{
       const lastJob = await this.findLastJob(jobName);
-      if (!lastJob.endTime){
+      if (lastJob && !lastJob.endTime){
         lastJob.startTime = new Date();
         await this.jobRepository.save(lastJob);
       }else{

@@ -119,6 +119,12 @@ export class DiscoveryMessageV2Dto {
   @Type(() => DeviceFieldDto)
   supportedFields?: DeviceFieldDto[];
 
+  /**
+   * Device rule-evaluation context built by the discovery microservice.
+   * Populated on the top-level device only (not sub-devices).
+   */
+  deviceContext?: Record<string, any>;
+
   toString() {
     return JSON.stringify(this)
   }

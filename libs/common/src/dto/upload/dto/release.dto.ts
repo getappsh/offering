@@ -302,8 +302,12 @@ export class ComponentV2Dto {
   @ApiProperty({ type: 'enum', enum: ReleaseStatusEnum })
   status: ReleaseStatusEnum;
 
-  @ApiProperty({ type: 'enum', enum: ProjectType })
+  /** @deprecated Use projectTypeV2 instead */
+  @ApiProperty({ type: 'enum', enum: ProjectType, deprecated: true })
   type: ProjectType
+
+  @ApiProperty({ type: 'enum', enum: ProjectType, required: false, description: 'The actual project type, regardless of agent compatibility' })
+  projectTypeV2?: ProjectType
 
   @ApiProperty({ type: 'integer', format: 'int64', required: false })
   size?: number
@@ -328,24 +332,27 @@ export class ComponentV2Dto {
 
   static fromEntity(release: ReleaseEntity): ComponentV2Dto {
     const dto = new ComponentV2Dto();
-    dto.version = release.version;
-    dto.id = release.catalogId;
-    dto.releaseNotes = release.releaseNotes;
-    dto.metadata = release.metadata;
-    dto.status = release.status;
-    dto.createdAt = release.createdAt;
-    dto.updatedAt = release.updatedAt;
+    // project data
+    dto.projectName = release.project.name;
     dto.projectId = release?.project?.id;
-    dto.projectName = release?.project?.name;
     dto.displayName = release?.project?.projectName ?? undefined;
     dto.label = release?.project?.label?.name ?? undefined;
-    dto.type = release?.project?.projectType;
+    dto.projectTypeV2 = release.project.projectType;
+    dto.type = ProjectType.PRODUCT;
+    // release data
+    dto.id = release.catalogId;
+    dto.version = release.version;
+    dto.status = release.status;
     dto.latest = release.latest;
-    dto.releasedAt = release.releasedAt ?? undefined;
     dto.size = release?.artifacts
       ?.filter(a => a.isInstallationFile)
       ?.map(a => Number(a?.fileUpload?.size) || 0)
       ?.reduce((size, a) => size + a, 0);
+    dto.releaseNotes = release.releaseNotes;
+    dto.metadata = release.metadata;
+    dto.createdAt = release.createdAt;
+    dto.updatedAt = release.updatedAt;
+    dto.releasedAt = release.releasedAt ?? undefined;
     
     // Map dependencies recursively
     if (release.dependencies && release.dependencies.length > 0) {

@@ -36,6 +36,7 @@ export const UploadTopics = {
     GET_POLICIES_FOR_RELEASE: `getapp-upload.get-policies-for-release${region}`,
     CREATE_POLICY: `getapp-upload.create-policy${region}`,
     GET_POLICY: `getapp-upload.get-policy${region}`,
+    GET_POLICY_INTERNAL: `getapp-upload.get-policy-internal${region}`,
     UPDATE_POLICY: `getapp-upload.update-policy${region}`,
     DELETE_POLICY: `getapp-upload.delete-policy${region}`,
     GET_RULE_FIELDS: `getapp-upload.get-rule-fields${region}`,
@@ -164,6 +165,10 @@ export const ProjectManagementTopics = {
     UPDATE_LABEL: `getapp-project-management.update-label${region}`,
     DELETE_LABEL: `getapp-project-management.delete-label${region}`,
 
+    // Git Integration
+    TRIGGER_GIT_SYNC: `getapp-project-management.trigger-git-sync${region}`,
+    TRIGGER_GIT_SYNC_BY_WEBHOOK: `getapp-project-management.trigger-git-sync-by-webhook${region}`,
+    CHECK_RELEASE_EXISTS: `getapp-project-management.check-release-exists${region}`,
     // Deployment Report
     GET_SYSTEM_WIDE_DEPLOYMENT_REPORT: `getapp-project-management.get-system-wide-deployment-report${region}`,
     GET_PROJECT_DEPLOYMENT_REPORT: `getapp-project-management.get-project-deployment-report${region}`,
@@ -173,6 +178,7 @@ export const ProjectManagementTopics = {
 
 export const ProjectManagementTopicsEmit = {
     PROJECT_RELEASES_CHANGED: `getapp-project-management.project-releases-changed${region}`,
+    GIT_SYNC_COMPLETED: `getapp-project-management.git-sync-completed${region}`,
     DEPLOYMENT_REPORT_REQUESTED: `getapp-project-management.deployment-report-requested${region}`,
 }
 
@@ -231,6 +237,8 @@ export const DeviceTopics = {
     GET_RULE_FIELDS: `getapp-device.get-rule-fields${region}`,
     ADD_RULE_FIELD: `getapp-device.add-rule-field${region}`,
     REMOVE_RULE_FIELD: `getapp-device.remove-rule-field${region}`,
+    EVALUATE_RESTRICTION: `getapp-device.evaluate-restriction${region}`,
+    GET_DEVICE_CONTEXT: `getapp-device.get-device-context${region}`,
     
     DISCOVER_DEVICE_CONTEXT_V2: `getapp-device.discover.device-context-V2${region}`,
     CHECK_HEALTH: `getapp-device.check-health${region}`, 

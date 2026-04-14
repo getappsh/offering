@@ -3,6 +3,7 @@ export * from './enums';
 export * from './rule.module';
 export * from './services/rule.service';
 export * from './services/rule-validation.service';
+export * from './services/rule-evaluation.service';
 export * from './dto';
 export * from './types/rule.types';
 export * from './enums/rule.enums';
