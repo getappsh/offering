@@ -1290,16 +1290,10 @@ export class OfferingService implements OnModuleInit {
     return componentOffering;
   }
 
-  private async fetchReleasesByCatalogIds(catalogIds: string[], includeDependencies: boolean = false, visited: Set<string> = new Set()): Promise<ReleaseEntity[]> {
-    // Filter out already visited catalog IDs to avoid infinite loops
-    const toFetch = catalogIds.filter(id => !visited.has(id));
-
-    if (toFetch.length === 0) {
+  private async fetchReleasesByCatalogIds(catalogIds: string[], includeDependencies: boolean = false, ancestors: Set<string> = new Set()): Promise<ReleaseEntity[]> {
+    if (catalogIds.length === 0) {
       return [];
     }
-
-    // Mark these as visited
-    toFetch.forEach(id => visited.add(id));
 
     const select: any = {
       project: { id: true, name: true, projectType: true },
@@ -1319,7 +1313,7 @@ export class OfferingService implements OnModuleInit {
       select,
       where: {
         status: ReleaseStatusEnum.RELEASED,
-        catalogId: In(toFetch),
+        catalogId: In(catalogIds),
       },
       relations,
     });
@@ -1328,9 +1322,17 @@ export class OfferingService implements OnModuleInit {
     if (includeDependencies) {
       for (const release of releases) {
         if (release.dependencies?.length > 0) {
-          const dependencyCatalogIds = release.dependencies.map(d => d.catalogId);
-          const nestedReleases = await this.fetchReleasesByCatalogIds(dependencyCatalogIds, true, visited);
-          release.dependencies = nestedReleases;
+          // Use ancestors (current path) rather than all-visited to allow diamond/shared deps
+          // while still preventing true circular references (e.g. A -> B -> A)
+          const dependencyCatalogIds = release.dependencies
+            .map(d => d.catalogId)
+            .filter(id => !ancestors.has(id));
+          if (dependencyCatalogIds.length > 0) {
+            const newAncestors = new Set([...ancestors, release.catalogId]);
+            release.dependencies = await this.fetchReleasesByCatalogIds(dependencyCatalogIds, true, newAncestors);
+          } else {
+            release.dependencies = [];
+          }
         }
       }
     }
