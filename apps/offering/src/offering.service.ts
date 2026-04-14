@@ -68,7 +68,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
-import { ArrayOverlap, ILike, In, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 
@@ -184,10 +184,6 @@ export class OfferingService implements OnModuleInit {
       where: [
         {
           releases: { catalogId: In(dto.components ?? []) },
-        },
-        {
-          projectType: ProjectType.FORMATION,
-          name: In(dto.formations ?? []),
         },
         {
           projectType: ProjectType.PRODUCT,
@@ -800,7 +796,6 @@ export class OfferingService implements OnModuleInit {
   // // TODO pagination
   private getDevicesByPlatformsFormationsAndComponents(
     platforms: string[],
-    formations: string[],
     projects: number[],
   ): Promise<DeviceEntity[]> {
     return this.deviceRepo.find({
@@ -808,7 +803,6 @@ export class OfferingService implements OnModuleInit {
       where: [
         { components: { release: { project: { id: In(projects) } } } },
         { platform: { name: In(platforms) } },
-        { formations: ArrayOverlap(formations) },
       ],
     });
   }
@@ -820,12 +814,9 @@ export class OfferingService implements OnModuleInit {
       });
 
       const platforms = project.platforms?.map((p) => p.name);
-      const formation =
-        project.projectType == ProjectType.FORMATION ? project.name : null;
 
       const device = await this.getDevicesByPlatformsFormationsAndComponents(
         platforms,
-        [formation],
         [project.id],
       );
 
@@ -935,6 +926,21 @@ export class OfferingService implements OnModuleInit {
       });
     });
     return platformOffering;
+  }
+
+  async getAllPlatformsOffering(options?: { withDependencies?: boolean }): Promise<PlatformOfferingDto[]> {
+    this.logger.log('getAllPlatformsOffering: fetching offering for all platforms');
+    const platforms = await this.platformRepo.find();
+    const results = await Promise.allSettled(
+      platforms.map(p =>
+        this.getOfferingForPlatform(
+          { platformIdentifier: p.id, withDependencies: options?.withDependencies ?? true },
+        ),
+      ),
+    );
+    return results
+      .filter((r): r is PromiseFulfilledResult<PlatformOfferingDto> => r.status === 'fulfilled')
+      .map(r => r.value);
   }
 
   async getOfferingForDeviceType(
@@ -1284,16 +1290,10 @@ export class OfferingService implements OnModuleInit {
     return componentOffering;
   }
 
-  private async fetchReleasesByCatalogIds(catalogIds: string[], includeDependencies: boolean = false, visited: Set<string> = new Set()): Promise<ReleaseEntity[]> {
-    // Filter out already visited catalog IDs to avoid infinite loops
-    const toFetch = catalogIds.filter(id => !visited.has(id));
-
-    if (toFetch.length === 0) {
+  private async fetchReleasesByCatalogIds(catalogIds: string[], includeDependencies: boolean = false, ancestors: Set<string> = new Set()): Promise<ReleaseEntity[]> {
+    if (catalogIds.length === 0) {
       return [];
     }
-
-    // Mark these as visited
-    toFetch.forEach(id => visited.add(id));
 
     const select: any = {
       project: { id: true, name: true, projectType: true },
@@ -1313,7 +1313,7 @@ export class OfferingService implements OnModuleInit {
       select,
       where: {
         status: ReleaseStatusEnum.RELEASED,
-        catalogId: In(toFetch),
+        catalogId: In(catalogIds),
       },
       relations,
     });
@@ -1322,9 +1322,17 @@ export class OfferingService implements OnModuleInit {
     if (includeDependencies) {
       for (const release of releases) {
         if (release.dependencies?.length > 0) {
-          const dependencyCatalogIds = release.dependencies.map(d => d.catalogId);
-          const nestedReleases = await this.fetchReleasesByCatalogIds(dependencyCatalogIds, true, visited);
-          release.dependencies = nestedReleases;
+          // Use ancestors (current path) rather than all-visited to allow diamond/shared deps
+          // while still preventing true circular references (e.g. A -> B -> A)
+          const dependencyCatalogIds = release.dependencies
+            .map(d => d.catalogId)
+            .filter(id => !ancestors.has(id));
+          if (dependencyCatalogIds.length > 0) {
+            const newAncestors = new Set([...ancestors, release.catalogId]);
+            release.dependencies = await this.fetchReleasesByCatalogIds(dependencyCatalogIds, true, newAncestors);
+          } else {
+            release.dependencies = [];
+          }
         }
       }
     }
@@ -1401,11 +1409,8 @@ export class OfferingService implements OnModuleInit {
 
     for (const project of projects) {
       const platforms = project.platforms?.map((p) => p.name);
-      const formation =
-        project.projectType == ProjectType.FORMATION ? project.name : null;
       const devices = await this.getDevicesByPlatformsFormationsAndComponents(
         platforms,
-        [formation],
         [project.id],
       );
 

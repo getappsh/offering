@@ -9,10 +9,21 @@ import { RuleOsEntity } from '../../database/entities/rule-os.entity';
 import { ReleaseEntity } from '../../database/entities/release.entity';
 import { DeviceTypeEntity } from '../../database/entities/device-type.entity';
 import { DeviceEntity } from '../../database/entities/device.entity';
-import { CreateRuleDto, CreatePolicyDto, CreateRestrictionDto, UpdateRuleDto, PolicyQueryDto } from '../dto';
+import { CreateRuleDto, CreatePolicyDto, CreateRestrictionDto, UpdateRuleDto } from '../dto';
 import { RuleValidationService } from './rule-validation.service';
 import { RuleType } from '../enums/rule.enums';
 import { RuleDefinition } from '../types/rule.types';
+
+interface RuleQueryFilter {
+  type?: RuleType;
+  isActive?: boolean;
+  releaseId?: string;
+  deviceTypeId?: number;
+  deviceTypeName?: string;
+  deviceId?: string;
+  osType?: string;
+  projectIdentifier?: string | number;
+}
 
 @Injectable()
 export class RuleService {
@@ -146,7 +157,7 @@ export class RuleService {
   /**
    * Finds all rules with optional filters
    */
-  async findAll(query: PolicyQueryDto, projectIds?: number[]): Promise<RuleEntity[]> {
+  async findAll(query: RuleQueryFilter, projectIds?: number[]): Promise<RuleEntity[]> {
     const queryBuilder = this.ruleRepository
       .createQueryBuilder('rule')
       .leftJoinAndSelect('rule.releaseAssociations', 'releaseAssoc')

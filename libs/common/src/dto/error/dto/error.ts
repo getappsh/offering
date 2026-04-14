@@ -21,6 +21,7 @@ export enum ErrorCode {
   // project management
   PM_OTHER = 'PROJECT_MANAGEMENT.unknown',
   PM_DELETE_PROJECT_FAILED = 'PROJECT_MANAGEMENT.deleteProjectFailed',
+  PM_WEBHOOK_INVALID = 'PROJECT_MANAGEMENT.webhookInvalid',
   PM_LABEL_NOT_FOUND = 'PROJECT_MANAGEMENT.labelNotFound',
   PM_LABEL_ALREADY_EXISTS = 'PROJECT_MANAGEMENT.labelAlreadyExists',
   PM_LABEL_IN_USE = 'PROJECT_MANAGEMENT.labelInUse',
@@ -80,6 +81,7 @@ export class ErrorDto {
 
       "`PROJECT_MANAGEMENT.unknown`: Error code not listed in the enum <br /> " +
       "`PROJECT_MANAGEMENT.deleteProjectFailed`: Failed to delete the project <br /> " +
+      "`PROJECT_MANAGEMENT.webhookInvalid`: Webhook token is invalid or no matching project found <br /> " +
       "`PROJECT_MANAGEMENT.labelNotFound`: Label with the given id or name was not found <br /> " +
       "`PROJECT_MANAGEMENT.labelAlreadyExists`: Label with the given name already exists <br /> " +
       "`PROJECT_MANAGEMENT.labelInUse`: Label cannot be deleted as it is being used by projects <br /> " +

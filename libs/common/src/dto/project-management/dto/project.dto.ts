@@ -9,6 +9,12 @@ import { ProjectMemberPreferencesDto } from "./project-member.dto";
 import { ReleaseDto } from "../../upload";
 import { Transform } from "class-transformer";
 
+export enum GitAuthMethod {
+  SSH_KEY = 'ssh_key',
+  HTTPS_CREDENTIALS = 'https_credentials',
+  NONE = 'none',
+}
+
 
 export class BaseProjectDto {
 
@@ -181,16 +187,52 @@ export class DetailedProjectDto extends ProjectDto {
   @ApiProperty({ required: false, type: MemberResDto, isArray: true })
   members?: MemberResDto[]
 
-
   @ApiProperty({ required: false, type: ProjectTokenDto, isArray: true })
   tokens?: ProjectTokenDto[]
 
+  @ApiProperty({ required: false, description: 'Generated webhook URL for git integration' })
+  gitWebhookUrl?: string;
+
+  @ApiProperty({ required: false, description: 'Git repository clone URL (HTTPS or SSH)' })
+  gitCloneUrl?: string;
+
+  @ApiProperty({ required: false, description: 'Whether an SSH private key is configured for git authentication', type: Boolean })
+  gitSshKeyConfigured?: boolean;
+
+  @ApiProperty({ required: false, description: 'Interval in minutes for periodic git clone', type: Number })
+  gitCloneInterval?: number;
+
+  @ApiProperty({ required: false, description: 'Branch to clone (defaults to repository default branch)' })
+  gitBranch?: string;
+
+  @ApiProperty({ required: false, description: 'Whether HTTPS username/password credentials are configured', type: Boolean })
+  gitHttpsCredentialsConfigured?: boolean;
+
+  @ApiProperty({ required: false, description: 'Git authentication method in use', enum: GitAuthMethod })
+  gitAuthMethod?: GitAuthMethod;
+
+  @ApiProperty({ required: false, description: 'Path to the .getapp file within the repository (defaults to repo root)' })
+  gitGetappFilePath?: string;
 
   fromProjectEntity(project: ProjectEntity) {
     super.fromProjectEntity(project);
     this.createdAt = project.createdDate;
     this.members = project.memberProject?.map(memberProject => new MemberResDto().fromMemberProjectEntity(memberProject));
-    this.tokens = project.tokens?.map(token => ProjectTokenDto.fromProjectTokenEntity(token))
+    this.tokens = project.tokens?.map(token => ProjectTokenDto.fromProjectTokenEntity(token));
+
+    const gs = project.gitSource;
+    this.gitWebhookUrl = gs?.webhookUrl;
+    this.gitCloneUrl = gs?.cloneUrl ?? undefined;
+    this.gitSshKeyConfigured = !!gs?.sshKey;
+    this.gitCloneInterval = gs?.cloneInterval;
+    this.gitBranch = gs?.branch;
+    this.gitHttpsCredentialsConfigured = !!(gs?.httpsUsername && gs?.httpsPassword);
+    this.gitGetappFilePath = gs?.getappFilePath;
+    this.gitAuthMethod = gs?.sshKey
+      ? GitAuthMethod.SSH_KEY
+      : (gs?.httpsUsername && gs?.httpsPassword)
+        ? GitAuthMethod.HTTPS_CREDENTIALS
+        : GitAuthMethod.NONE;
 
     return this;
   }
@@ -246,7 +288,49 @@ export class CreateProjectDto {
   @ApiProperty({ required: false, description: 'Label name to assign to the project' })
   label?: string;
 
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @ApiProperty({ required: false, description: 'Git repository clone URL (HTTPS or SSH)' })
+  gitCloneUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @ApiProperty({ required: false, description: 'SSH private key for git authentication (base64 encoded)' })
+  gitSshKey?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @ApiProperty({ required: false, description: 'Interval in minutes for periodic git clone (default: 60 if git configured)', type: Number })
+  gitCloneInterval?: number;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @ApiProperty({ required: false, description: 'Branch to clone (defaults to repository default branch)' })
+  gitBranch?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @ApiProperty({ required: false, description: 'Username for HTTPS git authentication' })
+  gitHttpsUsername?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @ApiProperty({ required: false, description: 'Password or personal access token for HTTPS git authentication' })
+  gitHttpsPassword?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @ApiProperty({ required: false, description: 'Path to the .getapp file within the repository (defaults to repo root)' })
+  gitGetappFilePath?: string;
+
   username: string;
+  apiBaseUrl?: string;
 }
 
 export class EditProjectDto extends PartialType(OmitType(CreateProjectDto, ['projectType'] as const)) {
