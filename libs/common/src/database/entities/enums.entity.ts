@@ -160,6 +160,7 @@ export enum ReleaseStatusEnum {
     APPROVED = 'approved',
     RELEASED = 'released',
     ARCHIVED = 'archived',
+    ERROR = 'error',
 }
 
 
