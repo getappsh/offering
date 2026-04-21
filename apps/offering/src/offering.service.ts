@@ -943,6 +943,21 @@ export class OfferingService implements OnModuleInit {
       .map(r => r.value);
   }
 
+  async getAllDeviceTypesOffering(options?: { withDependencies?: boolean }): Promise<DeviceTypeOfferingDto[]> {
+    this.logger.log('getAllDeviceTypesOffering: fetching offering for all device types');
+    const deviceTypes = await this.deviceTypeRepo.find();
+    const results = await Promise.allSettled(
+      deviceTypes.map(dt =>
+        this.getOfferingForDeviceType(
+          { deviceTypeIdentifier: dt.id, withDependencies: options?.withDependencies ?? true },
+        ),
+      ),
+    );
+    return results
+      .filter((r): r is PromiseFulfilledResult<DeviceTypeOfferingDto> => r.status === 'fulfilled')
+      .map(r => r.value);
+  }
+
   async getOfferingForDeviceType(
     query: DeviceTypeOfferingFilterQuery,
   ): Promise<DeviceTypeOfferingDto> {
