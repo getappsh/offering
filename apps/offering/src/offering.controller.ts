@@ -32,6 +32,11 @@ export class OfferingController {
     return this.offeringService.getAllPlatformsOffering(query);
   }
 
+  @MessagePattern(OfferingTopics.GET_OFFERING_FOR_ALL_DEVICE_TYPES)
+  getAllDeviceTypesOffering(@RpcPayload() query: { withDependencies?: boolean }) {
+    return this.offeringService.getAllDeviceTypesOffering(query);
+  }
+
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_DEVICE_TYPE)
   getOfferingForDeviceType(@RpcPayload() query: DeviceTypeOfferingFilterQuery) {
     return this.offeringService.getOfferingForDeviceType(query);
