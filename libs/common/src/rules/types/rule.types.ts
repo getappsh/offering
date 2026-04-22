@@ -17,6 +17,7 @@ export interface RuleDefinition {
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
+  isPush: boolean;
   rule: any; // The actual rule object conforming to @usex/rule-engine
 }
 

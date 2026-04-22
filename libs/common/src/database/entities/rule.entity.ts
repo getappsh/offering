@@ -26,6 +26,9 @@ export class RuleEntity {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  isPush: boolean;
+
   @Column({ type: 'jsonb' })
   rule: any;
 

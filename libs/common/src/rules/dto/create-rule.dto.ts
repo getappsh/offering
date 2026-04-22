@@ -66,6 +66,11 @@ export class CreatePolicyDto {
   @IsBoolean()
   isActive?: boolean;
 
+  @ApiPropertyOptional({ description: 'Whether this policy should be pushed to agents', default: false })
+  @IsOptional()
+  @IsBoolean()
+  isPush?: boolean;
+
   @ApiProperty({ type: 'object', description: 'Rule engine compliant rule object' })
   @IsObject()
   @IsNotEmpty()
@@ -148,6 +153,11 @@ export class CreateRuleDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'Whether this policy should be pushed to agents', default: false })
+  @IsOptional()
+  @IsBoolean()
+  isPush?: boolean;
 
   @ApiProperty({ type: 'object', description: 'Rule engine compliant rule object' })
   @IsObject()

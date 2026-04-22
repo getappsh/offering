@@ -73,9 +73,10 @@ export class ReleaseOfferingDto {
   @Type(() => ComponentV2Dto)
   release: ComponentV2Dto;
 
-  @ApiProperty({ description: "Flag indicating if this is a push action", default: false })
+  @ApiProperty({ description: "Flag indicating if this is a push action", default: false, required: false })
   @IsBoolean()
-  isPush: boolean;
+  @IsOptional()
+  isPush?: boolean;
 
   @ApiProperty({ 
     type: () => [PlatformDeviceTypeTreeDto], 
