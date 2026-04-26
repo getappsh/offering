@@ -68,7 +68,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike, In, Not, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 
@@ -1189,6 +1189,11 @@ export class OfferingService implements OnModuleInit {
     const whereCondition: any = {};
     if (dto.query && dto.query.trim() !== '') {
       whereCondition.name = ILike(`%${dto.query}%`);
+    }
+    if (dto.projectTypes && dto.projectTypes.length > 0) {
+      whereCondition.projectType = In(dto.projectTypes);
+    } else {
+      whereCondition.projectType = Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]));
     }
 
     const [projects, total] = await this.projectRepo.findAndCount({

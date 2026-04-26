@@ -173,7 +173,9 @@ export enum ProjectType {
     APPLICATION = "application",
     LIB = "lib",
     BUNDLE = "bundle",
-    INFRA = "infra"
+    INFRA = "infra",
+    CONFIG = "config",
+    CONFIG_MAP = "config_map"
   }
 
 

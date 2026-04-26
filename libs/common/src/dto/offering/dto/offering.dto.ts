@@ -2,8 +2,9 @@ import { ApiProperty, ApiPropertyOptional, IntersectionType, PartialType } from 
 import { ComponentV2Dto } from "../../upload";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto, ProjectRefDto } from "../../devices-hierarchy";
 import { BadRequestException } from "@nestjs/common";
-import { ValidateIf, IsString, IsNotEmpty, IsInt, IsOptional, IsPositive } from "class-validator";
+import { ValidateIf, IsString, IsNotEmpty, IsInt, IsOptional, IsPositive, IsEnum } from "class-validator";
 import { Transform, Type } from "class-transformer";
+import { ProjectType } from "@app/common/database/entities";
 
 export class GetProjectsOfferingDto {
   @ApiProperty({
@@ -35,6 +36,17 @@ export class GetProjectsOfferingDto {
   @IsPositive()
   @Type(() => Number)
   perPage?: number = 20;
+
+  @ApiPropertyOptional({
+    description: 'Filter by specific project types. When not provided, config and config_map types are excluded by default.',
+    example: ['application', 'lib'],
+    enum: ProjectType,
+    isArray: true,
+  })
+  @IsOptional()
+  @IsEnum(ProjectType, { each: true })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  projectTypes?: ProjectType[];
 
   toString() {
     return JSON.stringify(this);
