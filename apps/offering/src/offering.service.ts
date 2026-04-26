@@ -303,7 +303,7 @@ export class OfferingService implements OnModuleInit {
   /**
    * Assigns pre-fetched policies from a map to all releases in the tree.
    */
-  private assignPoliciesFromMap(releases: ComponentV2Dto[], policiesMap: Map<string, any[]>): void {
+  private assignPoliciesFromMap(releases: ComponentV2Dto[], policiesMap: Map<string, RuleDefinition[]>): void {
     for (const release of releases) {
       release.policies = policiesMap.get(release.id) ?? [];
       if (release.dependencies?.length) {
@@ -314,8 +314,8 @@ export class OfferingService implements OnModuleInit {
 
   /**
    * Fetches policies for all releases (including dependencies at any depth) and attaches them.
-   * All IDs are collected in a single tree-walk, then fetched in one parallel batch —
-   * avoiding the sequential-per-level recursion that caused timeouts with deep dependency trees.
+   * All IDs are collected in a single tree-walk, then fetched in ONE bulk Kafka call —
+   * replacing the previous N concurrent calls that saturated the Kafka consumer group.
    */
   private async enrichReleasesWithPolicies(
     releases: ComponentV2Dto[],
@@ -325,28 +325,21 @@ export class OfferingService implements OnModuleInit {
     }
 
     // Walk the entire dependency tree once to get all unique IDs
-    const allIds = this.collectReleaseIds(releases);
-    this.logger.debug(`Fetching policies for ${allIds.size} unique releases (flat batch)`);
+    const allIds = Array.from(this.collectReleaseIds(releases));
+    this.logger.debug(`Fetching policies for ${allIds.length} unique releases (bulk)`);
 
-    // Fetch all policies in a single parallel batch — no sequential recursion
-    const entries = await Promise.all(
-      Array.from(allIds).map(async (id) => {
-        const policies = await lastValueFrom(
-          this.uploadClient.send<RuleDefinition[]>(UploadTopics.GET_POLICIES_FOR_RELEASE, id),
-        ).catch((err) => {
-          this.logger.error(`Failed to fetch policies for release ${id}: ${err}`);
-          return [];
-        });
-        return [id, policies] as [string, RuleDefinition[]];
-      }),
-    );
-
-    const policiesMap = new Map(entries);
+    // Single Kafka call returning Record<catalogId, policy[]>
+    const policiesMap: Record<string, RuleDefinition[]> = await lastValueFrom(
+      this.uploadClient.send<Record<string, RuleDefinition[]>>(UploadTopics.GET_POLICIES_FOR_RELEASES, allIds),
+    ).catch((err) => {
+      this.logger.error(`Failed to bulk-fetch policies: ${err}`);
+      return {};
+    });
 
     // Assign policies to every node in the tree from the pre-built map
-    this.assignPoliciesFromMap(releases, policiesMap);
+    this.assignPoliciesFromMap(releases, new Map(Object.entries(policiesMap)));
 
-    this.logger.debug(`Successfully attached policies to ${allIds.size} releases`);
+    this.logger.debug(`Successfully attached policies to ${allIds.length} releases`);
   }
 
   private async getDevicesInGroup(groups: number[]): Promise<string[]> {
@@ -1476,6 +1469,7 @@ export class OfferingService implements OnModuleInit {
 
     this.uploadClient.subscribeToResponseOf([
       UploadTopics.GET_POLICIES_FOR_RELEASE,
+      UploadTopics.GET_POLICIES_FOR_RELEASES,
     ]);
     await this.uploadClient.connect();
   }
