@@ -71,6 +71,7 @@ import { lastValueFrom } from 'rxjs';
 import { ILike, In, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
+import { RuleDefinition } from '@app/common/rules/types/rule.types';
 
 @Injectable()
 export class OfferingService implements OnModuleInit {
@@ -287,8 +288,34 @@ export class OfferingService implements OnModuleInit {
   }
 
   /**
-   * Fetches policies for each release and attaches them to the ComponentV2Dto objects
-   * Also recursively enriches any dependencies with their policies
+   * Collects all unique release IDs across the entire dependency tree in one recursive pass.
+   */
+  private collectReleaseIds(releases: ComponentV2Dto[], ids: Set<string> = new Set()): Set<string> {
+    for (const release of releases) {
+      if (release.id) ids.add(release.id);
+      if (release.dependencies?.length) {
+        this.collectReleaseIds(release.dependencies, ids);
+      }
+    }
+    return ids;
+  }
+
+  /**
+   * Assigns pre-fetched policies from a map to all releases in the tree.
+   */
+  private assignPoliciesFromMap(releases: ComponentV2Dto[], policiesMap: Map<string, any[]>): void {
+    for (const release of releases) {
+      release.policies = policiesMap.get(release.id) ?? [];
+      if (release.dependencies?.length) {
+        this.assignPoliciesFromMap(release.dependencies, policiesMap);
+      }
+    }
+  }
+
+  /**
+   * Fetches policies for all releases (including dependencies at any depth) and attaches them.
+   * All IDs are collected in a single tree-walk, then fetched in one parallel batch —
+   * avoiding the sequential-per-level recursion that caused timeouts with deep dependency trees.
    */
   private async enrichReleasesWithPolicies(
     releases: ComponentV2Dto[],
@@ -297,38 +324,29 @@ export class OfferingService implements OnModuleInit {
       return;
     }
 
-    this.logger.debug(`Fetching policies for ${releases.length} releases`);
+    // Walk the entire dependency tree once to get all unique IDs
+    const allIds = this.collectReleaseIds(releases);
+    this.logger.debug(`Fetching policies for ${allIds.size} unique releases (flat batch)`);
 
-    // Fetch policies for all releases in parallel
-    const policiesPromises = releases.map((release) =>
-      lastValueFrom(
-        this.uploadClient.send(
-          UploadTopics.GET_POLICIES_FOR_RELEASE,
-          release.id,
-        ),
-      ).catch((err) => {
-        this.logger.error(
-          `Failed to fetch policies for release ${release.id}: ${err}`,
-        );
-        return [];
+    // Fetch all policies in a single parallel batch — no sequential recursion
+    const entries = await Promise.all(
+      Array.from(allIds).map(async (id) => {
+        const policies = await lastValueFrom(
+          this.uploadClient.send<RuleDefinition[]>(UploadTopics.GET_POLICIES_FOR_RELEASE, id),
+        ).catch((err) => {
+          this.logger.error(`Failed to fetch policies for release ${id}: ${err}`);
+          return [];
+        });
+        return [id, policies] as [string, RuleDefinition[]];
       }),
     );
 
-    const policiesResults = await Promise.all(policiesPromises);
+    const policiesMap = new Map(entries);
 
-    // Attach policies to each release
-    releases.forEach((release, index) => {
-      release.policies = policiesResults[index];
-    });
+    // Assign policies to every node in the tree from the pre-built map
+    this.assignPoliciesFromMap(releases, policiesMap);
 
-    this.logger.debug(`Successfully attached policies to releases`);
-
-    // Recursively enrich dependencies
-    for (const release of releases) {
-      if (release.dependencies && release.dependencies.length > 0) {
-        await this.enrichReleasesWithPolicies(release.dependencies);
-      }
-    }
+    this.logger.debug(`Successfully attached policies to ${allIds.size} releases`);
   }
 
   private async getDevicesInGroup(groups: number[]): Promise<string[]> {
