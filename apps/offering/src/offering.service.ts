@@ -68,7 +68,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike, In, IsNull, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 
@@ -1186,7 +1186,7 @@ export class OfferingService implements OnModuleInit {
   ): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     this.logger.log(`get offering for projects`);
 
-    const whereCondition: any = {};
+    const whereCondition: any = { archivedAt: IsNull() };
     if (dto.query && dto.query.trim() !== '') {
       whereCondition.name = ILike(`%${dto.query}%`);
     }

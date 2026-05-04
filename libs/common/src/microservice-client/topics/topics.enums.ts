@@ -49,6 +49,9 @@ export const UploadTopics = {
     GET_DEPLOYMENT_REPORT: `getapp-upload.get-deployment-report${region}`,
     // Settings
     GET_SBOM_ENABLED: `getapp-upload.get-sbom-enabled${region}`,
+    ARCHIVE_PROJECT_RELEASES: `getapp-upload.archive-project-releases${region}`,
+    RESTORE_PROJECT_RELEASES: `getapp-upload.restore-project-releases${region}`,
+    DELETE_PROJECT_RELEASES: `getapp-upload.delete-project-releases${region}`,
 
 } as const
 
@@ -173,7 +176,11 @@ export const ProjectManagementTopics = {
     GET_SYSTEM_WIDE_DEPLOYMENT_REPORT: `getapp-project-management.get-system-wide-deployment-report${region}`,
     GET_PROJECT_DEPLOYMENT_REPORT: `getapp-project-management.get-project-deployment-report${region}`,
 
-    CHECK_HEALTH: `getapp-project-management.check-health${region}`
+    CHECK_HEALTH: `getapp-project-management.check-health${region}`,
+
+    // Archive / Restore
+    RESTORE_PROJECT: `getapp-project-management.restore-project${region}`,
+    PERMANENTLY_DELETE_PROJECT: `getapp-project-management.permanently-delete-project${region}`,
 } as const
 
 export const ProjectManagementTopicsEmit = {

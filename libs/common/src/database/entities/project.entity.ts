@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinTable, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne } from "typeorm";
+import { Column, Entity, Index, JoinTable, ManyToMany, OneToMany, ManyToOne, JoinColumn, OneToOne, CreateDateColumn } from "typeorm";
 import { BaseEntity } from "./base.entity";
 import { MemberProjectEntity } from "./member_project.entity";
 import { RegulationEntity } from "./regulation.entity";
@@ -65,6 +65,9 @@ export class ProjectEntity extends BaseEntity {
 
     @OneToOne(() => ProjectGitSourceEntity, gs => gs.project, { nullable: true })
     gitSource?: ProjectGitSourceEntity | null;
+
+    @Column({ name: 'archived_at', type: 'timestamptz', nullable: true, default: null })
+    archivedAt: Date | null;
 
     toString() {
         return JSON.stringify(this)

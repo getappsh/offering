@@ -39,6 +39,9 @@ export class BaseProjectDto {
   @ApiProperty({ required: false, description: 'Label name assigned to the project' })
   label?: string;
 
+  @ApiProperty({ required: false, description: 'Date when the project was archived. Null means the project is active.', type: Date })
+  archivedAt?: Date | null;
+
   fromProjectEntity(project: ProjectEntity) {
     this.id = project.id;
     this.name = project.name;
@@ -46,6 +49,7 @@ export class BaseProjectDto {
     this.description = project.description;
     this.projectType = project.projectType;
     this.label = project.label?.name;
+    this.archivedAt = project.archivedAt ?? null;
     // this.status = project.status;
 
     return this;
