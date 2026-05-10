@@ -152,9 +152,8 @@ export class OfferingService implements OnModuleInit {
       ?.filter((p) => !dto.components?.includes(p.release.catalogId))
       ?.map((p) => ComponentV2Dto.fromEntity(p.release));
 
-    // Fetch policies for all releases in offer and push
-    await this.enrichReleasesWithPolicies(res.offer);
-    await this.enrichReleasesWithPolicies(res.push);
+    // Single bulk Kafka call for all releases in offer and push
+    await this.enrichReleasesWithPolicies([...res.offer, ...res.push]);
 
     this.logger.log(
       `Get offering for device: ${dto.deviceId}, offer count: ${res.offer?.length}, push count: ${res.push?.length}`,
@@ -912,9 +911,16 @@ export class OfferingService implements OnModuleInit {
       );
 
     const [policyOfferingProject, offering] = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), params.withDependencies),
-      this.getOfferingForProjectsByIds(projects, params.withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), params.withDependencies, true),
+      this.getOfferingForProjectsByIds(projects, params.withDependencies, true)
     ]);
+
+    // Single bulk Kafka call for all components (replaces 3 independent calls)
+    await this.enrichReleasesWithPolicies([
+      ...Array.from(policyOfferingProject.values()),
+      ...Array.from(offering.values()),
+    ]);
+
     const policyOfferingCatalog = new Map(
       Array.from(policyOfferingProject).map(([_, v]) => [v.id, v]),
     );
@@ -1049,9 +1055,12 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), query.withDependencies),
-      this.getOfferingForProjectsByIds(projectIds, query.withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), query.withDependencies, true),
+      this.getOfferingForProjectsByIds(projectIds, query.withDependencies, true)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    // Single bulk Kafka call for all components (replaces 3 independent calls)
+    await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
 
     const deviceTypeOffering =
       DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
@@ -1241,9 +1250,12 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map((p) => p.catalogId)),
-      this.getLatestReleaseOfProjects(projectIds),
+      this.getComponents(policies.map((p) => p.catalogId), undefined, true),
+      this.getLatestReleaseOfProjects(projectIds, undefined, true),
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    // Single bulk Kafka call for all components (replaces 2 independent calls)
+    await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
 
     const projectOfferings = projects.map((p) => {
       const projectOffering = new ProjectRefOfferingDto();
@@ -1301,7 +1313,7 @@ export class OfferingService implements OnModuleInit {
     }
   }
 
-  private async getOfferingForProjectsByIds(projectIds: number[], withDependencies: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getOfferingForProjectsByIds(projectIds: number[], withDependencies: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`Get offering for projects by ids: ${JSON.stringify(projectIds)}`)
     let policies = await this.policyService.findByProjects(projectIds);
 
@@ -1310,9 +1322,14 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), withDependencies),
-      this.getLatestReleaseOfProjects(projectIds, withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), withDependencies, true),
+      this.getLatestReleaseOfProjects(projectIds, withDependencies, true)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
+    }
+
     return componentOffering;
   }
 
@@ -1367,7 +1384,7 @@ export class OfferingService implements OnModuleInit {
   }
 
 
-  private async getLatestReleaseOfProjects(projects: number[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getLatestReleaseOfProjects(projects: number[], withDependencies?: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
     const releases = await this.releaseRepo.find({
       select: {
@@ -1397,14 +1414,14 @@ export class OfferingService implements OnModuleInit {
       }
     });
 
-    // Enrich all releases with policies
-    const components = Array.from(resultMap.values());
-    await this.enrichReleasesWithPolicies(components);
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(resultMap.values()));
+    }
 
     return resultMap;
   }
 
-  private async getComponents(catalogIds: string[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getComponents(catalogIds: string[], withDependencies?: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get components: ${JSON.stringify(catalogIds)}`);
     const releases = await this.fetchReleasesByCatalogIds(catalogIds, withDependencies);
     const componentMap = new Map<number, ComponentV2Dto>();
@@ -1414,9 +1431,9 @@ export class OfferingService implements OnModuleInit {
       }
     });
 
-    // Enrich all components with policies
-    const components = Array.from(componentMap.values());
-    await this.enrichReleasesWithPolicies(components);
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(componentMap.values()));
+    }
 
     return componentMap;
   }
