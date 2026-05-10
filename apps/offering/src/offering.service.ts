@@ -77,6 +77,12 @@ import { RuleDefinition } from '@app/common/rules/types/rule.types';
 export class OfferingService implements OnModuleInit {
   private readonly logger = new Logger(OfferingService.name);
 
+  private readonly deviceTypeHierarchyCache = new Map<number, { value: DeviceTypeHierarchyDto; expiresAt: number }>();
+  private readonly DEVICE_TYPE_HIERARCHY_CACHE_TTL_MS = 60_000; // 1 minute
+
+  private readonly projectsOfferingCache = new Map<string, { value: PaginatedResultDto<ProjectRefOfferingDto>; expiresAt: number }>();
+  private readonly PROJECTS_OFFERING_CACHE_TTL_MS = 60_000; // 1 minute
+
   constructor(
     @InjectRepository(ReleaseEntity)
     private readonly releaseRepo: Repository<ReleaseEntity>,
@@ -851,6 +857,9 @@ export class OfferingService implements OnModuleInit {
       this.compOfferingRepo.delete({ release: { catalogId: dto.catalogId } });
       this.deviceClient.emit(DeviceTopicsEmit.RELEASE_CHANGED_EVENT, dto);
     }
+    // Invalidate projects offering cache since available releases changed
+    this.projectsOfferingCache.clear();
+    this.logger.debug('Cleared projects offering cache due to release change event');
   }
 
   async getOfferingForPlatform(
@@ -969,6 +978,17 @@ export class OfferingService implements OnModuleInit {
       .map(r => r.value);
   }
 
+  private async refreshHierarchyCacheForDeviceType(deviceTypeId: number): Promise<DeviceTypeHierarchyDto> {
+    const result = await lastValueFrom(
+      this.deviceClient.send<DeviceTypeHierarchyDto>(
+        DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
+        { deviceTypeId },
+      ),
+    );
+    this.deviceTypeHierarchyCache.set(deviceTypeId, { value: result, expiresAt: Date.now() + this.DEVICE_TYPE_HIERARCHY_CACHE_TTL_MS });
+    return result;
+  }
+
   async getOfferingForDeviceType(
     query: DeviceTypeOfferingFilterQuery,
   ): Promise<DeviceTypeOfferingDto> {
@@ -980,15 +1000,29 @@ export class OfferingService implements OnModuleInit {
 
     let tree: DeviceTypeHierarchyDto;
     try {
-      tree =
-        query.deviceTypeTree && Object.keys(query.deviceTypeTree).length > 0
-          ? query.deviceTypeTree
-          : await lastValueFrom(
-            this.deviceClient.send(
-              DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
-              { deviceTypeId: deviceTypeId },
-            ),
-          );
+      if (query.deviceTypeTree && Object.keys(query.deviceTypeTree).length > 0) {
+        tree = query.deviceTypeTree;
+      } else if (!query.ignoreCache) {
+        const cached = this.deviceTypeHierarchyCache.get(deviceTypeId);
+        if (cached) {
+          if (cached.expiresAt <= Date.now()) {
+            // Stale: serve immediately, refresh in background
+            this.logger.debug(`Hierarchy cache stale for deviceType ${deviceTypeId}, refreshing in background`);
+            this.refreshHierarchyCacheForDeviceType(deviceTypeId).catch(err =>
+              this.logger.warn(`Background hierarchy cache refresh failed for deviceType ${deviceTypeId}: ${err}`)
+            );
+          } else {
+            this.logger.debug(`Hierarchy cache hit for deviceType ${deviceTypeId}`);
+          }
+          tree = cached.value;
+        } else {
+          // Cold start: no cache yet, fetch synchronously
+          tree = await this.refreshHierarchyCacheForDeviceType(deviceTypeId);
+        }
+      } else {
+        this.logger.debug(`Hierarchy cache bypassed for deviceType ${deviceTypeId} (ignoreCache=true)`);
+        tree = await this.refreshHierarchyCacheForDeviceType(deviceTypeId);
+      }
       delete query.deviceTypeTree;
     } catch (e) {
       this.logger.error(
@@ -1212,6 +1246,37 @@ export class OfferingService implements OnModuleInit {
   ): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     this.logger.log(`get offering for projects`);
 
+    const cacheKey = dto.toString();
+
+    if (!dto.ignoreCache) {
+      const cached = this.projectsOfferingCache.get(cacheKey);
+      if (cached) {
+        if (cached.expiresAt <= Date.now()) {
+          // Stale: serve immediately, refresh in background
+          this.logger.debug(`Projects offering cache stale for key "${cacheKey}", refreshing in background`);
+          this.fetchProjectsOffering(dto).then(result => {
+            this.projectsOfferingCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
+          }).catch(err => this.logger.warn(`Background projects offering cache refresh failed: ${err}`));
+        } else {
+          this.logger.debug(`Projects offering cache hit for key "${cacheKey}"`);
+        }
+        return cached.value;
+      }
+    } else {
+      this.logger.debug(`Projects offering cache bypassed (ignoreCache=true)`);
+    }
+
+    // Cold start or cache bypassed: fetch and store
+    const result = await this.fetchProjectsOffering(dto);
+    if (!dto.ignoreCache) {
+      this.projectsOfferingCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
+    }
+    return result;
+  }
+
+  private async fetchProjectsOffering(
+    dto: GetProjectsOfferingDto,
+  ): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     const whereCondition: any = {};
     if (dto.query && dto.query.trim() !== '') {
       whereCondition.name = ILike(`%${dto.query}%`);
@@ -1231,7 +1296,7 @@ export class OfferingService implements OnModuleInit {
       take: dto.perPage,
       order: { id: 'ASC' },
     });
-    
+
     let projectIds = projects.map((p) => p.id);
 
     const policies = await this.policyService.findByProjects(projectIds);
@@ -1261,6 +1326,21 @@ export class OfferingService implements OnModuleInit {
     res.page = dto.page;
     res.perPage = dto.perPage;
     return res;
+  }
+
+  private async warmProjectsOfferingCache(): Promise<void> {
+    this.logger.log('Pre-warming projects offering cache (first page)');
+    const dto = new GetProjectsOfferingDto();
+    dto.page = 1;
+    dto.perPage = 20;
+    try {
+      const result = await this.fetchProjectsOffering(dto);
+      const cacheKey = dto.toString();
+      this.projectsOfferingCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
+      this.logger.log(`Projects offering cache pre-warmed (total projects: ${result.total})`);
+    } catch (err) {
+      this.logger.warn(`Failed to pre-warm projects offering cache: ${err}`);
+    }
   }
 
   private async getDeviceTypeIdByParams(
@@ -1472,5 +1552,8 @@ export class OfferingService implements OnModuleInit {
       UploadTopics.GET_POLICIES_FOR_RELEASES,
     ]);
     await this.uploadClient.connect();
+
+    // Pre-warm the projects offering cache so the first request is served from cache
+    this.warmProjectsOfferingCache();
   }
 }
