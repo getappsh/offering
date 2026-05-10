@@ -80,7 +80,7 @@ export class OfferingService implements OnModuleInit {
   private readonly deviceTypeHierarchyCache = new Map<number, { value: DeviceTypeHierarchyDto; expiresAt: number }>();
   private readonly DEVICE_TYPE_HIERARCHY_CACHE_TTL_MS = 60_000; // 1 minute
 
-  private readonly projectsOfferingCache = new Map<string, { value: PaginatedResultDto<ProjectRefOfferingDto>; expiresAt: number }>();
+  private readonly projectsOfferingCache = new Map<string, { value: ProjectRefOfferingDto[]; expiresAt: number }>();
   private readonly PROJECTS_OFFERING_CACHE_TTL_MS = 60_000; // 1 minute
 
   constructor(
@@ -1246,43 +1246,57 @@ export class OfferingService implements OnModuleInit {
   ): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     this.logger.log(`get offering for projects`);
 
-    const cacheKey = dto.toString();
+    // Cache key is query-only so any page/perPage combination hits the same cached full list
+    const cacheKey = dto.query?.trim() ?? '';
+    const page = dto.page ?? 1;
+    const perPage = dto.perPage ?? 20;
 
     if (!dto.ignoreCache) {
       const cached = this.projectsOfferingCache.get(cacheKey);
       if (cached) {
         if (cached.expiresAt <= Date.now()) {
           // Stale: serve immediately, refresh in background
-          this.logger.debug(`Projects offering cache stale for key "${cacheKey}", refreshing in background`);
-          this.fetchProjectsOffering(dto).then(result => {
-            this.projectsOfferingCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
+          this.logger.debug(`Projects offering cache stale for query "${cacheKey}", refreshing in background`);
+          this.fetchProjectsOffering(dto.query).then(all => {
+            this.projectsOfferingCache.set(cacheKey, { value: all, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
           }).catch(err => this.logger.warn(`Background projects offering cache refresh failed: ${err}`));
         } else {
-          this.logger.debug(`Projects offering cache hit for key "${cacheKey}"`);
+          this.logger.debug(`Projects offering cache hit for query "${cacheKey}"`);
         }
-        return cached.value;
+        return this.paginateProjectsInMemory(cached.value, page, perPage);
       }
     } else {
       this.logger.debug(`Projects offering cache bypassed (ignoreCache=true)`);
     }
 
-    // Cold start or cache bypassed: fetch and store
-    const result = await this.fetchProjectsOffering(dto);
+    // Cold start or cache bypassed: fetch full list and store
+    const all = await this.fetchProjectsOffering(dto.query);
     if (!dto.ignoreCache) {
-      this.projectsOfferingCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
+      this.projectsOfferingCache.set(cacheKey, { value: all, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
     }
-    return result;
+    return this.paginateProjectsInMemory(all, page, perPage);
   }
 
-  private async fetchProjectsOffering(
-    dto: GetProjectsOfferingDto,
-  ): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
+  private paginateProjectsInMemory(
+    all: ProjectRefOfferingDto[],
+    page: number,
+    perPage: number,
+  ): PaginatedResultDto<ProjectRefOfferingDto> {
+    const res = new PaginatedResultDto<ProjectRefOfferingDto>();
+    res.total = all.length;
+    res.page = page;
+    res.perPage = perPage;
+    res.data = all.slice((page - 1) * perPage, page * perPage);
+    return res;
+  }
+
+  private async fetchProjectsOffering(query?: string): Promise<ProjectRefOfferingDto[]> {
     const whereCondition: any = {};
-    if (dto.query && dto.query.trim() !== '') {
-      whereCondition.name = ILike(`%${dto.query}%`);
+    if (query && query.trim() !== '') {
+      whereCondition.name = ILike(`%${query}%`);
     }
 
-    const [projects, total] = await this.projectRepo.findAndCount({
+    const projects = await this.projectRepo.find({
       select: {
         id: true,
         name: true,
@@ -1292,8 +1306,6 @@ export class OfferingService implements OnModuleInit {
       },
       where: whereCondition,
       relations: { label: true },
-      skip: (dto.page - 1) * dto.perPage,
-      take: dto.perPage,
       order: { id: 'ASC' },
     });
 
@@ -1310,7 +1322,7 @@ export class OfferingService implements OnModuleInit {
       this.getLatestReleaseOfProjects(projectIds),
     ]).then(([components, offering]) => new Map([...components, ...offering]));
 
-    const projectOfferings = projects.map((p) => {
+    return projects.map((p) => {
       const projectOffering = new ProjectRefOfferingDto();
       projectOffering.projectId = p.id;
       projectOffering.projectName = p.name;
@@ -1319,25 +1331,14 @@ export class OfferingService implements OnModuleInit {
       projectOffering.release = componentOffering.get(p.id);
       return projectOffering;
     });
-
-    const res = new PaginatedResultDto<ProjectRefOfferingDto>();
-    res.data = projectOfferings;
-    res.total = total;
-    res.page = dto.page;
-    res.perPage = dto.perPage;
-    return res;
   }
 
   private async warmProjectsOfferingCache(): Promise<void> {
-    this.logger.log('Pre-warming projects offering cache (first page)');
-    const dto = new GetProjectsOfferingDto();
-    dto.page = 1;
-    dto.perPage = 20;
+    this.logger.log('Pre-warming projects offering cache');
     try {
-      const result = await this.fetchProjectsOffering(dto);
-      const cacheKey = dto.toString();
-      this.projectsOfferingCache.set(cacheKey, { value: result, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
-      this.logger.log(`Projects offering cache pre-warmed (total projects: ${result.total})`);
+      const all = await this.fetchProjectsOffering();
+      this.projectsOfferingCache.set('', { value: all, expiresAt: Date.now() + this.PROJECTS_OFFERING_CACHE_TTL_MS });
+      this.logger.log(`Projects offering cache pre-warmed (total projects: ${all.length})`);
     } catch (err) {
       this.logger.warn(`Failed to pre-warm projects offering cache: ${err}`);
     }
