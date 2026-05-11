@@ -81,7 +81,8 @@ export enum DeployStatusEnum {
 export enum ItemTypeEnum {
     SOFTWARE = 'software',
     MAP = 'map',
-    CACHE = 'cache'
+    CACHE = 'cache',
+    CONFIG = 'config'
 }
 
 export enum MapImportStatusEnum {

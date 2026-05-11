@@ -1,5 +1,6 @@
 import {
   ComponentOfferingEntity,
+  ConfigOfferingEntity,
   DeviceComponentEntity,
   DeviceComponentStateEnum,
   DeviceEntity,
@@ -89,6 +90,8 @@ export class OfferingService implements OnModuleInit {
     private readonly deviceRepo: Repository<DeviceEntity>,
     @InjectRepository(ComponentOfferingEntity)
     private readonly compOfferingRepo: Repository<ComponentOfferingEntity>,
+    @InjectRepository(ConfigOfferingEntity)
+    private readonly configOfferingRepo: Repository<ConfigOfferingEntity>,
     @InjectRepository(DeviceComponentEntity)
     private readonly deviceComponentRepo: Repository<DeviceComponentEntity>,
     @InjectRepository(MapOfferingEntity)
@@ -599,6 +602,64 @@ export class OfferingService implements OnModuleInit {
       );
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // CONFIG OFFERING
+  // ---------------------------------------------------------------------------
+
+  async pushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`push config offering for configDeviceId: ${po.catalogId}`);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    const uniqueDevices = [...new Set(devices)];
+
+    const entities = uniqueDevices.map((deviceId) => {
+      const entity = this.configOfferingRepo.create();
+      entity.device = { ID: deviceId } as DeviceEntity;
+      entity.configDeviceId = po.catalogId;
+      return entity;
+    });
+
+    try {
+      await this.configOfferingRepo.upsert(entities, ['device', 'configDeviceId']);
+    } catch (err) {
+      this.logger.error(`error upserting config offering: ${err}`);
+      throw err;
+    }
+  }
+
+  async unpushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`unpush config offering for configDeviceId: ${po.catalogId}`);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    const uniqueDevices = [...new Set(devices)];
+
+    try {
+      await this.configOfferingRepo.delete({
+        device: { ID: In(uniqueDevices) },
+        configDeviceId: po.catalogId,
+      });
+    } catch (err) {
+      this.logger.error(`error deleting config offering: ${err}`);
+      throw err;
+    }
+  }
+
+  async getConfigOfferingForDevice(agentDeviceId: string): Promise<string[]> {
+    this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
+    const offerings = await this.configOfferingRepo.find({
+      where: { device: { ID: agentDeviceId } },
+    });
+    return offerings.map((o) => o.configDeviceId);
+  }
+
+  // ---------------------------------------------------------------------------
 
   private async setDeviceSoftwaresOffering(
     deviceId: string,

@@ -89,6 +89,9 @@ export const OfferingTopics = {
     UPSERT_OFFERING_TREE_POLICY: `getapp-offering.upsert-offering-tree-policy${region}`,
     GET_OFFERING_TREE_POLICIES: `getapp-offering.get-offering-tree-policies${region}`,
     GET_PUSH_OFFERING_DEVICES: `getapp-offering.get-push-offering-devices${region}`,
+    GET_CONFIG_OFFERING_FOR_DEVICE: `getapp-offering.get-config-offering-for-device${region}`,
+    CONFIG_OFFERING_PUSH: `getapp-offering.config-offering-push${region}`,
+    CONFIG_OFFERING_UNPUSH: `getapp-offering.config-offering-unpush${region}`,
     
 } as const
 
