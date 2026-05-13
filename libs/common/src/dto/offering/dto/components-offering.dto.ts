@@ -35,6 +35,11 @@ export class DeviceTypeProjectRefDto {
   @IsString()
   projectLabel?: string;
 
+  @ApiProperty({ description: "Application category (user or technician)", required: false })
+  @IsOptional()
+  @IsString()
+  projectApplicationCategory?: string;
+
   toString() {
     return JSON.stringify(this);
   }
