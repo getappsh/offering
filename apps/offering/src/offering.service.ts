@@ -1210,6 +1210,7 @@ export class OfferingService implements OnModuleInit {
     projectOffering.projectName = project.name;
     projectOffering.displayName = project.projectName;
     projectOffering.label = project.label?.name;
+    projectOffering.applicationCategory = project.applicationCategory ?? undefined;
 
     projectOffering.release = offering.get(project.id);
 
@@ -1232,6 +1233,7 @@ export class OfferingService implements OnModuleInit {
         name: true,
         projectType: true,
         projectName: true,
+        applicationCategory: true,
         label: { id: true, name: true },
       },
       where: whereCondition,
@@ -1263,6 +1265,7 @@ export class OfferingService implements OnModuleInit {
       projectOffering.projectName = p.name;
       projectOffering.displayName = p.projectName;
       projectOffering.label = p.label?.name;
+      projectOffering.applicationCategory = p.applicationCategory ?? undefined;
       projectOffering.release = componentOffering.get(p.id);
       return projectOffering;
     });

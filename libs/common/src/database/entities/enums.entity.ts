@@ -177,6 +177,11 @@ export enum ProjectType {
     INFRA = "infra"
   }
 
+export enum ApplicationCategory {
+    USER = "user",
+    TECHNICIAN = "technician"
+  }
+
 
 // PLATFORM TYPES
 export enum CPUArchitecture {

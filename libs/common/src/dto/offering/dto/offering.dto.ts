@@ -54,6 +54,9 @@ export class ProjectRefOfferingDto {
   @ApiProperty({ required: false, description: "Label of the project" })
   label?: string;
 
+  @ApiProperty({ required: false, description: "Application category (user or technician)" })
+  applicationCategory?: string;
+
   @ApiProperty({ type: ComponentV2Dto, required: false })
   release?: ComponentV2Dto;
 
@@ -63,6 +66,7 @@ export class ProjectRefOfferingDto {
     dto.projectName = projectRef.projectName;
     dto.displayName = projectRef.displayName;
     dto.label = projectRef.label;
+    dto.applicationCategory = projectRef.applicationCategory;
     return dto;
   }
 
