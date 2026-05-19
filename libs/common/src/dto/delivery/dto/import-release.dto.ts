@@ -146,6 +146,15 @@ export class ImportReleaseDto {
   @ValidateNested({ each: true })
   @Type(() => ImportDependencyDto)
   dependencies?: ImportDependencyDto[];
+
+  /** Optional config groups for CONFIG project type (GitOps only). */
+  configGroups?: GitConfigGroupDto[];
+}
+
+export class GitConfigGroupDto {
+  name: string;
+  gitFilePath?: string;
+  isGlobal?: boolean;
 }
 
 export class ArtifactWarningDto {

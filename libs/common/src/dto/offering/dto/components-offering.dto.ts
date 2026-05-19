@@ -135,6 +135,25 @@ export class DeviceComponentsOfferingDto {
   @IsArray()
   restrictions: RestrictionDto[]
 
+  @ApiProperty({
+    type: String,
+    description: 'The semVer of the latest ACTIVE config revision for this device. The device should compare this with its locally cached version and fetch from GET /v2/device/device-config/:deviceId if they differ.',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  latestConfigSemVer?: string | null;
+
+  @ApiProperty({
+    type: [String],
+    description: 'List of device IDs whose CONFIG projects this agent should also download and cache locally. For each deviceId in this list, call GET /v2/device/device-config/:deviceId.',
+    required: false,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  configDeviceIds?: string[];
+
 
   toString() {
     return JSON.stringify(this)

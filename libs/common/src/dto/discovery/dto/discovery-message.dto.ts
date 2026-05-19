@@ -125,6 +125,9 @@ export class DiscoveryMessageV2Dto {
    */
   deviceContext?: Record<string, any>;
 
+  /** Latest assembled device config, returned by the discovery response for the agent. */
+  deviceConfig?: Record<string, any>;
+
   toString() {
     return JSON.stringify(this)
   }
