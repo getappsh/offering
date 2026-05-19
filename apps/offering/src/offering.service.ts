@@ -607,16 +607,17 @@ export class OfferingService implements OnModuleInit {
 
   /**
    * Resolves a config catalogId. The caller may pass either a real release catalogId
-   * (e.g. "42.config:deviceId@latest") or just the project name ("config:deviceId").
-   * In the latter case, look up the project's "latest" release.
+   * (e.g. "42.config:deviceId@1.0.0") or just the project name ("config:deviceId").
+   * In the latter case, look up the project's most recent released revision.
    */
   private async resolveConfigCatalogId(catalogId: string): Promise<string> {
     // If it already contains '@', assume it's a full release catalogId
     if (catalogId.includes('@')) return catalogId;
 
-    // Otherwise treat it as a project name and find its "latest" release
+    // Otherwise treat it as a project name and find its latest released release by sort order
     const release = await this.releaseRepo.findOne({
-      where: { project: { name: catalogId }, version: 'latest' },
+      where: { project: { name: catalogId }, status: ReleaseStatusEnum.RELEASED },
+      order: { sortOrder: 'DESC' },
       relations: { project: true },
     });
 
