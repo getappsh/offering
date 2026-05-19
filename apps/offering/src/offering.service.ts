@@ -1,6 +1,5 @@
 import {
   ComponentOfferingEntity,
-  ConfigOfferingEntity,
   DeviceComponentEntity,
   DeviceComponentStateEnum,
   DeviceEntity,
@@ -90,8 +89,6 @@ export class OfferingService implements OnModuleInit {
     private readonly deviceRepo: Repository<DeviceEntity>,
     @InjectRepository(ComponentOfferingEntity)
     private readonly compOfferingRepo: Repository<ComponentOfferingEntity>,
-    @InjectRepository(ConfigOfferingEntity)
-    private readonly configOfferingRepo: Repository<ConfigOfferingEntity>,
     @InjectRepository(DeviceComponentEntity)
     private readonly deviceComponentRepo: Repository<DeviceComponentEntity>,
     @InjectRepository(MapOfferingEntity)
@@ -134,6 +131,7 @@ export class OfferingService implements OnModuleInit {
         where: {
           device: { ID: dto.deviceId },
           action: OfferingActionEnum.PUSH,
+          release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
         },
         relations: {
           release: { project: true, artifacts: { fileUpload: true } },
@@ -607,32 +605,42 @@ export class OfferingService implements OnModuleInit {
   // CONFIG OFFERING
   // ---------------------------------------------------------------------------
 
+  /**
+   * Resolves a config catalogId. The caller may pass either a real release catalogId
+   * (e.g. "42.config:deviceId@latest") or just the project name ("config:deviceId").
+   * In the latter case, look up the project's "latest" release.
+   */
+  private async resolveConfigCatalogId(catalogId: string): Promise<string> {
+    // If it already contains '@', assume it's a full release catalogId
+    if (catalogId.includes('@')) return catalogId;
+
+    // Otherwise treat it as a project name and find its "latest" release
+    const release = await this.releaseRepo.findOne({
+      where: { project: { name: catalogId }, version: 'latest' },
+      relations: { project: true },
+    });
+
+    if (!release) {
+      throw new NotFoundException(`No release found for config project "${catalogId}". Ensure the config project has been provisioned.`);
+    }
+
+    return release.catalogId;
+  }
+
   async pushConfigOffering(po: PushOfferingDto) {
-    this.logger.debug(`push config offering for configDeviceId: ${po.catalogId}`);
+    this.logger.debug(`push config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
     const devices = [...po.devices];
     if (po.groups.length > 0) {
       const idsInGroup = await this.getDevicesInGroup(po.groups);
       devices.push(...idsInGroup);
     }
-    const uniqueDevices = [...new Set(devices)];
-
-    const entities = uniqueDevices.map((deviceId) => {
-      const entity = this.configOfferingRepo.create();
-      entity.device = { ID: deviceId } as DeviceEntity;
-      entity.configDeviceId = po.catalogId;
-      return entity;
-    });
-
-    try {
-      await this.configOfferingRepo.upsert(entities, ['device', 'configDeviceId']);
-    } catch (err) {
-      this.logger.error(`error upserting config offering: ${err}`);
-      throw err;
-    }
+    await this.setSoftwareOffering(devices, resolvedCatalogId, OfferingActionEnum.PUSH);
   }
 
   async unpushConfigOffering(po: PushOfferingDto) {
-    this.logger.debug(`unpush config offering for configDeviceId: ${po.catalogId}`);
+    this.logger.debug(`unpush config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
     const devices = [...po.devices];
     if (po.groups.length > 0) {
       const idsInGroup = await this.getDevicesInGroup(po.groups);
@@ -641,9 +649,10 @@ export class OfferingService implements OnModuleInit {
     const uniqueDevices = [...new Set(devices)];
 
     try {
-      await this.configOfferingRepo.delete({
+      await this.compOfferingRepo.delete({
         device: { ID: In(uniqueDevices) },
-        configDeviceId: po.catalogId,
+        release: { catalogId: resolvedCatalogId },
+        action: OfferingActionEnum.PUSH,
       });
     } catch (err) {
       this.logger.error(`error deleting config offering: ${err}`);
@@ -653,10 +662,15 @@ export class OfferingService implements OnModuleInit {
 
   async getConfigOfferingForDevice(agentDeviceId: string): Promise<string[]> {
     this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
-    const offerings = await this.configOfferingRepo.find({
-      where: { device: { ID: agentDeviceId } },
+    const offerings = await this.compOfferingRepo.find({
+      where: {
+        device: { ID: agentDeviceId },
+        action: OfferingActionEnum.PUSH,
+        release: { project: { projectType: In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]) } },
+      },
+      relations: { release: { project: true } },
     });
-    return offerings.map((o) => o.configDeviceId);
+    return offerings.map((o) => o.release.catalogId);
   }
 
   // ---------------------------------------------------------------------------

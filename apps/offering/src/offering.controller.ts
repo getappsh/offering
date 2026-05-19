@@ -93,14 +93,14 @@ export class OfferingController {
 
   @MessagePattern(OfferingTopics.CONFIG_OFFERING_PUSH)
   async pushConfigOffering(@RpcPayload() po: PushOfferingDto) {
-    this.logger.log(`Push config offering for configDeviceId: ${po.catalogId}`);
+    this.logger.log(`Push config offering for catalogId: ${po.catalogId}`);
     await this.offeringService.pushConfigOffering(po);
     return { success: true };
   }
 
   @MessagePattern(OfferingTopics.CONFIG_OFFERING_UNPUSH)
   async unpushConfigOffering(@RpcPayload() po: PushOfferingDto) {
-    this.logger.log(`Unpush config offering for configDeviceId: ${po.catalogId}`);
+    this.logger.log(`Unpush config offering for catalogId: ${po.catalogId}`);
     await this.offeringService.unpushConfigOffering(po);
     return { success: true };
   }
