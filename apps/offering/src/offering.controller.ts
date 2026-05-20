@@ -32,6 +32,11 @@ export class OfferingController {
     return this.offeringService.getAllPlatformsOffering(query);
   }
 
+  @MessagePattern(OfferingTopics.GET_OFFERING_FOR_ALL_DEVICE_TYPES)
+  getAllDeviceTypesOffering(@RpcPayload() query: { withDependencies?: boolean }) {
+    return this.offeringService.getAllDeviceTypesOffering(query);
+  }
+
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_DEVICE_TYPE)
   getOfferingForDeviceType(@RpcPayload() query: DeviceTypeOfferingFilterQuery) {
     return this.offeringService.getOfferingForDeviceType(query);
@@ -89,6 +94,26 @@ export class OfferingController {
     } else if (po.itemType == ItemTypeEnum.MAP) {
       await this.offeringService.unpushMapOffering(po);
     }
+  }
+
+  @MessagePattern(OfferingTopics.CONFIG_OFFERING_PUSH)
+  async pushConfigOffering(@RpcPayload() po: PushOfferingDto) {
+    this.logger.log(`Push config offering for catalogId: ${po.catalogId}`);
+    await this.offeringService.pushConfigOffering(po);
+    return { success: true };
+  }
+
+  @MessagePattern(OfferingTopics.CONFIG_OFFERING_UNPUSH)
+  async unpushConfigOffering(@RpcPayload() po: PushOfferingDto) {
+    this.logger.log(`Unpush config offering for catalogId: ${po.catalogId}`);
+    await this.offeringService.unpushConfigOffering(po);
+    return { success: true };
+  }
+
+  @MessagePattern(OfferingTopics.GET_CONFIG_OFFERING_FOR_DEVICE)
+  getConfigOfferingForDevice(@RpcPayload('stringValue') agentDeviceId: string) {
+    this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
+    return this.offeringService.getConfigOfferingForDevice(agentDeviceId);
   }
 
   @EventPattern(OfferingTopicsEmit.RELEASE_CHANGED_EVENT)

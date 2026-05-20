@@ -68,9 +68,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
-import { ILike, In, IsNull, Repository } from 'typeorm';
+import { ILike, In, Not, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
+import { RuleDefinition } from '@app/common/rules/types/rule.types';
 
 @Injectable()
 export class OfferingService implements OnModuleInit {
@@ -124,16 +125,17 @@ export class OfferingService implements OnModuleInit {
             createdAt: true,
             updatedAt: true,
             metadata: {},
-            project: { id: true, name: true, projectType: true },
+            project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
             artifacts: { fileUpload: { size: true }, isInstallationFile: true },
           },
         },
         where: {
           device: { ID: dto.deviceId },
           action: OfferingActionEnum.PUSH,
+          release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
         },
         relations: {
-          release: { project: true, artifacts: { fileUpload: true } },
+          release: { project: { label: true }, artifacts: { fileUpload: true } },
         },
       }),
     ]);
@@ -151,9 +153,8 @@ export class OfferingService implements OnModuleInit {
       ?.filter((p) => !dto.components?.includes(p.release.catalogId))
       ?.map((p) => ComponentV2Dto.fromEntity(p.release));
 
-    // Fetch policies for all releases in offer and push
-    await this.enrichReleasesWithPolicies(res.offer);
-    await this.enrichReleasesWithPolicies(res.push);
+    // Single bulk Kafka call for all releases in offer and push
+    await this.enrichReleasesWithPolicies([...res.offer, ...res.push]);
 
     this.logger.log(
       `Get offering for device: ${dto.deviceId}, offer count: ${res.offer?.length}, push count: ${res.push?.length}`,
@@ -202,14 +203,14 @@ export class OfferingService implements OnModuleInit {
 
     const offering = await this.releaseRepo.find({
       select: {
-        project: { id: true, name: true, projectType: true },
+        project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
         artifacts: { fileUpload: { size: true }, isInstallationFile: true },
       },
       where: {
         status: ReleaseStatusEnum.RELEASED,
         project: { id: In(projectIds) },
       },
-      relations: { project: true, artifacts: { fileUpload: true } },
+      relations: { project: { label: true }, artifacts: { fileUpload: true } },
     });
 
     return offering;
@@ -257,9 +258,9 @@ export class OfferingService implements OnModuleInit {
         catalogId: catalogId,
         status: ReleaseStatusEnum.RELEASED,
       },
-      relations: { project: true, artifacts: { fileUpload: true } },
+      relations: { project: { label: true }, artifacts: { fileUpload: true } },
       select: {
-        project: { id: true, name: true, projectType: true },
+        project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
         artifacts: { fileUpload: { size: true }, isInstallationFile: true },
       },
     });
@@ -287,8 +288,34 @@ export class OfferingService implements OnModuleInit {
   }
 
   /**
-   * Fetches policies for each release and attaches them to the ComponentV2Dto objects
-   * Also recursively enriches any dependencies with their policies
+   * Collects all unique release IDs across the entire dependency tree in one recursive pass.
+   */
+  private collectReleaseIds(releases: ComponentV2Dto[], ids: Set<string> = new Set()): Set<string> {
+    for (const release of releases) {
+      if (release.id) ids.add(release.id);
+      if (release.dependencies?.length) {
+        this.collectReleaseIds(release.dependencies, ids);
+      }
+    }
+    return ids;
+  }
+
+  /**
+   * Assigns pre-fetched policies from a map to all releases in the tree.
+   */
+  private assignPoliciesFromMap(releases: ComponentV2Dto[], policiesMap: Map<string, RuleDefinition[]>): void {
+    for (const release of releases) {
+      release.policies = policiesMap.get(release.id) ?? [];
+      if (release.dependencies?.length) {
+        this.assignPoliciesFromMap(release.dependencies, policiesMap);
+      }
+    }
+  }
+
+  /**
+   * Fetches policies for all releases (including dependencies at any depth) and attaches them.
+   * All IDs are collected in a single tree-walk, then fetched in ONE bulk Kafka call —
+   * replacing the previous N concurrent calls that saturated the Kafka consumer group.
    */
   private async enrichReleasesWithPolicies(
     releases: ComponentV2Dto[],
@@ -297,38 +324,22 @@ export class OfferingService implements OnModuleInit {
       return;
     }
 
-    this.logger.debug(`Fetching policies for ${releases.length} releases`);
+    // Walk the entire dependency tree once to get all unique IDs
+    const allIds = Array.from(this.collectReleaseIds(releases));
+    this.logger.debug(`Fetching policies for ${allIds.length} unique releases (bulk)`);
 
-    // Fetch policies for all releases in parallel
-    const policiesPromises = releases.map((release) =>
-      lastValueFrom(
-        this.uploadClient.send(
-          UploadTopics.GET_POLICIES_FOR_RELEASE,
-          release.id,
-        ),
-      ).catch((err) => {
-        this.logger.error(
-          `Failed to fetch policies for release ${release.id}: ${err}`,
-        );
-        return [];
-      }),
-    );
-
-    const policiesResults = await Promise.all(policiesPromises);
-
-    // Attach policies to each release
-    releases.forEach((release, index) => {
-      release.policies = policiesResults[index];
+    // Single Kafka call returning Record<catalogId, policy[]>
+    const policiesMap: Record<string, RuleDefinition[]> = await lastValueFrom(
+      this.uploadClient.send<Record<string, RuleDefinition[]>>(UploadTopics.GET_POLICIES_FOR_RELEASES, allIds),
+    ).catch((err) => {
+      this.logger.error(`Failed to bulk-fetch policies: ${err}`);
+      return {};
     });
 
-    this.logger.debug(`Successfully attached policies to releases`);
+    // Assign policies to every node in the tree from the pre-built map
+    this.assignPoliciesFromMap(releases, new Map(Object.entries(policiesMap)));
 
-    // Recursively enrich dependencies
-    for (const release of releases) {
-      if (release.dependencies && release.dependencies.length > 0) {
-        await this.enrichReleasesWithPolicies(release.dependencies);
-      }
-    }
+    this.logger.debug(`Successfully attached policies to ${allIds.length} releases`);
   }
 
   private async getDevicesInGroup(groups: number[]): Promise<string[]> {
@@ -599,6 +610,81 @@ export class OfferingService implements OnModuleInit {
       );
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // CONFIG OFFERING
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Resolves a config catalogId. The caller may pass either a real release catalogId
+   * (e.g. "42.config:deviceId@1.0.0") or just the project name ("config:deviceId").
+   * In the latter case, look up the project's most recent released revision.
+   */
+  private async resolveConfigCatalogId(catalogId: string): Promise<string> {
+    // If it already contains '@', assume it's a full release catalogId
+    if (catalogId.includes('@')) return catalogId;
+
+    // Otherwise treat it as a project name and find its latest released release by sort order
+    const release = await this.releaseRepo.findOne({
+      where: { project: { name: catalogId }, status: ReleaseStatusEnum.RELEASED },
+      order: { sortOrder: 'DESC' },
+      relations: { project: true },
+    });
+
+    if (!release) {
+      throw new NotFoundException(`No release found for config project "${catalogId}". Ensure the config project has been provisioned.`);
+    }
+
+    return release.catalogId;
+  }
+
+  async pushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`push config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    await this.setSoftwareOffering(devices, resolvedCatalogId, OfferingActionEnum.PUSH);
+  }
+
+  async unpushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`unpush config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    const uniqueDevices = [...new Set(devices)];
+
+    try {
+      await this.compOfferingRepo.delete({
+        device: { ID: In(uniqueDevices) },
+        release: { catalogId: resolvedCatalogId },
+        action: OfferingActionEnum.PUSH,
+      });
+    } catch (err) {
+      this.logger.error(`error deleting config offering: ${err}`);
+      throw err;
+    }
+  }
+
+  async getConfigOfferingForDevice(agentDeviceId: string): Promise<string[]> {
+    this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
+    const offerings = await this.compOfferingRepo.find({
+      where: {
+        device: { ID: agentDeviceId },
+        action: OfferingActionEnum.PUSH,
+        release: { project: { projectType: In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]) } },
+      },
+      relations: { release: { project: true } },
+    });
+    return offerings.map((o) => o.release.catalogId);
+  }
+
+  // ---------------------------------------------------------------------------
 
   private async setDeviceSoftwaresOffering(
     deviceId: string,
@@ -901,9 +987,16 @@ export class OfferingService implements OnModuleInit {
       );
 
     const [policyOfferingProject, offering] = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), params.withDependencies),
-      this.getOfferingForProjectsByIds(projects, params.withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), params.withDependencies, true),
+      this.getOfferingForProjectsByIds(projects, params.withDependencies, true)
     ]);
+
+    // Single bulk Kafka call for all components (replaces 3 independent calls)
+    await this.enrichReleasesWithPolicies([
+      ...Array.from(policyOfferingProject.values()),
+      ...Array.from(offering.values()),
+    ]);
+
     const policyOfferingCatalog = new Map(
       Array.from(policyOfferingProject).map(([_, v]) => [v.id, v]),
     );
@@ -940,6 +1033,21 @@ export class OfferingService implements OnModuleInit {
     );
     return results
       .filter((r): r is PromiseFulfilledResult<PlatformOfferingDto> => r.status === 'fulfilled')
+      .map(r => r.value);
+  }
+
+  async getAllDeviceTypesOffering(options?: { withDependencies?: boolean }): Promise<DeviceTypeOfferingDto[]> {
+    this.logger.log('getAllDeviceTypesOffering: fetching offering for all device types');
+    const deviceTypes = await this.deviceTypeRepo.find();
+    const results = await Promise.allSettled(
+      deviceTypes.map(dt =>
+        this.getOfferingForDeviceType(
+          { deviceTypeIdentifier: dt.id, withDependencies: options?.withDependencies ?? true },
+        ),
+      ),
+    );
+    return results
+      .filter((r): r is PromiseFulfilledResult<DeviceTypeOfferingDto> => r.status === 'fulfilled')
       .map(r => r.value);
   }
 
@@ -1023,9 +1131,12 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), query.withDependencies),
-      this.getOfferingForProjectsByIds(projectIds, query.withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), query.withDependencies, true),
+      this.getOfferingForProjectsByIds(projectIds, query.withDependencies, true)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    // Single bulk Kafka call for all components (replaces 3 independent calls)
+    await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
 
     const deviceTypeOffering =
       DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
@@ -1190,6 +1301,11 @@ export class OfferingService implements OnModuleInit {
     if (dto.query && dto.query.trim() !== '') {
       whereCondition.name = ILike(`%${dto.query}%`);
     }
+    if (dto.projectTypes && dto.projectTypes.length > 0) {
+      whereCondition.projectType = In(dto.projectTypes);
+    } else {
+      whereCondition.projectType = Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]));
+    }
 
     const [projects, total] = await this.projectRepo.findAndCount({
       select: {
@@ -1215,9 +1331,12 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map((p) => p.catalogId)),
-      this.getLatestReleaseOfProjects(projectIds),
+      this.getComponents(policies.map((p) => p.catalogId), undefined, true),
+      this.getLatestReleaseOfProjects(projectIds, undefined, true),
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    // Single bulk Kafka call for all components (replaces 2 independent calls)
+    await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
 
     const projectOfferings = projects.map((p) => {
       const projectOffering = new ProjectRefOfferingDto();
@@ -1275,7 +1394,7 @@ export class OfferingService implements OnModuleInit {
     }
   }
 
-  private async getOfferingForProjectsByIds(projectIds: number[], withDependencies: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getOfferingForProjectsByIds(projectIds: number[], withDependencies: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`Get offering for projects by ids: ${JSON.stringify(projectIds)}`)
     let policies = await this.policyService.findByProjects(projectIds);
 
@@ -1284,42 +1403,41 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), withDependencies),
-      this.getLatestReleaseOfProjects(projectIds, withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), withDependencies, true),
+      this.getLatestReleaseOfProjects(projectIds, withDependencies, true)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
+    }
+
     return componentOffering;
   }
 
-  private async fetchReleasesByCatalogIds(catalogIds: string[], includeDependencies: boolean = false, visited: Set<string> = new Set()): Promise<ReleaseEntity[]> {
-    // Filter out already visited catalog IDs to avoid infinite loops
-    const toFetch = catalogIds.filter(id => !visited.has(id));
-
-    if (toFetch.length === 0) {
+  private async fetchReleasesByCatalogIds(catalogIds: string[], includeDependencies: boolean = false, ancestors: Set<string> = new Set()): Promise<ReleaseEntity[]> {
+    if (catalogIds.length === 0) {
       return [];
     }
 
-    // Mark these as visited
-    toFetch.forEach(id => visited.add(id));
-
     const select: any = {
-      project: { id: true, name: true, projectType: true },
+      project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
       artifacts: { fileUpload: { size: true }, isInstallationFile: true }
     };
 
     if (includeDependencies) {
-      select.dependencies = { catalogId: true, version: true, project: { id: true, name: true, projectType: true }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } };
+      select.dependencies = { catalogId: true, version: true, project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } }, artifacts: { fileUpload: { size: true }, isInstallationFile: true } };
     }
 
-    const relations: any = { project: true, artifacts: { fileUpload: true } };
+    const relations: any = { project: { label: true }, artifacts: { fileUpload: true } };
     if (includeDependencies) {
-      relations.dependencies = { project: true, artifacts: { fileUpload: true } };
+      relations.dependencies = { project: { label: true }, artifacts: { fileUpload: true } };
     }
 
     const releases = await this.releaseRepo.find({
       select,
       where: {
         status: ReleaseStatusEnum.RELEASED,
-        catalogId: In(toFetch),
+        catalogId: In(catalogIds),
       },
       relations,
     });
@@ -1328,9 +1446,17 @@ export class OfferingService implements OnModuleInit {
     if (includeDependencies) {
       for (const release of releases) {
         if (release.dependencies?.length > 0) {
-          const dependencyCatalogIds = release.dependencies.map(d => d.catalogId);
-          const nestedReleases = await this.fetchReleasesByCatalogIds(dependencyCatalogIds, true, visited);
-          release.dependencies = nestedReleases;
+          // Use ancestors (current path) rather than all-visited to allow diamond/shared deps
+          // while still preventing true circular references (e.g. A -> B -> A)
+          const dependencyCatalogIds = release.dependencies
+            .map(d => d.catalogId)
+            .filter(id => !ancestors.has(id));
+          if (dependencyCatalogIds.length > 0) {
+            const newAncestors = new Set([...ancestors, release.catalogId]);
+            release.dependencies = await this.fetchReleasesByCatalogIds(dependencyCatalogIds, true, newAncestors);
+          } else {
+            release.dependencies = [];
+          }
         }
       }
     }
@@ -1339,7 +1465,7 @@ export class OfferingService implements OnModuleInit {
   }
 
 
-  private async getLatestReleaseOfProjects(projects: number[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getLatestReleaseOfProjects(projects: number[], withDependencies?: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
     const releases = await this.releaseRepo.find({
       select: {
@@ -1369,14 +1495,14 @@ export class OfferingService implements OnModuleInit {
       }
     });
 
-    // Enrich all releases with policies
-    const components = Array.from(resultMap.values());
-    await this.enrichReleasesWithPolicies(components);
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(resultMap.values()));
+    }
 
     return resultMap;
   }
 
-  private async getComponents(catalogIds: string[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getComponents(catalogIds: string[], withDependencies?: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get components: ${JSON.stringify(catalogIds)}`);
     const releases = await this.fetchReleasesByCatalogIds(catalogIds, withDependencies);
     const componentMap = new Map<number, ComponentV2Dto>();
@@ -1386,9 +1512,9 @@ export class OfferingService implements OnModuleInit {
       }
     });
 
-    // Enrich all components with policies
-    const components = Array.from(componentMap.values());
-    await this.enrichReleasesWithPolicies(components);
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(componentMap.values()));
+    }
 
     return componentMap;
   }
@@ -1441,6 +1567,7 @@ export class OfferingService implements OnModuleInit {
 
     this.uploadClient.subscribeToResponseOf([
       UploadTopics.GET_POLICIES_FOR_RELEASE,
+      UploadTopics.GET_POLICIES_FOR_RELEASES,
     ]);
     await this.uploadClient.connect();
   }

@@ -34,6 +34,7 @@ export const UploadTopics = {
     // Rules - Policies
     GET_POLICIES: `getapp-upload.get-policies${region}`,
     GET_POLICIES_FOR_RELEASE: `getapp-upload.get-policies-for-release${region}`,
+    GET_POLICIES_FOR_RELEASES: `getapp-upload.get-policies-for-releases${region}`,
     CREATE_POLICY: `getapp-upload.create-policy${region}`,
     GET_POLICY: `getapp-upload.get-policy${region}`,
     GET_POLICY_INTERNAL: `getapp-upload.get-policy-internal${region}`,
@@ -86,12 +87,16 @@ export const OfferingTopics = {
     GET_OFFERING_FOR_PROJECT: `getapp-offering.get-offering-for-project${region}`,
     GET_OFFERING_FOR_ALL_PROJECTS: `getapp-offering.get-offering-for-all-project${region}`,
     GET_OFFERING_FOR_ALL_PLATFORMS: `getapp-offering.get-offering-for-all-platforms${region}`,
+    GET_OFFERING_FOR_ALL_DEVICE_TYPES: `getapp-offering.get-offering-for-all-device-types${region}`,
     GET_OFFER_OF_COMP: `getapp-offering.get-offering-of-comp${region}`,
 
     // Policies
     UPSERT_OFFERING_TREE_POLICY: `getapp-offering.upsert-offering-tree-policy${region}`,
     GET_OFFERING_TREE_POLICIES: `getapp-offering.get-offering-tree-policies${region}`,
     GET_PUSH_OFFERING_DEVICES: `getapp-offering.get-push-offering-devices${region}`,
+    GET_CONFIG_OFFERING_FOR_DEVICE: `getapp-offering.get-config-offering-for-device${region}`,
+    CONFIG_OFFERING_PUSH: `getapp-offering.config-offering-push${region}`,
+    CONFIG_OFFERING_UNPUSH: `getapp-offering.config-offering-unpush${region}`,
     
 } as const
 
@@ -176,11 +181,25 @@ export const ProjectManagementTopics = {
     GET_SYSTEM_WIDE_DEPLOYMENT_REPORT: `getapp-project-management.get-system-wide-deployment-report${region}`,
     GET_PROJECT_DEPLOYMENT_REPORT: `getapp-project-management.get-project-deployment-report${region}`,
 
-    CHECK_HEALTH: `getapp-project-management.check-health${region}`,
 
     // Archive / Restore
     RESTORE_PROJECT: `getapp-project-management.restore-project${region}`,
     PERMANENTLY_DELETE_PROJECT: `getapp-project-management.permanently-delete-project${region}`,
+    // Config projects
+    CONFIG_UPSERT_GROUP: `getapp-project-management.config.upsert-group${region}`,
+    CONFIG_DELETE_GROUP: `getapp-project-management.config.delete-group${region}`,
+    CONFIG_UPSERT_ENTRY: `getapp-project-management.config.upsert-entry${region}`,
+    CONFIG_DELETE_ENTRY: `getapp-project-management.config.delete-entry${region}`,
+    CONFIG_APPLY_REVISION: `getapp-project-management.config.apply-revision${region}`,
+    CONFIG_GET_REVISIONS: `getapp-project-management.config.get-revisions${region}`,
+    CONFIG_GET_REVISION_BY_ID: `getapp-project-management.config.get-revision-by-id${region}`,
+    CONFIG_ADD_MAP_ASSOCIATION: `getapp-project-management.config.add-map-association${region}`,
+    CONFIG_REMOVE_MAP_ASSOCIATION: `getapp-project-management.config.remove-map-association${region}`,
+    CONFIG_GET_MAP_ASSOCIATIONS: `getapp-project-management.config.get-map-associations${region}`,
+    CONFIG_GET_CONFIG_MAPS_FOR_PROJECT: `getapp-project-management.config.get-config-maps-for-project${region}`,
+    CONFIG_GET_DEVICE_CONFIG: `getapp-project-management.config.get-device-config${region}`,
+    CONFIG_ENSURE_DEVICE_PROJECT: `getapp-project-management.config.ensure-device-project${region}`,
+    CHECK_HEALTH: `getapp-project-management.check-health${region}`
 } as const
 
 export const ProjectManagementTopicsEmit = {
