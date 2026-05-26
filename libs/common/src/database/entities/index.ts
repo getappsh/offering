@@ -20,6 +20,7 @@ export * from './device-component-state.entity'
 export * from './device-config.entity'
 export * from './component-offering.entity'
 export * from './map-offering.entity'
+
 export * from './regulation-type.entity'
 export * from './regulation.entity'
 export * from './regulation-status.entity'

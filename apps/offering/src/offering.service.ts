@@ -68,7 +68,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike, In, Not, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 import { RuleDefinition } from '@app/common/rules/types/rule.types';
@@ -132,6 +132,7 @@ export class OfferingService implements OnModuleInit {
         where: {
           device: { ID: dto.deviceId },
           action: OfferingActionEnum.PUSH,
+          release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
         },
         relations: {
           release: { project: { label: true }, artifacts: { fileUpload: true } },
@@ -609,6 +610,81 @@ export class OfferingService implements OnModuleInit {
       );
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // CONFIG OFFERING
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Resolves a config catalogId. The caller may pass either a real release catalogId
+   * (e.g. "42.config:deviceId@1.0.0") or just the project name ("config:deviceId").
+   * In the latter case, look up the project's most recent released revision.
+   */
+  private async resolveConfigCatalogId(catalogId: string): Promise<string> {
+    // If it already contains '@', assume it's a full release catalogId
+    if (catalogId.includes('@')) return catalogId;
+
+    // Otherwise treat it as a project name and find its latest released release by sort order
+    const release = await this.releaseRepo.findOne({
+      where: { project: { name: catalogId }, status: ReleaseStatusEnum.RELEASED },
+      order: { sortOrder: 'DESC' },
+      relations: { project: true },
+    });
+
+    if (!release) {
+      throw new NotFoundException(`No release found for config project "${catalogId}". Ensure the config project has been provisioned.`);
+    }
+
+    return release.catalogId;
+  }
+
+  async pushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`push config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    await this.setSoftwareOffering(devices, resolvedCatalogId, OfferingActionEnum.PUSH);
+  }
+
+  async unpushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`unpush config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    const uniqueDevices = [...new Set(devices)];
+
+    try {
+      await this.compOfferingRepo.delete({
+        device: { ID: In(uniqueDevices) },
+        release: { catalogId: resolvedCatalogId },
+        action: OfferingActionEnum.PUSH,
+      });
+    } catch (err) {
+      this.logger.error(`error deleting config offering: ${err}`);
+      throw err;
+    }
+  }
+
+  async getConfigOfferingForDevice(agentDeviceId: string): Promise<string[]> {
+    this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
+    const offerings = await this.compOfferingRepo.find({
+      where: {
+        device: { ID: agentDeviceId },
+        action: OfferingActionEnum.PUSH,
+        release: { project: { projectType: In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]) } },
+      },
+      relations: { release: { project: true } },
+    });
+    return offerings.map((o) => o.release.catalogId);
+  }
+
+  // ---------------------------------------------------------------------------
 
   private async setDeviceSoftwaresOffering(
     deviceId: string,
@@ -1225,6 +1301,11 @@ export class OfferingService implements OnModuleInit {
     const whereCondition: any = {};
     if (dto.query && dto.query.trim() !== '') {
       whereCondition.name = ILike(`%${dto.query}%`);
+    }
+    if (dto.projectTypes && dto.projectTypes.length > 0) {
+      whereCondition.projectType = In(dto.projectTypes);
+    } else {
+      whereCondition.projectType = Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]));
     }
 
     const [projects, total] = await this.projectRepo.findAndCount({

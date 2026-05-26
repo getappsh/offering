@@ -81,7 +81,8 @@ export enum DeployStatusEnum {
 export enum ItemTypeEnum {
     SOFTWARE = 'software',
     MAP = 'map',
-    CACHE = 'cache'
+    CACHE = 'cache',
+    CONFIG = 'config'
 }
 
 export enum MapImportStatusEnum {
@@ -174,7 +175,9 @@ export enum ProjectType {
     APPLICATION = "application",
     LIB = "lib",
     BUNDLE = "bundle",
-    INFRA = "infra"
+    INFRA = "infra",
+    CONFIG = "config",
+    CONFIG_MAP = "config_map"
   }
 
 export enum ApplicationCategory {

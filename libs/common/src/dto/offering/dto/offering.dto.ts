@@ -1,9 +1,10 @@
-import { ApiProperty, ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
+import { ApiProperty, IntersectionType, PartialType } from "@nestjs/swagger";
 import { ComponentV2Dto } from "../../upload";
 import { DeviceTypeHierarchyDto, PlatformHierarchyDto, ProjectRefDto } from "../../devices-hierarchy";
 import { BadRequestException } from "@nestjs/common";
-import { ValidateIf, IsString, IsNotEmpty, IsInt, IsOptional, IsPositive } from "class-validator";
+import { ValidateIf, IsString, IsNotEmpty, IsInt, IsOptional, IsPositive, IsEnum } from "class-validator";
 import { Transform, Type } from "class-transformer";
+import { ProjectType } from "@app/common/database/entities";
 
 export class GetProjectsOfferingDto {
   @ApiProperty({
@@ -16,9 +17,10 @@ export class GetProjectsOfferingDto {
   query: string;
 
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'The page number to fetch (default: 1)',
     example: 1,
+    required: false,
   })
   @IsOptional()
   @IsInt()
@@ -26,15 +28,28 @@ export class GetProjectsOfferingDto {
   @Type(() => Number)
   page?: number = 1;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Number of projects per page (default: 20)',
     example: 20,
+    required: false,
   })
   @IsOptional()
   @IsInt()
   @IsPositive()
   @Type(() => Number)
   perPage?: number = 20;
+
+  @ApiProperty({
+    description: 'Filter by specific project types. When not provided, config and config_map types are excluded by default.',
+    example: ['application', 'lib'],
+    enum: ProjectType,
+    isArray: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(ProjectType, { each: true })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  projectTypes?: ProjectType[];
 
   toString() {
     return JSON.stringify(this);
