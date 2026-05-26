@@ -312,6 +312,9 @@ export class ComponentV2Dto {
   @ApiProperty({ required: false, description: 'Label associated with the project' })
   label?: string;
 
+  @ApiProperty({ required: false, description: 'Application category (user or technician)' })
+  applicationCategory?: string;
+
   @ApiProperty({ required: false })
   releaseNotes?: string;
 
@@ -356,6 +359,7 @@ export class ComponentV2Dto {
     dto.projectId = release?.project?.id;
     dto.displayName = release?.project?.projectName ?? undefined;
     dto.label = release?.project?.label?.name ?? undefined;
+    dto.applicationCategory = release?.project?.applicationCategory ?? undefined;
     dto.projectTypeV2 = release.project.projectType;
     dto.type = ProjectType.PRODUCT;
     // release data

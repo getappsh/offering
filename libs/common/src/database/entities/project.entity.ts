@@ -5,7 +5,7 @@ import { RegulationEntity } from "./regulation.entity";
 import { ReleaseEntity } from "./release.entity";
 import { ProjectTokenEntity } from "./project-token.entity";
 import { DocEntity } from "./document.entity";
-import { ProjectType } from "./enums.entity";
+import { ApplicationCategory, ProjectType } from "./enums.entity";
 import { DeviceTypeEntity } from "./device-type.entity";
 import { PlatformEntity } from "./platform.entity";
 import { LabelEntity } from "./label.entity";
@@ -55,6 +55,9 @@ export class ProjectEntity extends BaseEntity {
 
     @Column({ name: "project_type", type: "enum", enum: ProjectType, default: ProjectType.APPLICATION })
     projectType: ProjectType;
+
+    @Column({ name: "application_category", type: "enum", enum: ApplicationCategory, nullable: true })
+    applicationCategory: ApplicationCategory | null;
 
     @ManyToMany(() => DeviceTypeEntity, deviceType => deviceType.projects)
     deviceTypes: DeviceTypeEntity[];
