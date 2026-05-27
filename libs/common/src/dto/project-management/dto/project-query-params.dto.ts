@@ -51,6 +51,15 @@ export class GetProjectsQueryDto {
   @IsString({ each: true })
   @Type(() => String)
   projectNames?: string[];
+
+  @ApiPropertyOptional({
+    description: 'If true, return only archived projects; if false (default), return only active (non-archived) projects',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  archived?: boolean;
  
 }
 

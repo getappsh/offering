@@ -43,3 +43,6 @@ manifest.json
 ._.DS_Store
 ._.env
 .vscode/launch.json
+libs/common/src/microservice-client/topics/._topics.enums.ts
+.gitignore
+libs/common/src/dto/upload/dto/._release.dto.ts
