@@ -18,12 +18,16 @@ export class ProjectRefDto {
   @ApiProperty({ description: "Label of the project", required: false })
   label?: string;
 
+  @ApiProperty({ description: "Application category (user or technician)", required: false })
+  applicationCategory?: string;
+
   static fromProjectEntity(project: ProjectEntity) {    
     const dto = new ProjectRefDto();
     dto.projectName = project.name;
     dto.projectId = project.id;
     dto.displayName = project.projectName ?? undefined;
     dto.label = project.label?.name;
+    dto.applicationCategory = project.applicationCategory ?? undefined;
     return dto;
   }
 
