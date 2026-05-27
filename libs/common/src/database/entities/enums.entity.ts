@@ -199,3 +199,8 @@ export enum NetworkType {
   HOST_ONLY = 'HOST_ONLY',
   CUSTOM = 'CUSTOM',
 }
+
+export enum ApplicationCategory {
+    USER = "user",
+    TECHNICIAN = "technician"
+}
