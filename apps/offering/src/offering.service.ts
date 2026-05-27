@@ -673,15 +673,31 @@ export class OfferingService implements OnModuleInit {
 
   async getConfigOfferingForDevice(agentDeviceId: string): Promise<string[]> {
     this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
-    const offerings = await this.compOfferingRepo.find({
-      where: {
-        device: { ID: agentDeviceId },
-        action: OfferingActionEnum.PUSH,
-        release: { project: { projectType: In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]) } },
-      },
-      relations: { release: { project: true } },
-    });
-    return offerings.map((o) => o.release.catalogId);
+
+    const [offerings, selfRelease] = await Promise.all([
+      this.compOfferingRepo.find({
+        where: {
+          device: { ID: agentDeviceId },
+          action: OfferingActionEnum.PUSH,
+          release: { project: { projectType: In([ProjectType.CONFIG]) } },
+        },
+        relations: { release: { project: true } },
+      }),
+      this.releaseRepo.findOne({
+        where: {
+          project: { name: `config:${agentDeviceId}`, projectType: ProjectType.CONFIG },
+          status: ReleaseStatusEnum.RELEASED,
+        },
+        order: { sortOrder: 'DESC' },
+      }),
+    ]);
+
+    const catalogIds = offerings.map((o) => o.release.catalogId);
+    if (selfRelease) {
+      catalogIds.push(selfRelease.catalogId);
+    }
+
+    return [...new Set(catalogIds)];
   }
 
   // ---------------------------------------------------------------------------
