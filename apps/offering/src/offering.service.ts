@@ -679,7 +679,7 @@ export class OfferingService implements OnModuleInit {
         where: {
           device: { ID: agentDeviceId },
           action: OfferingActionEnum.PUSH,
-          release: { project: { projectType: In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]) } },
+          release: { project: { projectType: In([ProjectType.CONFIG]) } },
         },
         relations: { release: { project: true } },
       }),
