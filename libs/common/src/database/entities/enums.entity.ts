@@ -205,7 +205,3 @@ export enum NetworkType {
   CUSTOM = 'CUSTOM',
 }
 
-export enum ApplicationCategory {
-    USER = "user",
-    TECHNICIAN = "technician"
-}
