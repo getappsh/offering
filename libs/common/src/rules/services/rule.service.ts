@@ -37,6 +37,17 @@ interface RuleQueryFilter {
   projectIdentifier?: string | number;
 }
 
+interface RuleQueryFilter {
+  type?: RuleType;
+  isActive?: boolean;
+  releaseId?: string;
+  deviceTypeId?: number;
+  deviceTypeName?: string;
+  deviceId?: string;
+  osType?: string;
+  projectIdentifier?: string | number;
+}
+
 @Injectable()
 export class RuleService implements OnModuleInit {
   private readonly logger = new Logger(RuleService.name);
@@ -234,6 +245,28 @@ export class RuleService implements OnModuleInit {
     queryBuilder.orderBy('rule.createdAt', 'DESC');
 
     return queryBuilder.getMany();
+  }
+
+  /**
+   * Fetches all POLICY rules associated with ANY of the given catalogIds in a single query.
+   * More efficient than calling findAll() N times when you need policies for many releases.
+   */
+  async findAllForReleases(catalogIds: string[]): Promise<RuleEntity[]> {
+    if (!catalogIds || catalogIds.length === 0) return [];
+    return this.ruleRepository
+      .createQueryBuilder('rule')
+      .leftJoinAndSelect('rule.releaseAssociations', 'releaseAssoc')
+      .leftJoinAndSelect('releaseAssoc.release', 'release')
+      .leftJoinAndSelect('release.project', 'project')
+      .leftJoinAndSelect('rule.deviceTypeAssociations', 'deviceTypeAssoc')
+      .leftJoinAndSelect('deviceTypeAssoc.deviceType', 'deviceType')
+      .leftJoinAndSelect('rule.deviceAssociations', 'deviceAssoc')
+      .leftJoinAndSelect('deviceAssoc.device', 'device')
+      .leftJoinAndSelect('rule.osAssociations', 'osAssoc')
+      .where('rule.type = :type', { type: RuleType.POLICY })
+      .andWhere('release.catalogId IN (:...catalogIds)', { catalogIds })
+      .orderBy('rule.createdAt', 'DESC')
+      .getMany();
   }
 
   /**

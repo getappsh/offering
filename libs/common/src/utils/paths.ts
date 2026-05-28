@@ -16,6 +16,7 @@ export const UPLOAD_RELEASES = 'catalog/releases';
 
 export const GET_MAP = "map";
 export const BUG_REPORT = "bug-report"
+export const DIAGNOSTICS = "diagnostics"
 
 
 // nested login paths

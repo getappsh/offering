@@ -212,4 +212,5 @@ export class DeviceTypeOfferingFilterQuery extends IntersectionType(
 ) {
     deviceTypeIdentifier?: string | number  | undefined;
     deviceTypeTree?: DeviceTypeHierarchyDto
+    ignoreCache?: boolean;
 }

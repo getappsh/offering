@@ -8,6 +8,7 @@ import { DiscoveryMapDto } from "./discovery-map.dto";
 import { PlatformDiscoverDto } from "./discovery-platform";
 import { EitherIdPresentConstraint } from "@app/common/validators/id-presentation";
 import { DeviceFieldDto } from "./device-field.dto";
+import { DeviceDataDto } from "../../device/dto/device-metadata.dto";
 
 export class DiscoveryMessageDto {
 
@@ -87,6 +88,12 @@ export class DiscoveryMessageV2Dto {
   @ValidateNested()
   @Type(() => PlatformDiscoverDto)
   platform?: PlatformDiscoverDto
+
+  @ApiProperty({ required: false, type: () => DeviceDataDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DeviceDataDto)
+  deviceData?: DeviceDataDto;
 
   @ApiProperty({ required: false })
   @IsOptional()
