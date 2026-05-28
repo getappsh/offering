@@ -19,10 +19,11 @@ export class PushOfferingDto {
   @IsString({each: true})
   devices: string[];
 
-  @ApiProperty({ required: false, type: Number, isArray: true })
+  @ApiProperty({ required: false, type: Number, isArray: true, default: [] })
+  @IsOptional()
   @IsArray()
   @IsNumber({ allowNaN: false }, { each: true })
-  groups: number[];
+  groups: number[] = [];
 
   @ApiProperty({ enum: ItemTypeEnum, default: ItemTypeEnum.SOFTWARE })
   @IsEnum(ItemTypeEnum)

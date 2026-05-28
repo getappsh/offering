@@ -96,6 +96,26 @@ export class OfferingController {
     }
   }
 
+  @MessagePattern(OfferingTopics.CONFIG_OFFERING_PUSH)
+  async pushConfigOffering(@RpcPayload() po: PushOfferingDto) {
+    this.logger.log(`Push config offering for catalogId: ${po.catalogId}`);
+    await this.offeringService.pushConfigOffering(po);
+    return { success: true };
+  }
+
+  @MessagePattern(OfferingTopics.CONFIG_OFFERING_UNPUSH)
+  async unpushConfigOffering(@RpcPayload() po: PushOfferingDto) {
+    this.logger.log(`Unpush config offering for catalogId: ${po.catalogId}`);
+    await this.offeringService.unpushConfigOffering(po);
+    return { success: true };
+  }
+
+  @MessagePattern(OfferingTopics.GET_CONFIG_OFFERING_FOR_DEVICE)
+  getConfigOfferingForDevice(@RpcPayload('stringValue') agentDeviceId: string) {
+    this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
+    return this.offeringService.getConfigOfferingForDevice(agentDeviceId);
+  }
+
   @EventPattern(OfferingTopicsEmit.RELEASE_CHANGED_EVENT)
   releaseChangedEvent(@RpcPayload() event: ReleaseChangedEventDto) {
     this.logger.log(`Release changed event for catalogId: ${event.catalogId}, event: ${event.event}`);

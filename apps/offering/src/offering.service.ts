@@ -68,7 +68,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike, In, IsNull, Not, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 import { RuleDefinition } from '@app/common/rules/types/rule.types';
@@ -132,6 +132,7 @@ export class OfferingService implements OnModuleInit {
         where: {
           device: { ID: dto.deviceId },
           action: OfferingActionEnum.PUSH,
+          release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
         },
         relations: {
           release: { project: { label: true }, artifacts: { fileUpload: true } },
@@ -152,9 +153,8 @@ export class OfferingService implements OnModuleInit {
       ?.filter((p) => !dto.components?.includes(p.release.catalogId))
       ?.map((p) => ComponentV2Dto.fromEntity(p.release));
 
-    // Fetch policies for all releases in offer and push
-    await this.enrichReleasesWithPolicies(res.offer);
-    await this.enrichReleasesWithPolicies(res.push);
+    // Single bulk Kafka call for all releases in offer and push
+    await this.enrichReleasesWithPolicies([...res.offer, ...res.push]);
 
     this.logger.log(
       `Get offering for device: ${dto.deviceId}, offer count: ${res.offer?.length}, push count: ${res.push?.length}`,
@@ -611,6 +611,97 @@ export class OfferingService implements OnModuleInit {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // CONFIG OFFERING
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Resolves a config catalogId. The caller may pass either a real release catalogId
+   * (e.g. "42.config:deviceId@1.0.0") or just the project name ("config:deviceId").
+   * In the latter case, look up the project's most recent released revision.
+   */
+  private async resolveConfigCatalogId(catalogId: string): Promise<string> {
+    // If it already contains '@', assume it's a full release catalogId
+    if (catalogId.includes('@')) return catalogId;
+
+    // Otherwise treat it as a project name and find its latest released release by sort order
+    const release = await this.releaseRepo.findOne({
+      where: { project: { name: catalogId }, status: ReleaseStatusEnum.RELEASED },
+      order: { sortOrder: 'DESC' },
+      relations: { project: true },
+    });
+
+    if (!release) {
+      throw new NotFoundException(`No release found for config project "${catalogId}". Ensure the config project has been provisioned.`);
+    }
+
+    return release.catalogId;
+  }
+
+  async pushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`push config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    await this.setSoftwareOffering(devices, resolvedCatalogId, OfferingActionEnum.PUSH);
+  }
+
+  async unpushConfigOffering(po: PushOfferingDto) {
+    this.logger.debug(`unpush config offering for catalogId: ${po.catalogId}`);
+    const resolvedCatalogId = await this.resolveConfigCatalogId(po.catalogId);
+    const devices = [...po.devices];
+    if (po.groups.length > 0) {
+      const idsInGroup = await this.getDevicesInGroup(po.groups);
+      devices.push(...idsInGroup);
+    }
+    const uniqueDevices = [...new Set(devices)];
+
+    try {
+      await this.compOfferingRepo.delete({
+        device: { ID: In(uniqueDevices) },
+        release: { catalogId: resolvedCatalogId },
+        action: OfferingActionEnum.PUSH,
+      });
+    } catch (err) {
+      this.logger.error(`error deleting config offering: ${err}`);
+      throw err;
+    }
+  }
+
+  async getConfigOfferingForDevice(agentDeviceId: string): Promise<string[]> {
+    this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
+
+    const [offerings, selfRelease] = await Promise.all([
+      this.compOfferingRepo.find({
+        where: {
+          device: { ID: agentDeviceId },
+          action: OfferingActionEnum.PUSH,
+          release: { project: { projectType: In([ProjectType.CONFIG]) } },
+        },
+        relations: { release: { project: true } },
+      }),
+      this.releaseRepo.findOne({
+        where: {
+          project: { name: `config:${agentDeviceId}`, projectType: ProjectType.CONFIG },
+          status: ReleaseStatusEnum.RELEASED,
+        },
+        order: { sortOrder: 'DESC' },
+      }),
+    ]);
+
+    const catalogIds = offerings.map((o) => o.release.catalogId);
+    if (selfRelease) {
+      catalogIds.push(selfRelease.catalogId);
+    }
+
+    return [...new Set(catalogIds)];
+  }
+
+  // ---------------------------------------------------------------------------
+
   private async setDeviceSoftwaresOffering(
     deviceId: string,
     catalogIds: string[],
@@ -912,9 +1003,16 @@ export class OfferingService implements OnModuleInit {
       );
 
     const [policyOfferingProject, offering] = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), params.withDependencies),
-      this.getOfferingForProjectsByIds(projects, params.withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), params.withDependencies, true),
+      this.getOfferingForProjectsByIds(projects, params.withDependencies, true)
     ]);
+
+    // Single bulk Kafka call for all components (replaces 3 independent calls)
+    await this.enrichReleasesWithPolicies([
+      ...Array.from(policyOfferingProject.values()),
+      ...Array.from(offering.values()),
+    ]);
+
     const policyOfferingCatalog = new Map(
       Array.from(policyOfferingProject).map(([_, v]) => [v.id, v]),
     );
@@ -1049,9 +1147,12 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), query.withDependencies),
-      this.getOfferingForProjectsByIds(projectIds, query.withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), query.withDependencies, true),
+      this.getOfferingForProjectsByIds(projectIds, query.withDependencies, true)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    // Single bulk Kafka call for all components (replaces 3 independent calls)
+    await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
 
     const deviceTypeOffering =
       DeviceTypeOfferingDto.fromDeviceTypeHierarchyDto(tree);
@@ -1201,6 +1302,7 @@ export class OfferingService implements OnModuleInit {
     projectOffering.projectName = project.name;
     projectOffering.displayName = project.projectName;
     projectOffering.label = project.label?.name;
+    projectOffering.applicationCategory = project.applicationCategory ?? undefined;
 
     projectOffering.release = offering.get(project.id);
 
@@ -1212,9 +1314,14 @@ export class OfferingService implements OnModuleInit {
   ): Promise<PaginatedResultDto<ProjectRefOfferingDto>> {
     this.logger.log(`get offering for projects`);
 
-    const whereCondition: any = {};
+    const whereCondition: any = { archivedAt: IsNull() };
     if (dto.query && dto.query.trim() !== '') {
       whereCondition.name = ILike(`%${dto.query}%`);
+    }
+    if (dto.projectTypes && dto.projectTypes.length > 0) {
+      whereCondition.projectType = In(dto.projectTypes);
+    } else {
+      whereCondition.projectType = Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP]));
     }
 
     const [projects, total] = await this.projectRepo.findAndCount({
@@ -1223,6 +1330,7 @@ export class OfferingService implements OnModuleInit {
         name: true,
         projectType: true,
         projectName: true,
+        applicationCategory: true,
         label: { id: true, name: true },
       },
       where: whereCondition,
@@ -1241,9 +1349,12 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map((p) => p.catalogId)),
-      this.getLatestReleaseOfProjects(projectIds),
+      this.getComponents(policies.map((p) => p.catalogId), undefined, true),
+      this.getLatestReleaseOfProjects(projectIds, undefined, true),
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    // Single bulk Kafka call for all components (replaces 2 independent calls)
+    await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
 
     const projectOfferings = projects.map((p) => {
       const projectOffering = new ProjectRefOfferingDto();
@@ -1251,6 +1362,7 @@ export class OfferingService implements OnModuleInit {
       projectOffering.projectName = p.name;
       projectOffering.displayName = p.projectName;
       projectOffering.label = p.label?.name;
+      projectOffering.applicationCategory = p.applicationCategory ?? undefined;
       projectOffering.release = componentOffering.get(p.id);
       return projectOffering;
     });
@@ -1301,7 +1413,7 @@ export class OfferingService implements OnModuleInit {
     }
   }
 
-  private async getOfferingForProjectsByIds(projectIds: number[], withDependencies: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getOfferingForProjectsByIds(projectIds: number[], withDependencies: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`Get offering for projects by ids: ${JSON.stringify(projectIds)}`)
     let policies = await this.policyService.findByProjects(projectIds);
 
@@ -1310,9 +1422,14 @@ export class OfferingService implements OnModuleInit {
     );
 
     const componentOffering = await Promise.all([
-      this.getComponents(policies.map(p => p.catalogId), withDependencies),
-      this.getLatestReleaseOfProjects(projectIds, withDependencies)
+      this.getComponents(policies.map(p => p.catalogId), withDependencies, true),
+      this.getLatestReleaseOfProjects(projectIds, withDependencies, true)
     ]).then(([components, offering]) => new Map([...components, ...offering]));
+
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(componentOffering.values()));
+    }
+
     return componentOffering;
   }
 
@@ -1367,7 +1484,7 @@ export class OfferingService implements OnModuleInit {
   }
 
 
-  private async getLatestReleaseOfProjects(projects: number[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getLatestReleaseOfProjects(projects: number[], withDependencies?: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get offering for projects: ${JSON.stringify(projects)}`);
     const releases = await this.releaseRepo.find({
       select: {
@@ -1397,14 +1514,14 @@ export class OfferingService implements OnModuleInit {
       }
     });
 
-    // Enrich all releases with policies
-    const components = Array.from(resultMap.values());
-    await this.enrichReleasesWithPolicies(components);
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(resultMap.values()));
+    }
 
     return resultMap;
   }
 
-  private async getComponents(catalogIds: string[], withDependencies?: boolean): Promise<Map<number, ComponentV2Dto>> {
+  private async getComponents(catalogIds: string[], withDependencies?: boolean, skipEnrichment = false): Promise<Map<number, ComponentV2Dto>> {
     this.logger.debug(`get components: ${JSON.stringify(catalogIds)}`);
     const releases = await this.fetchReleasesByCatalogIds(catalogIds, withDependencies);
     const componentMap = new Map<number, ComponentV2Dto>();
@@ -1414,9 +1531,9 @@ export class OfferingService implements OnModuleInit {
       }
     });
 
-    // Enrich all components with policies
-    const components = Array.from(componentMap.values());
-    await this.enrichReleasesWithPolicies(components);
+    if (!skipEnrichment) {
+      await this.enrichReleasesWithPolicies(Array.from(componentMap.values()));
+    }
 
     return componentMap;
   }

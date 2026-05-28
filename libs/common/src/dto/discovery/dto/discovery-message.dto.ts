@@ -8,6 +8,7 @@ import { DiscoveryMapDto } from "./discovery-map.dto";
 import { PlatformDiscoverDto } from "./discovery-platform";
 import { EitherIdPresentConstraint } from "@app/common/validators/id-presentation";
 import { DeviceFieldDto } from "./device-field.dto";
+import { DeviceDataDto } from "../../device/dto/device-metadata.dto";
 
 export class DiscoveryMessageDto {
 
@@ -88,6 +89,12 @@ export class DiscoveryMessageV2Dto {
   @Type(() => PlatformDiscoverDto)
   platform?: PlatformDiscoverDto
 
+  @ApiProperty({ required: false, type: () => DeviceDataDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DeviceDataDto)
+  deviceData?: DeviceDataDto;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @ValidateNested()
@@ -124,6 +131,9 @@ export class DiscoveryMessageV2Dto {
    * Populated on the top-level device only (not sub-devices).
    */
   deviceContext?: Record<string, any>;
+
+  /** Latest assembled device config, returned by the discovery response for the agent. */
+  deviceConfig?: Record<string, any>;
 
   toString() {
     return JSON.stringify(this)

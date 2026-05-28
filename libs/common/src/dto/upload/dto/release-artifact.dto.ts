@@ -53,6 +53,11 @@ export class SetReleaseArtifactDto {
   @ApiProperty({ required: false, description: 'Whether to trigger an SBOM scan for this artifact after upload. Defaults to true.', default: true })
   enableSbomScan: boolean = true;
 
+  @IsString()
+  @IsOptional()
+  @ApiProperty({ required: false, description: 'Package version for RPM/DEB artifact types (e.g. "1.2.3-4")' })
+  packageVersion?: string;
+
 }
 
 
@@ -159,6 +164,11 @@ export class ReleaseArtifactDto {
   @IsString()
   sbomScanId?: string
 
+  @ApiProperty({ required: false, type: 'string', description: 'Package version for RPM/DEB artifact types (e.g. "1.2.3-4")' })
+  @IsOptional()
+  @IsString()
+  packageVersion?: string | null
+
 
   static fromEntity(artifact: ReleaseArtifactEntity): ReleaseArtifactDto {
     const dto = new ReleaseArtifactDto();
@@ -170,15 +180,17 @@ export class ReleaseArtifactDto {
     dto.dockerImageUrl = artifact?.dockerImageUrl;
     dto.uploadId = artifact.fileUpload ? artifact.fileUpload.id : undefined;
     const isDockerUrlOnly = artifact.type === ArtifactTypeEnum.DOCKER_IMAGE && !artifact.fileUpload;
-    dto.status = isDockerUrlOnly ? FileUPloadStatusEnum.UPLOADED : artifact?.fileUpload?.status
+    const isPackageArtifact = artifact.type === ArtifactTypeEnum.RPM || artifact.type === ArtifactTypeEnum.DEB;
+    dto.status = (isDockerUrlOnly || isPackageArtifact) ? FileUPloadStatusEnum.UPLOADED : artifact?.fileUpload?.status
     dto.size = artifact?.fileUpload?.size
-    dto.progress = isDockerUrlOnly ? 100 : (artifact?.fileUpload?.progress ?? 0)
+    dto.progress = (isDockerUrlOnly || isPackageArtifact) ? 100 : (artifact?.fileUpload?.progress ?? 0)
     dto.error = artifact?.fileUpload?.error
     dto.sha256 = artifact?.fileUpload?.sha256
     dto.arguments = artifact?.arguments;
     dto.isExecutable = artifact?.isExecutable;
     dto.enableSbomScan = artifact?.enableSbomScan ?? true;
     dto.sbomScanId = artifact?.sbomScanId;
+    dto.packageVersion = artifact?.packageVersion;
 
     return dto
   }

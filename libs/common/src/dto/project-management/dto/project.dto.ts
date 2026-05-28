@@ -1,6 +1,6 @@
 import { ApiProperty, OmitType, PartialType } from "@nestjs/swagger";
 import { MemberResDto } from "./member-project-res.dto";
-import { MemberProjectEntity, ProjectEntity, ProjectType, RoleInProject } from "@app/common/database/entities";
+import { MemberProjectEntity, ProjectEntity, ProjectType, RoleInProject, ApplicationCategory } from "@app/common/database/entities";
 import { IsString, IsNotEmpty, IsOptional, IsArray, IsEnum } from "class-validator";
 import { IsValidStringFor } from "@app/common/validators";
 import { Pattern } from "@app/common/validators/regex.validator";
@@ -39,6 +39,12 @@ export class BaseProjectDto {
   @ApiProperty({ required: false, description: 'Label name assigned to the project' })
   label?: string;
 
+  @ApiProperty({ required: false, description: 'Date when the project was archived. Null means the project is active.', type: Date })
+  archivedAt?: Date | null;
+
+  @ApiProperty({ enum: ApplicationCategory, required: false, description: 'Application category (user or technician), only relevant for application type projects' })
+  applicationCategory?: ApplicationCategory;
+
   fromProjectEntity(project: ProjectEntity) {
     this.id = project.id;
     this.name = project.name;
@@ -46,6 +52,8 @@ export class BaseProjectDto {
     this.description = project.description;
     this.projectType = project.projectType;
     this.label = project.label?.name;
+    this.archivedAt = project.archivedAt ?? null;
+    this.applicationCategory = project.applicationCategory ?? undefined;
     // this.status = project.status;
 
     return this;
@@ -157,6 +165,13 @@ export class ProjectDto extends BaseProjectDto {
 
   @ApiProperty({ required: false, type: ProjectSummaryDto, description: 'Summary of the project' })
   summary?: ProjectSummaryDto
+
+  @ApiProperty({
+    required: false,
+    description:
+      'Semantic version of the currently active config revision (only set for CONFIG and CONFIG_MAP project types)',
+  })
+  configSemVer?: string | null;
 
   fromProjectEntity(project: ProjectEntity) {
     super.fromProjectEntity(project);
@@ -287,6 +302,11 @@ export class CreateProjectDto {
   @IsOptional()
   @ApiProperty({ required: false, description: 'Label name to assign to the project' })
   label?: string;
+
+  @IsEnum(ApplicationCategory)
+  @IsOptional()
+  @ApiProperty({ enum: ApplicationCategory, required: false, description: 'Application category (user or technician), only for application type projects' })
+  applicationCategory?: ApplicationCategory;
 
   @IsString()
   @IsOptional()

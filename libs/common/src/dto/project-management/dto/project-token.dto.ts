@@ -27,6 +27,9 @@ export class ProjectTokenDto {
     @ApiProperty()
     createdAt: Date
 
+    @ApiProperty({ required: false })
+    description?: string
+
     static fromProjectTokenEntity(projectToken: ProjectTokenEntity) {
         let token = new ProjectTokenDto();
         token.id = projectToken.id;
@@ -70,6 +73,12 @@ export class CreateProjectTokenDto {
     @IsBoolean()
     @IsOptional()
     isActive?: boolean
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    @MaxLength(500)
+    description?: string
 
     toString() {
         return JSON.stringify(this)

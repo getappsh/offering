@@ -39,6 +39,10 @@ export class GeoLocationDto {
   @IsOptional()
   @IsString()
   alt: string;
+
+  toString() {
+    return JSON.stringify(this)
+  }
 }
 
 export class SituationalDiscoveryDto {
@@ -80,6 +84,9 @@ export class SituationalDiscoveryDto {
   @Type(() => GeoLocationDto)
   location: GeoLocationDto;
 
+  toString() {
+    return JSON.stringify(this)
+  }
 }
 
 export class PhysicalDiscoveryDto {

@@ -81,7 +81,8 @@ export enum DeployStatusEnum {
 export enum ItemTypeEnum {
     SOFTWARE = 'software',
     MAP = 'map',
-    CACHE = 'cache'
+    CACHE = 'cache',
+    CONFIG = 'config'
 }
 
 export enum MapImportStatusEnum {
@@ -167,6 +168,8 @@ export enum ReleaseStatusEnum {
 export enum ArtifactTypeEnum {
     FILE = 'file',
     DOCKER_IMAGE = 'docker_image',
+    RPM = 'rpm',
+    DEB = 'deb',
 }
 
 export enum ProjectType {
@@ -174,9 +177,21 @@ export enum ProjectType {
     APPLICATION = "application",
     LIB = "lib",
     BUNDLE = "bundle",
-    INFRA = "infra"
+    INFRA = "infra",
+    CONFIG = "config",
+    CONFIG_MAP = "config_map"
   }
 
+export enum ApplicationCategory {
+    USER = "user",
+    TECHNICIAN = "technician"
+  }
+
+export enum ConfigRevisionStatus {
+    DRAFT = "draft",
+    ACTIVE = "active",
+    ARCHIVED = "archived",
+}
 
 // PLATFORM TYPES
 export enum CPUArchitecture {
@@ -196,3 +211,4 @@ export enum NetworkType {
   HOST_ONLY = 'HOST_ONLY',
   CUSTOM = 'CUSTOM',
 }
+

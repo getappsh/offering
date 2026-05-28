@@ -71,6 +71,13 @@ export const ROLE_DESCRIPTIONS: Partial<Record<ApiRole, string>> = {
   [ApiRole.MANAGE_CONFIG]: 'Permission to manage system configuration',
   [ApiRole.VIEW_CONFIG]: 'Permission to view system configuration',
 
+  // Config Revision & Config Map Management
+  [ApiRole.VIEW_CONFIG_REVISION]: 'Permission to view config revisions and device config snapshots',
+  [ApiRole.MANAGE_CONFIG_REVISION]: 'Permission to manage config revisions (create draft, apply, delete draft)',
+  [ApiRole.MANAGE_CONFIG_GROUP]: 'Permission to manage config groups and entries within a draft revision',
+  [ApiRole.VIEW_CONFIG_MAP]: 'Permission to view ConfigMap projects and their device-type associations',
+  [ApiRole.MANAGE_CONFIG_MAP]: 'Permission to manage ConfigMap associations (add or remove device-type / device-id links)',
+
   // SBOM
   [ApiRole.CREATE_SBOM_SCAN]: 'Permission to request a new SBOM scan for a docker image, binary file, or directory',
   [ApiRole.VIEW_SBOM_SCAN]: 'Permission to view SBOM scan status, results, and download reports',
@@ -134,6 +141,9 @@ export const COMPOSITE_ROLES: RoleDefinition[] = [
       ApiRole.VIEW_LOGS,
       ApiRole.VIEW_METRICS,
       ApiRole.VIEW_CONFIG,
+      // Config Revision & Config Map (read-only)
+      ApiRole.VIEW_CONFIG_REVISION,
+      ApiRole.VIEW_CONFIG_MAP,
       // Policies & Rules
       ApiRole.CREATE_POLICY,
       ApiRole.VIEW_POLICY,
@@ -181,6 +191,12 @@ export const COMPOSITE_ROLES: RoleDefinition[] = [
       // Configuration
       ApiRole.MANAGE_CONFIG,
       ApiRole.VIEW_CONFIG,
+      // Config Revision & Config Map Management
+      ApiRole.VIEW_CONFIG_REVISION,
+      ApiRole.MANAGE_CONFIG_REVISION,
+      ApiRole.MANAGE_CONFIG_GROUP,
+      ApiRole.VIEW_CONFIG_MAP,
+      ApiRole.MANAGE_CONFIG_MAP,
       // Policies & Rules Management
       ApiRole.CREATE_POLICY,
       ApiRole.VIEW_POLICY,

@@ -50,7 +50,27 @@ export const UploadTopics = {
     GET_DEPLOYMENT_REPORT: `getapp-upload.get-deployment-report${region}`,
     // Settings
     GET_SBOM_ENABLED: `getapp-upload.get-sbom-enabled${region}`,
+    ARCHIVE_PROJECT_RELEASES: `getapp-upload.archive-project-releases${region}`,
+    RESTORE_PROJECT_RELEASES: `getapp-upload.restore-project-releases${region}`,
+    DELETE_PROJECT_RELEASES: `getapp-upload.delete-project-releases${region}`,
 
+    // Config projects
+    CONFIG_UPSERT_GROUP: `getapp-upload.config.upsert-group${region}`,
+    CONFIG_DELETE_GROUP: `getapp-upload.config.delete-group${region}`,
+    CONFIG_APPLY_REVISION: `getapp-upload.config.apply-revision${region}`,
+    CONFIG_GET_REVISIONS: `getapp-upload.config.get-revisions${region}`,
+    CONFIG_GET_REVISION_BY_ID: `getapp-upload.config.get-revision-by-id${region}`,
+    CONFIG_ADD_MAP_ASSOCIATION: `getapp-upload.config.add-map-association${region}`,
+    CONFIG_REMOVE_MAP_ASSOCIATION: `getapp-upload.config.remove-map-association${region}`,
+    CONFIG_GET_MAP_ASSOCIATIONS: `getapp-upload.config.get-map-associations${region}`,
+    CONFIG_GET_CONFIG_MAPS_FOR_PROJECT: `getapp-upload.config.get-config-maps-for-project${region}`,
+    CONFIG_GET_DEVICE_CONFIG: `getapp-upload.config.get-device-config${region}`,
+    CONFIG_GET_DEVICE_CONFIG_BY_VERSION: `getapp-upload.config.get-device-config-by-version${region}`,
+    CONFIG_GET_ACTIVE_SEMVER_FOR_DEVICE: `getapp-upload.config.get-active-semver-for-device${region}`,
+    CONFIG_ENSURE_DEVICE_PROJECT: `getapp-upload.config.ensure-device-project${region}`,
+    CONFIG_PROVISION_PROJECT_CONTENT: `getapp-upload.config.provision-project-content${region}`,
+    CONFIG_CREATE_DRAFT_REVISION: `getapp-upload.config.create-draft-revision${region}`,
+    CONFIG_DELETE_DRAFT_REVISION: `getapp-upload.config.delete-draft-revision${region}`,
 } as const
 
 export const UploadTopicsEmit = {
@@ -91,6 +111,9 @@ export const OfferingTopics = {
     UPSERT_OFFERING_TREE_POLICY: `getapp-offering.upsert-offering-tree-policy${region}`,
     GET_OFFERING_TREE_POLICIES: `getapp-offering.get-offering-tree-policies${region}`,
     GET_PUSH_OFFERING_DEVICES: `getapp-offering.get-push-offering-devices${region}`,
+    GET_CONFIG_OFFERING_FOR_DEVICE: `getapp-offering.get-config-offering-for-device${region}`,
+    CONFIG_OFFERING_PUSH: `getapp-offering.config-offering-push${region}`,
+    CONFIG_OFFERING_UNPUSH: `getapp-offering.config-offering-unpush${region}`,
     
 } as const
 
@@ -175,6 +198,29 @@ export const ProjectManagementTopics = {
     GET_SYSTEM_WIDE_DEPLOYMENT_REPORT: `getapp-project-management.get-system-wide-deployment-report${region}`,
     GET_PROJECT_DEPLOYMENT_REPORT: `getapp-project-management.get-project-deployment-report${region}`,
 
+    // Archive / Restore
+    RESTORE_PROJECT: `getapp-project-management.restore-project${region}`,
+    PERMANENTLY_DELETE_PROJECT: `getapp-project-management.permanently-delete-project${region}`,
+    // Config projects
+    CONFIG_UPSERT_GROUP: `getapp-project-management.config.upsert-group${region}`,
+    CONFIG_DELETE_GROUP: `getapp-project-management.config.delete-group${region}`,
+    CONFIG_UPSERT_ENTRY: `getapp-project-management.config.upsert-entry${region}`,
+    CONFIG_DELETE_ENTRY: `getapp-project-management.config.delete-entry${region}`,
+    CONFIG_APPLY_REVISION: `getapp-project-management.config.apply-revision${region}`,
+    CONFIG_GET_REVISIONS: `getapp-project-management.config.get-revisions${region}`,
+    CONFIG_GET_REVISION_BY_ID: `getapp-project-management.config.get-revision-by-id${region}`,
+    CONFIG_ADD_MAP_ASSOCIATION: `getapp-project-management.config.add-map-association${region}`,
+    CONFIG_REMOVE_MAP_ASSOCIATION: `getapp-project-management.config.remove-map-association${region}`,
+    CONFIG_GET_MAP_ASSOCIATIONS: `getapp-project-management.config.get-map-associations${region}`,
+    CONFIG_GET_CONFIG_MAPS_FOR_PROJECT: `getapp-project-management.config.get-config-maps-for-project${region}`,
+    CONFIG_GET_DEVICE_CONFIG: `getapp-project-management.config.get-device-config${region}`,
+    CONFIG_GET_DEVICE_CONFIG_BY_VERSION: `getapp-project-management.config.get-device-config-by-version${region}`,
+    CONFIG_GET_ACTIVE_SEMVER_FOR_DEVICE: `getapp-project-management.config.get-active-semver-for-device${region}`,
+    CONFIG_ENSURE_DEVICE_PROJECT: `getapp-project-management.config.ensure-device-project${region}`,
+    CONFIG_PROVISION_ALL: `getapp-project-management.config.provision-all${region}`,
+    CONFIG_CREATE_DRAFT_REVISION: `getapp-project-management.config.create-draft-revision${region}`,
+    CONFIG_DELETE_DRAFT_REVISION: `getapp-project-management.config.delete-draft-revision${region}`,
+    
     CHECK_HEALTH: `getapp-project-management.check-health${region}`
 } as const
 
@@ -229,7 +275,7 @@ export const DeviceTopics = {
     // Config
     GET_DEVICE_CONFIG: `getapp-device.config.get${region}`,
     SET_DEVICE_CONFIG: `getapp-device.config.set${region}`,
-    
+   
     // Rules - Restrictions
     GET_RESTRICTIONS: `getapp-device.get-restrictions${region}`,
     CREATE_RESTRICTION: `getapp-device.create-restriction${region}`,
@@ -250,6 +296,13 @@ export const DeviceTopics = {
     GET_DEVICE_RESTRICTIONS: `getapp-device.get-device-restrictions${region}`,
     // OS
     GET_ALL_OS: `getapp-device.get-all-os${region}`,
+    // Config helper queries (used by project-management service)
+    GET_DEVICE_TYPE_IDS_FOR_DEVICE: `getapp-device.get-device-type-ids${region}`,
+    GET_DEVICE_IDS_BY_TYPE_IDS: `getapp-device.get-device-ids-by-type-ids${region}`,
+    GET_ALL_DEVICE_IDS: `getapp-device.get-all-device-ids${region}`,
+    // Device Data
+    GET_DEVICE_DATA: `getapp-device.deviceData.get${region}`,
+    SET_DEVICE_DATA: `getapp-device.deviceData.set${region}`,
 } as const
 
 export const DeviceTopicsEmit = {
