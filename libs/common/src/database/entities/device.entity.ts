@@ -90,4 +90,8 @@ export class DeviceEntity {
   @Column("text", { name: "formations", array: true, nullable: true })
   formations?: string[];
 
+  /** Persistent metadata settable via API (distinct from discovery-message metaData). */
+  @Column({ type: 'jsonb', nullable: true, default: null, name: 'device_data' })
+  deviceData?: Record<string, any> | null;
+
 }

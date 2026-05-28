@@ -260,6 +260,32 @@ export enum ApiRole {
    */
   RETRY_SBOM_SCAN = 'retry-sbom-scan',
 
+  // ========== CONFIG REVISION & CONFIG MAP MANAGEMENT ==========
+  /**
+   * Permission to view config revisions and device config snapshots
+   */
+  VIEW_CONFIG_REVISION = 'view-config-revision',
+
+  /**
+   * Permission to manage config revisions (create draft, apply, delete draft)
+   */
+  MANAGE_CONFIG_REVISION = 'manage-config-revision',
+
+  /**
+   * Permission to manage config groups and entries within a draft revision
+   */
+  MANAGE_CONFIG_GROUP = 'manage-config-group',
+
+  /**
+   * Permission to view ConfigMap projects and their device-type associations
+   */
+  VIEW_CONFIG_MAP = 'view-config-map',
+
+  /**
+   * Permission to manage ConfigMap associations (add or remove device-type / device-id links)
+   */
+  MANAGE_CONFIG_MAP = 'manage-config-map',
+
   // ========== SPECIAL STAMP ==========
   /**
    * Special stamp role that enables permission validation when present

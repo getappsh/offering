@@ -26,28 +26,6 @@ interface RuleQueryFilter {
   projectIdentifier?: string | number;
 }
 
-interface RuleQueryFilter {
-  type?: RuleType;
-  isActive?: boolean;
-  releaseId?: string;
-  deviceTypeId?: number;
-  deviceTypeName?: string;
-  deviceId?: string;
-  osType?: string;
-  projectIdentifier?: string | number;
-}
-
-interface RuleQueryFilter {
-  type?: RuleType;
-  isActive?: boolean;
-  releaseId?: string;
-  deviceTypeId?: number;
-  deviceTypeName?: string;
-  deviceId?: string;
-  osType?: string;
-  projectIdentifier?: string | number;
-}
-
 @Injectable()
 export class RuleService implements OnModuleInit {
   private readonly logger = new Logger(RuleService.name);
@@ -232,6 +210,10 @@ export class RuleService implements OnModuleInit {
 
     if (query.deviceTypeId) {
       queryBuilder.andWhere('deviceType.id = :deviceTypeId', { deviceTypeId: query.deviceTypeId });
+    }
+
+    if (query.deviceTypeName) {
+      queryBuilder.andWhere('deviceType.name = :deviceTypeName', { deviceTypeName: query.deviceTypeName });
     }
 
     if (query.deviceId) {

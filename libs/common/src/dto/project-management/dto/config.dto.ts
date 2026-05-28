@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, ArrayNotEmpty } from 'class-validator';
 import { ConfigRevisionStatus } from '@app/common/database/entities';
 
@@ -36,8 +37,6 @@ export class ConfigGroupDto {
 }
 
 export class UpsertConfigGroupDto {
-  @ApiProperty({ description: 'Project identifier (id or name)' })
-  @IsNotEmpty()
   projectIdentifier: number | string;
 
   @ApiProperty()
@@ -86,8 +85,6 @@ export class UpsertConfigGroupDto {
 }
 
 export class DeleteConfigGroupDto {
-  @ApiProperty()
-  @IsNotEmpty()
   projectIdentifier: number | string;
 
   @ApiProperty()
@@ -130,14 +127,28 @@ export class ConfigRevisionDto {
 }
 
 export class ApplyConfigRevisionDto {
-  @ApiProperty({ description: 'Project identifier (id or name)' })
-  @IsNotEmpty()
   projectIdentifier: number | string;
 
   @ApiProperty({ required: false, description: 'Who is applying (email / user id)' })
   @IsString()
   @IsOptional()
   appliedBy?: string;
+}
+
+export class GetConfigRevisionsQueryDto {
+  @ApiProperty({ required: false, description: 'Include groups in each revision' })
+  @IsBoolean()
+  @IsOptional()
+  @Type(() => Boolean)
+  includeGroups?: boolean;
+}
+
+export class GetConfigRevisionQueryDto {
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  @Type(() => Boolean)
+  includeGroups?: boolean;
 }
 
 export class CreateDraftRevisionDto {
@@ -198,8 +209,7 @@ export class ConfigMapAssociationDto {
 }
 
 export class AddConfigMapAssociationDto {
-  @ApiProperty({ description: 'ConfigMap project identifier (id or name)' })
-  @IsNotEmpty()
+ 
   configMapProjectIdentifier: number | string;
 
   @ApiProperty({ required: false, description: 'Device type ID to associate with. Null = global.' })

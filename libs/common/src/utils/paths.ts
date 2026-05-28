@@ -13,7 +13,7 @@ export const USERS = "users";
 export const DEVICE = "device";
 export const DEVICE_GROUP = "org";
 export const UPLOAD_RELEASES = 'catalog/releases';
-
+export const GET_CONFIG = 'get_config';
 export const GET_MAP = "map";
 export const BUG_REPORT = "bug-report"
 export const DIAGNOSTICS = "diagnostics"

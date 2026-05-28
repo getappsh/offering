@@ -21,7 +21,6 @@ const ormConfig = new DataSource({
   username: process.env.POSTGRES_USER,
   connectTimeoutMS: 5000,
 
-
   ...getDBAuthParams(),
 
   subscribers: [ReleaseSubscriber],
