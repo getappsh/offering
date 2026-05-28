@@ -187,6 +187,11 @@ export enum ApplicationCategory {
     TECHNICIAN = "technician"
   }
 
+export enum ConfigRevisionStatus {
+    DRAFT = "draft",
+    ACTIVE = "active",
+    ARCHIVED = "archived",
+}
 
 // PLATFORM TYPES
 export enum CPUArchitecture {

@@ -82,4 +82,23 @@ export class MinioClientService implements OnModuleInit{
       this.logger.error(`Error checking bucket "${bucketName}": ${err}`)
     }
   }
+
+  async putObjectContent(bucketName: string, objectKey: string, content: string, contentType = 'application/octet-stream'): Promise<void> {
+    const buffer = Buffer.from(content, 'utf-8');
+    await this.client.putObject(bucketName, objectKey, buffer, buffer.length, { 'Content-Type': contentType });
+  }
+
+  async getObjectAsString(bucketName: string, objectKey: string): Promise<string | null> {
+    try {
+      const dataStream = await this.client.getObject(bucketName, objectKey);
+      const chunks: Buffer[] = [];
+      for await (const chunk of dataStream) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks).toString('utf-8');
+    } catch (err: any) {
+      if (err?.code === 'NoSuchKey' || err?.code === 'NotFound') return null;
+      throw err;
+    }
+  }
 }

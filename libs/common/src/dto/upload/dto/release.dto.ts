@@ -146,11 +146,11 @@ export class SetReleaseDto {
 
   @ApiProperty({ 
     required: false, 
-    enum: [ReleaseStatusEnum.DRAFT, ReleaseStatusEnum.IN_REVIEW, ReleaseStatusEnum.ARCHIVED, ReleaseStatusEnum.RELEASED],
+    enum: ReleaseStatusEnum,
     description: 'Explicitly set the release status. Allowed values: draft, in_review, archived, released. Takes precedence over isDraft when provided.'
   })
   @IsOptional()
-  @IsEnum([ReleaseStatusEnum.DRAFT, ReleaseStatusEnum.IN_REVIEW, ReleaseStatusEnum.ARCHIVED, ReleaseStatusEnum.RELEASED])
+  @IsEnum(ReleaseStatusEnum)
   status?: ReleaseStatusEnum;
 
   @ApiProperty({ required: false, type: String, isArray: true, description: 'List of dependencies. Providing an empty array will remove all dependencies. Omitting this field or setting it to null will leave dependencies unchanged.' })

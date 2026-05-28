@@ -52,8 +52,9 @@ function TimeoutRepeatTaskInjector(options: TimeoutRepeatTaskOptions) {
             await locker.releaseLock(options.name);
             setTimeout(runTask, options.repeatTimeout || 1000 * 10) // 10 seconds;
           }
+        } else {
+          setTimeout(runTask, options.acquireFailTimeout || 1000 * 60 * 60); // 1 hour
         }
-        setTimeout(runTask, options.acquireFailTimeout || 1000 * 60 * 60); // 1 hour
       };
 
       runTask();

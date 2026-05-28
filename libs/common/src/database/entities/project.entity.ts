@@ -5,7 +5,7 @@ import { RegulationEntity } from "./regulation.entity";
 import { ReleaseEntity } from "./release.entity";
 import { ProjectTokenEntity } from "./project-token.entity";
 import { DocEntity } from "./document.entity";
-import { ApplicationCategory, ProjectType } from "./enums.entity";
+import { ProjectType, ApplicationCategory } from "./enums.entity";
 import { DeviceTypeEntity } from "./device-type.entity";
 import { PlatformEntity } from "./platform.entity";
 import { LabelEntity } from "./label.entity";
