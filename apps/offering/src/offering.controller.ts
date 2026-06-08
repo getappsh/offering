@@ -1,7 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
-import { ComponentOfferingRequestDto, UpsertOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto } from '@app/common/dto/offering';
+import { ComponentOfferingRequestDto, UpsertOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto, BatchPushOfferingRequestDto } from '@app/common/dto/offering';
 import { ItemTypeEnum } from '@app/common/database/entities';
 import { ReleaseChangedEventDto } from '@app/common/dto/upload';
 import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
@@ -67,6 +67,11 @@ export class OfferingController {
   getPushOfferingDevices(@RpcPayload("stringValue") catalogId: string) {
     this.logger.debug(`get push offering devices for catalogId: ${catalogId}`);
     return this.offeringService.getPushOfferingDevices(catalogId);
+  }
+
+  @MessagePattern(OfferingTopics.GET_BATCH_PUSH_OFFERINGS_FOR_DEVICES)
+  getBatchPushOfferingsForDevices(@RpcPayload() dto: BatchPushOfferingRequestDto) {
+    return this.offeringService.getBatchPushOfferingsForDevices(dto);
   }
 
 

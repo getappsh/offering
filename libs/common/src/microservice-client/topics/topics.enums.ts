@@ -114,6 +114,7 @@ export const OfferingTopics = {
     GET_CONFIG_OFFERING_FOR_DEVICE: `getapp-offering.get-config-offering-for-device${region}`,
     CONFIG_OFFERING_PUSH: `getapp-offering.config-offering-push${region}`,
     CONFIG_OFFERING_UNPUSH: `getapp-offering.config-offering-unpush${region}`,
+    GET_BATCH_PUSH_OFFERINGS_FOR_DEVICES: `getapp-offering.get-batch-push-offerings-for-devices${region}`,
     
 } as const
 
