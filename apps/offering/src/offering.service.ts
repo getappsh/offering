@@ -290,7 +290,7 @@ export class OfferingService implements OnModuleInit {
   }
 
   async getBatchPushOfferingsForDevices(dto: BatchPushOfferingRequestDto): Promise<BatchPushOfferingResponseDto> {
-    const isAll = dto.deviceIds === 'all';
+    const isAll = dto.deviceIds === 'all' || (Array.isArray(dto.deviceIds) && dto.deviceIds.length === 1 && dto.deviceIds[0] === 'all');
     const deviceIds = isAll ? undefined : (dto.deviceIds as string[]);
 
     const whereCondition: any = {
@@ -322,14 +322,13 @@ export class OfferingService implements OnModuleInit {
       },
     });
 
-    console.log(pushEntities);
-    
+    this.logger.debug(`getBatchPushOfferingsForDevices: found ${pushEntities.length} push entities (isAll: ${isAll})`);
 
     const pushByDevice: Record<string, ComponentV2Dto[]> = {};
     for (const entity of pushEntities) {
       const deviceId = entity.device?.ID;
       if (!deviceId) continue;
-      const installed = dto.installedComponents[deviceId] ?? [];
+      const installed = isAll ? [] : (dto.installedComponents?.[deviceId] ?? []);
       if (!installed.includes(entity.release.catalogId)) {
         (pushByDevice[deviceId] ??= []).push(ComponentV2Dto.fromEntity(entity.release));
       }
