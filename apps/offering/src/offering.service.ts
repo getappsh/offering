@@ -30,7 +30,9 @@ import {
   PushOfferingDto,
   OfferingMapPushResDto,
   OfferingTreePolicyParams,
-  BaseDeviceDto
+  BaseDeviceDto,
+  BatchPushOfferingRequestDto,
+  BatchPushOfferingResponseDto,
 } from '@app/common/dto/offering';
 import {
   DeviceTypeOfferingDto,
@@ -176,9 +178,9 @@ export class OfferingService implements OnModuleInit {
   private async getOfferingFromFormationsPlatformsAndComponents(
     dto: ComponentOfferingRequestDto,
   ): Promise<ReleaseEntity[]> {
-    const platformIds = dto.platforms
-      ?.filter((s) => /^\d+$/.test(s))
-      .map((s) => parseInt(s, 10));
+    // const platformIds = dto.platforms
+    //   ?.filter((s) => /^\d+$/.test(s))
+    //   .map((s) => parseInt(s, 10));
 
     const projects = await this.projectRepo.find({
       select: { id: true, platforms: false },
@@ -186,14 +188,14 @@ export class OfferingService implements OnModuleInit {
         {
           releases: { catalogId: In(dto.components ?? []) },
         },
-        {
-          projectType: ProjectType.PRODUCT,
-          platforms: { name: In(dto.platforms ?? []) },
-        },
-        {
-          projectType: ProjectType.PRODUCT,
-          platforms: { id: In(platformIds ?? []) },
-        },
+        // {
+        //   projectType: ProjectType.PRODUCT,
+        //   platforms: { name: In(dto.platforms ?? []) },
+        // },
+        // {
+        //   projectType: ProjectType.PRODUCT,
+        //   platforms: { id: In(platformIds ?? []) },
+        // },
       ],
     });
     const projectIds = projects.map((p) => p.id);
@@ -285,6 +287,51 @@ export class OfferingService implements OnModuleInit {
     return offerings
       .filter(o => !!o.device?.ID)
       .map(o => ({ deviceId: o.device.ID, deviceName: o.device.name }));
+  }
+
+  async getBatchPushOfferingsForDevices(dto: BatchPushOfferingRequestDto): Promise<BatchPushOfferingResponseDto> {
+    const pushEntities = await this.compOfferingRepo.find({
+      select: {
+        release: {
+          version: true,
+          catalogId: true,
+          releaseNotes: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          metadata: {},
+          project: { id: true, name: true, projectType: true, projectName: true, label: { id: true, name: true } },
+          artifacts: { fileUpload: { size: true }, isInstallationFile: true },
+        },
+      },
+      where: {
+        action: OfferingActionEnum.PUSH,
+        release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
+        device: { ID: In(dto.deviceIds) },
+      },
+      relations: {
+        device: true,
+        release: { project: { label: true }, artifacts: { fileUpload: true } },
+      },
+    });
+
+    this.logger.debug(`getBatchPushOfferingsForDevices: found ${pushEntities.length} push entities for ${dto.deviceIds.length} device(s)`);
+
+    const pushByDevice: Record<string, ComponentV2Dto[]> = {};
+    for (const entity of pushEntities) {
+      const deviceId = entity.device?.ID;
+      if (!deviceId) continue;
+      const installed = dto.installedComponents?.[deviceId] ?? [];
+      if (!installed.includes(entity.release.catalogId)) {
+        (pushByDevice[deviceId] ??= []).push(ComponentV2Dto.fromEntity(entity.release));
+      }
+    }
+
+    const allReleases = Object.values(pushByDevice).flat();
+    await this.enrichReleasesWithPolicies(allReleases);
+
+    this.logger.log(`Batch push offerings: ${Object.keys(pushByDevice).length} device(s) with push releases`);
+    return { pushByDevice };
   }
 
   /**
@@ -698,6 +745,38 @@ export class OfferingService implements OnModuleInit {
     }
 
     return [...new Set(catalogIds)];
+  }
+
+  /**
+   * Returns the latest released config catalogId for each of the given device IDs.
+   * Result is a map of deviceId -> catalogId (devices without a config release are omitted).
+   */
+  async getConfigReleasesForDevices(deviceIds: string[]): Promise<Record<string, string>> {
+    this.logger.debug(`get config releases for ${deviceIds.length} devices`);
+    if (deviceIds.length === 0) return {};
+
+    const projectNames = deviceIds.map((id) => `config:${id}`);
+
+    const releases = await this.releaseRepo
+      .createQueryBuilder('r')
+      .innerJoin('r.project', 'p')
+      .select(['r.catalogId', 'p.name'])
+      .where('p.name IN (:...projectNames)', { projectNames })
+      .andWhere('p.projectType = :type', { type: ProjectType.CONFIG })
+      .andWhere('r.status = :status', { status: ReleaseStatusEnum.RELEASED })
+      .orderBy('r.sortOrder', 'DESC')
+      .getMany();
+
+    // Keep only the first (latest) release per project name
+    const result: Record<string, string> = {};
+    for (const release of releases) {
+      const deviceId = release.project.name.slice('config:'.length);
+      if (!result[deviceId]) {
+        result[deviceId] = release.catalogId;
+      }
+    }
+
+    return result;
   }
 
   // ---------------------------------------------------------------------------

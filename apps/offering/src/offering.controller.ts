@@ -1,7 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { OfferingTopics, OfferingTopicsEmit } from '@app/common/microservice-client/topics';
-import { ComponentOfferingRequestDto, UpsertOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto } from '@app/common/dto/offering';
+import { ComponentOfferingRequestDto, UpsertOfferingTreePolicyDto, OfferingTreePolicyParams, PushOfferingDto, BatchPushOfferingRequestDto } from '@app/common/dto/offering';
 import { ItemTypeEnum } from '@app/common/database/entities';
 import { ReleaseChangedEventDto } from '@app/common/dto/upload';
 import { DeviceComponentStateDto } from '@app/common/dto/device/dto/device-software.dto';
@@ -69,6 +69,11 @@ export class OfferingController {
     return this.offeringService.getPushOfferingDevices(catalogId);
   }
 
+  @MessagePattern(OfferingTopics.GET_BATCH_PUSH_OFFERINGS_FOR_DEVICES)
+  getBatchPushOfferingsForDevices(@RpcPayload() dto: BatchPushOfferingRequestDto) {
+    return this.offeringService.getBatchPushOfferingsForDevices(dto);
+  }
+
 
   @MessagePattern(OfferingTopics.DEVICE_MAP_OFFERING)
   getDeviceMapOffering(@RpcPayload("stringValue") deviceId: string) {
@@ -114,6 +119,12 @@ export class OfferingController {
   getConfigOfferingForDevice(@RpcPayload('stringValue') agentDeviceId: string) {
     this.logger.debug(`get config offering for agent device: ${agentDeviceId}`);
     return this.offeringService.getConfigOfferingForDevice(agentDeviceId);
+  }
+
+  @MessagePattern(OfferingTopics.GET_CONFIG_RELEASES_FOR_DEVICES)
+  getConfigReleasesForDevices(@RpcPayload() deviceIds: string[]) {
+    this.logger.debug(`get config releases for devices: ${deviceIds?.length}`);
+    return this.offeringService.getConfigReleasesForDevices(deviceIds);
   }
 
   @EventPattern(OfferingTopicsEmit.RELEASE_CHANGED_EVENT)
