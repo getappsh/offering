@@ -121,6 +121,12 @@ export class OfferingController {
     return this.offeringService.getConfigOfferingForDevice(agentDeviceId);
   }
 
+  @MessagePattern(OfferingTopics.GET_CONFIG_RELEASES_FOR_DEVICES)
+  getConfigReleasesForDevices(@RpcPayload() deviceIds: string[]) {
+    this.logger.debug(`get config releases for devices: ${deviceIds?.length}`);
+    return this.offeringService.getConfigReleasesForDevices(deviceIds);
+  }
+
   @EventPattern(OfferingTopicsEmit.RELEASE_CHANGED_EVENT)
   releaseChangedEvent(@RpcPayload() event: ReleaseChangedEventDto) {
     this.logger.log(`Release changed event for catalogId: ${event.catalogId}, event: ${event.event}`);

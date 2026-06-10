@@ -754,6 +754,38 @@ export class OfferingService implements OnModuleInit {
     return [...new Set(catalogIds)];
   }
 
+  /**
+   * Returns the latest released config catalogId for each of the given device IDs.
+   * Result is a map of deviceId -> catalogId (devices without a config release are omitted).
+   */
+  async getConfigReleasesForDevices(deviceIds: string[]): Promise<Record<string, string>> {
+    this.logger.debug(`get config releases for ${deviceIds.length} devices`);
+    if (deviceIds.length === 0) return {};
+
+    const projectNames = deviceIds.map((id) => `config:${id}`);
+
+    const releases = await this.releaseRepo
+      .createQueryBuilder('r')
+      .innerJoin('r.project', 'p')
+      .select(['r.catalogId', 'p.name'])
+      .where('p.name IN (:...projectNames)', { projectNames })
+      .andWhere('p.projectType = :type', { type: ProjectType.CONFIG })
+      .andWhere('r.status = :status', { status: ReleaseStatusEnum.RELEASED })
+      .orderBy('r.sortOrder', 'DESC')
+      .getMany();
+
+    // Keep only the first (latest) release per project name
+    const result: Record<string, string> = {};
+    for (const release of releases) {
+      const deviceId = release.project.name.slice('config:'.length);
+      if (!result[deviceId]) {
+        result[deviceId] = release.catalogId;
+      }
+    }
+
+    return result;
+  }
+
   // ---------------------------------------------------------------------------
 
   private async setDeviceSoftwaresOffering(
