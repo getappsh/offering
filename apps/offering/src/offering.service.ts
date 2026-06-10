@@ -290,16 +290,6 @@ export class OfferingService implements OnModuleInit {
   }
 
   async getBatchPushOfferingsForDevices(dto: BatchPushOfferingRequestDto): Promise<BatchPushOfferingResponseDto> {
-    const deviceIds = dto.deviceIds as string[];
-
-    const whereCondition: any = {
-      action: OfferingActionEnum.PUSH,
-      release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
-    };
-    if (deviceIds?.length) {
-      whereCondition.device = { ID: In(deviceIds) };
-    }
-
     const pushEntities = await this.compOfferingRepo.find({
       select: {
         release: {
@@ -314,14 +304,18 @@ export class OfferingService implements OnModuleInit {
           artifacts: { fileUpload: { size: true }, isInstallationFile: true },
         },
       },
-      where: whereCondition,
+      where: {
+        action: OfferingActionEnum.PUSH,
+        release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
+        device: { ID: In(dto.deviceIds) },
+      },
       relations: {
         device: true,
         release: { project: { label: true }, artifacts: { fileUpload: true } },
       },
     });
 
-    this.logger.debug(`getBatchPushOfferingsForDevices: found ${pushEntities.length} push entities for ${deviceIds?.length ?? 0} device(s)`);
+    this.logger.debug(`getBatchPushOfferingsForDevices: found ${pushEntities.length} push entities for ${dto.deviceIds.length} device(s)`);
 
     const pushByDevice: Record<string, ComponentV2Dto[]> = {};
     for (const entity of pushEntities) {
