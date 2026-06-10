@@ -290,14 +290,13 @@ export class OfferingService implements OnModuleInit {
   }
 
   async getBatchPushOfferingsForDevices(dto: BatchPushOfferingRequestDto): Promise<BatchPushOfferingResponseDto> {
-    const isAll = dto.deviceIds === 'all' || (Array.isArray(dto.deviceIds) && dto.deviceIds.length === 1 && dto.deviceIds[0] === 'all');
-    const deviceIds = isAll ? undefined : (dto.deviceIds as string[]);
+    const deviceIds = dto.deviceIds as string[];
 
     const whereCondition: any = {
       action: OfferingActionEnum.PUSH,
       release: { project: { projectType: Not(In([ProjectType.CONFIG, ProjectType.CONFIG_MAP])) } },
     };
-    if (!isAll && deviceIds?.length) {
+    if (deviceIds?.length) {
       whereCondition.device = { ID: In(deviceIds) };
     }
 
@@ -322,13 +321,13 @@ export class OfferingService implements OnModuleInit {
       },
     });
 
-    this.logger.debug(`getBatchPushOfferingsForDevices: found ${pushEntities.length} push entities (isAll: ${isAll})`);
+    this.logger.debug(`getBatchPushOfferingsForDevices: found ${pushEntities.length} push entities for ${deviceIds?.length ?? 0} device(s)`);
 
     const pushByDevice: Record<string, ComponentV2Dto[]> = {};
     for (const entity of pushEntities) {
       const deviceId = entity.device?.ID;
       if (!deviceId) continue;
-      const installed = isAll ? [] : (dto.installedComponents?.[deviceId] ?? []);
+      const installed = dto.installedComponents?.[deviceId] ?? [];
       if (!installed.includes(entity.release.catalogId)) {
         (pushByDevice[deviceId] ??= []).push(ComponentV2Dto.fromEntity(entity.release));
       }

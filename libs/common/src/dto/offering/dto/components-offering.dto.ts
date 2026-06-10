@@ -190,8 +190,8 @@ export class ComponentOfferingRequestDto {
 }
 
 export class BatchPushOfferingRequestDto {
-  /** Array of device IDs to query push offerings for, or 'all' to query all devices */
-  deviceIds: string[] | 'all';
+  /** Array of device IDs to query push offerings for */
+  deviceIds: string[];
   /** Map of deviceId -> installed catalogIds; used to exclude already-installed releases from the result. Omit to skip filtering. */
   installedComponents?: Record<string, string[]>;
 }
