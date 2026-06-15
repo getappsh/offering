@@ -42,6 +42,9 @@ export class OfferingTreePolicyService {
       }
       this.policyRepository.remove(existingPolicy);
       existingPolicy.release = null;
+      if (!dto.platformId && !dto.deviceTypeId) {
+        await this.resetLatestFlag(dto.projectId);
+      }
       return OfferingTreePolicyDto.fromEntity(existingPolicy);
     }
 
@@ -59,6 +62,9 @@ export class OfferingTreePolicyService {
       this.logger.debug(`Policy already exists, updating ID: ${existingPolicy.id}`);
       existingPolicy.release = release;
       await this.policyRepository.save(existingPolicy);
+      if (!dto.platformId && !dto.deviceTypeId) {
+        await this.updateLatestFlag(dto.projectId, dto.catalogId);
+      }
       return OfferingTreePolicyDto.fromEntity(existingPolicy);
 
     }else {
@@ -74,6 +80,9 @@ export class OfferingTreePolicyService {
 
       try {
         const savedPolicy = await this.policyRepository.save(policy);
+        if (!dto.platformId && !dto.deviceTypeId) {
+          await this.updateLatestFlag(dto.projectId, dto.catalogId);
+        }
         return OfferingTreePolicyDto.fromEntity(savedPolicy);
       } catch (error) {
         if (error.code === '23505') { // Unique violation
@@ -155,5 +164,39 @@ export class OfferingTreePolicyService {
       this.releaseRepo.delete({catalogId: dto.catalogId});
     }
 
+  }
+
+  private async updateLatestFlag(projectId: number, catalogId: string) {
+    await this.releaseRepo
+      .createQueryBuilder()
+      .update(ReleaseEntity)
+      .set({
+        latest: () => `CASE WHEN catalog_id = :catalogId THEN TRUE ELSE FALSE END`,
+      })
+      .where("project_id = :projectId", { projectId, catalogId })
+      .execute();
+  }
+
+  private async resetLatestFlag(projectId: number) {
+    await this.releaseRepo
+      .createQueryBuilder()
+      .update(ReleaseEntity)
+      .set({
+        latest: () => `
+          CASE 
+            WHEN catalog_id = (
+              SELECT catalog_id 
+              FROM "release"
+              WHERE project_id = :projectId AND status = :status
+              ORDER BY sort_order DESC
+              LIMIT 1
+            ) 
+            THEN TRUE 
+            ELSE FALSE 
+          END
+        `,
+      })
+      .where("project_id = :projectId", { projectId, status: ReleaseStatusEnum.RELEASED })
+      .execute();
   }
 }
