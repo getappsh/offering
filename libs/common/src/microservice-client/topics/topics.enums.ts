@@ -112,8 +112,10 @@ export const OfferingTopics = {
     GET_OFFERING_TREE_POLICIES: `getapp-offering.get-offering-tree-policies${region}`,
     GET_PUSH_OFFERING_DEVICES: `getapp-offering.get-push-offering-devices${region}`,
     GET_CONFIG_OFFERING_FOR_DEVICE: `getapp-offering.get-config-offering-for-device${region}`,
+    GET_CONFIG_RELEASES_FOR_DEVICES: `getapp-offering.get-config-releases-for-devices${region}`,
     CONFIG_OFFERING_PUSH: `getapp-offering.config-offering-push${region}`,
     CONFIG_OFFERING_UNPUSH: `getapp-offering.config-offering-unpush${region}`,
+    GET_BATCH_PUSH_OFFERINGS_FOR_DEVICES: `getapp-offering.get-batch-push-offerings-for-devices${region}`,
     
 } as const
 

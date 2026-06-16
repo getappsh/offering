@@ -188,3 +188,15 @@ export class ComponentOfferingRequestDto {
     return dto
   }
 }
+
+export class BatchPushOfferingRequestDto {
+  /** Array of device IDs to query push offerings for */
+  deviceIds: string[];
+  /** Map of deviceId -> installed catalogIds; used to exclude already-installed releases from the result. Omit to skip filtering. */
+  installedComponents?: Record<string, string[]>;
+}
+
+export class BatchPushOfferingResponseDto {
+  /** Map of deviceId -> push releases for that device */
+  pushByDevice: Record<string, ComponentV2Dto[]>;
+}
