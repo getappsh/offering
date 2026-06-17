@@ -466,6 +466,7 @@ export class OfferingService implements OnModuleInit {
     );
 
     try {
+      const startTime = Date.now();
       const raw: Record<string, RuleDefinition[]> = await lastValueFrom(
         this.uploadClient.send<Record<string, RuleDefinition[]>>(
           UploadTopics.GET_POLICIES_FOR_RELEASES,
@@ -475,6 +476,10 @@ export class OfferingService implements OnModuleInit {
         this.logger.error(`Failed to bulk-fetch policies: ${err}`);
         return {};
       });
+      const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+      this.logger.log(
+        `Policy batch fetch completed in ${elapsedSeconds}s for ${batchIds.length} IDs`,
+      );
 
       const fullMap = new Map(Object.entries(raw));
 
