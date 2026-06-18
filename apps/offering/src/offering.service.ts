@@ -1157,7 +1157,14 @@ export class OfferingService implements OnModuleInit {
 
     let tree: PlatformHierarchyDto;
     try {
-      tree = await this.hierarchyCache.getPlatformHierarchy(platformId);
+      tree = params.useHierarchyCache
+        ? await this.hierarchyCache.getPlatformHierarchy(platformId)
+        : await lastValueFrom(
+            this.deviceClient.send(
+              DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
+              { platformId: platformId },
+            ),
+          );
     } catch (e) {
       this.logger.error(
         `get offering for platform: ${params.platformIdentifier} error: ${e}`,
@@ -1237,13 +1244,13 @@ export class OfferingService implements OnModuleInit {
     return platformOffering;
   }
 
-  async getAllPlatformsOffering(options?: { withDependencies?: boolean }): Promise<PlatformOfferingDto[]> {
+  async getAllPlatformsOffering(options?: { withDependencies?: boolean; useHierarchyCache?: boolean }): Promise<PlatformOfferingDto[]> {
     this.logger.log('getAllPlatformsOffering: fetching offering for all platforms');
     const platforms = await this.platformRepo.find();
     const results = await Promise.allSettled(
       platforms.map(p =>
         this.getOfferingForPlatform(
-          { platformIdentifier: p.id, withDependencies: options?.withDependencies ?? true },
+          { platformIdentifier: p.id, withDependencies: options?.withDependencies ?? true, useHierarchyCache: options?.useHierarchyCache },
         ),
       ),
     );
@@ -1252,13 +1259,13 @@ export class OfferingService implements OnModuleInit {
       .map(r => r.value);
   }
 
-  async getAllDeviceTypesOffering(options?: { withDependencies?: boolean }): Promise<DeviceTypeOfferingDto[]> {
+  async getAllDeviceTypesOffering(options?: { withDependencies?: boolean; useHierarchyCache?: boolean }): Promise<DeviceTypeOfferingDto[]> {
     this.logger.log('getAllDeviceTypesOffering: fetching offering for all device types');
     const deviceTypes = await this.deviceTypeRepo.find();
     const results = await Promise.allSettled(
       deviceTypes.map(dt =>
         this.getOfferingForDeviceType(
-          { deviceTypeIdentifier: dt.id, withDependencies: options?.withDependencies ?? true },
+          { deviceTypeIdentifier: dt.id, withDependencies: options?.withDependencies ?? true, useHierarchyCache: options?.useHierarchyCache },
         ),
       ),
     );
@@ -1281,7 +1288,14 @@ export class OfferingService implements OnModuleInit {
       tree =
         query.deviceTypeTree && Object.keys(query.deviceTypeTree).length > 0
           ? query.deviceTypeTree
-          : await this.hierarchyCache.getDeviceTypeHierarchy(deviceTypeId);
+          : query.useHierarchyCache
+            ? await this.hierarchyCache.getDeviceTypeHierarchy(deviceTypeId)
+            : await lastValueFrom(
+                this.deviceClient.send(
+                  DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
+                  { deviceTypeId: deviceTypeId },
+                ),
+              );
       delete query.deviceTypeTree;
     } catch (e) {
       this.logger.error(
@@ -1303,7 +1317,14 @@ export class OfferingService implements OnModuleInit {
       this.logger.log(`Get hierarchy tree for platform`);
       let tree: PlatformHierarchyDto;
       try {
-        tree = await this.hierarchyCache.getPlatformHierarchy(findByQuery.platformId);
+        tree = query.useHierarchyCache
+          ? await this.hierarchyCache.getPlatformHierarchy(findByQuery.platformId)
+          : await lastValueFrom(
+              this.deviceClient.send(
+                DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
+                { platformId: findByQuery.platformId },
+              ),
+            );
       } catch (e) {
         this.logger.error(
           `get offering for platform: ${query.platformIdentifier} error: ${e}`,
@@ -1407,7 +1428,12 @@ export class OfferingService implements OnModuleInit {
         this.logger.log(`Get hierarchy tree for platform`);
         let tree: PlatformHierarchyDto;
         try {
-          tree = await this.hierarchyCache.getPlatformHierarchy(findByQuery.platformId);
+          tree = await lastValueFrom(
+            this.deviceClient.send(
+              DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
+              { platformId: findByQuery.platformId },
+            ),
+          );
         } catch (e) {
           this.logger.error(
             `get offering for platform: ${query.platformIdentifier} error: ${e}`,
@@ -1431,7 +1457,12 @@ export class OfferingService implements OnModuleInit {
 
         let tree: DeviceTypeHierarchyDto;
         try {
-          tree = await this.hierarchyCache.getDeviceTypeHierarchy(findByQuery.deviceTypeId);
+          tree = await lastValueFrom(
+            this.deviceClient.send(
+              DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
+              { deviceTypeId: findByQuery.deviceTypeId },
+            ),
+          );
         } catch (e) {
           this.logger.error(
             `get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`,
