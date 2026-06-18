@@ -72,6 +72,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
 import { ILike, In, IsNull, Not, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
+import { HierarchyCacheService } from './hierarchy-cache.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 import { RuleDefinition } from '@app/common/rules/types/rule.types';
 
@@ -122,6 +123,7 @@ export class OfferingService implements OnModuleInit {
     private readonly uploadClient: MicroserviceClient,
 
     private readonly policyService: OfferingTreePolicyService,
+    private readonly hierarchyCache: HierarchyCacheService,
     private readonly config: ConfigService,
   ) { }
 
@@ -1155,12 +1157,7 @@ export class OfferingService implements OnModuleInit {
 
     let tree: PlatformHierarchyDto;
     try {
-      tree = await lastValueFrom(
-        this.deviceClient.send(
-          DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
-          { platformId: platformId },
-        ),
-      );
+      tree = await this.hierarchyCache.getPlatformHierarchy(platformId);
     } catch (e) {
       this.logger.error(
         `get offering for platform: ${params.platformIdentifier} error: ${e}`,
@@ -1284,12 +1281,7 @@ export class OfferingService implements OnModuleInit {
       tree =
         query.deviceTypeTree && Object.keys(query.deviceTypeTree).length > 0
           ? query.deviceTypeTree
-          : await lastValueFrom(
-            this.deviceClient.send(
-              DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
-              { deviceTypeId: deviceTypeId },
-            ),
-          );
+          : await this.hierarchyCache.getDeviceTypeHierarchy(deviceTypeId);
       delete query.deviceTypeTree;
     } catch (e) {
       this.logger.error(
@@ -1311,12 +1303,7 @@ export class OfferingService implements OnModuleInit {
       this.logger.log(`Get hierarchy tree for platform`);
       let tree: PlatformHierarchyDto;
       try {
-        tree = await lastValueFrom(
-          this.deviceClient.send(
-            DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
-            { platformId: findByQuery.platformId },
-          ),
-        );
+        tree = await this.hierarchyCache.getPlatformHierarchy(findByQuery.platformId);
       } catch (e) {
         this.logger.error(
           `get offering for platform: ${query.platformIdentifier} error: ${e}`,
@@ -1420,12 +1407,7 @@ export class OfferingService implements OnModuleInit {
         this.logger.log(`Get hierarchy tree for platform`);
         let tree: PlatformHierarchyDto;
         try {
-          tree = await lastValueFrom(
-            this.deviceClient.send(
-              DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
-              { platformId: findByQuery.platformId },
-            ),
-          );
+          tree = await this.hierarchyCache.getPlatformHierarchy(findByQuery.platformId);
         } catch (e) {
           this.logger.error(
             `get offering for platform: ${query.platformIdentifier} error: ${e}`,
@@ -1449,12 +1431,7 @@ export class OfferingService implements OnModuleInit {
 
         let tree: DeviceTypeHierarchyDto;
         try {
-          tree = await lastValueFrom(
-            this.deviceClient.send(
-              DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
-              { deviceTypeId: findByQuery.deviceTypeId },
-            ),
-          );
+          tree = await this.hierarchyCache.getDeviceTypeHierarchy(findByQuery.deviceTypeId);
         } catch (e) {
           this.logger.error(
             `get offering for device type: ${query.deviceTypeIdentifier} error: ${e}`,
