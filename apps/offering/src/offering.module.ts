@@ -10,6 +10,7 @@ import { MicroserviceModule, MicroserviceName, MicroserviceType, KafkaHealthCont
 import { SafeCronModule } from '@app/common/safe-cron';
 import { OfferingService } from './offering.service'
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
+import { HierarchyCacheService } from './hierarchy-cache.service';
 
 @Module({
   imports: [
@@ -34,6 +35,6 @@ import { OfferingTreePolicyService } from './offering-tree-policy.service';
     SafeCronModule,
   ],
   controllers: [OfferingController, KafkaHealthController],
-  providers: [OfferingService, OfferingTreePolicyService],
+  providers: [OfferingService, OfferingTreePolicyService, HierarchyCacheService],
 })
 export class OfferingModule { }
