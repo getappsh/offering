@@ -192,7 +192,9 @@ export class OfferingQueryParams {
 export class OfferingParamsCombined extends IntersectionType(
   PartialType(PlatformOfferingParams),
   PartialType(OfferingQueryParams),
-) {}
+) {
+  useHierarchyCache?: boolean;
+}
 
 export class ProjectOfferingFilterQuery extends IntersectionType(
   PartialType(DeviceTypeOfferingParams),
@@ -213,4 +215,5 @@ export class DeviceTypeOfferingFilterQuery extends IntersectionType(
     deviceTypeIdentifier?: string | number  | undefined;
     deviceTypeTree?: DeviceTypeHierarchyDto
     ignoreCache?: boolean;
+    useHierarchyCache?: boolean;
 }
