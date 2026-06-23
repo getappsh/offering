@@ -109,6 +109,9 @@ export class ReleaseMetadata {
   @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Total size in bytes - automatically calculated as installationSize + artifactsSize' })
   totalSize?: number;
 
+  @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Timeout installation in minutes (user-specified)' })
+  timeoutInstallation?: number;
+
   //@ApiProperty({ required: false, description: 'Additional user-defined metadata properties (flexible structure)' })
   [key: string]: any;
 }
