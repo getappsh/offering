@@ -72,12 +72,30 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { lastValueFrom } from 'rxjs';
 import { ILike, In, IsNull, Not, Repository } from 'typeorm';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
+import { HierarchyCacheService } from './hierarchy-cache.service';
 import { PaginatedResultDto } from '@app/common/dto/pagination.dto';
 import { RuleDefinition } from '@app/common/rules/types/rule.types';
 
 @Injectable()
 export class OfferingService implements OnModuleInit {
   private readonly logger = new Logger(OfferingService.name);
+
+  // ---------------------------------------------------------------------------
+  // Policy batching + caching — coalesces concurrent Kafka calls into one
+  // ---------------------------------------------------------------------------
+  /** Pending release IDs waiting to be sent in the next batch */
+  private policyBatchIds = new Set<string>();
+  /** Resolvers waiting for the current batch to complete */
+  private policyBatchWaiters: Array<{
+    ids: string[];
+    resolve: (map: Map<string, RuleDefinition[]>) => void;
+    reject: (err: unknown) => void;
+  }> = [];
+  /** Whether a flush is already scheduled */
+  private policyBatchScheduled = false;
+  /** Simple TTL cache: releaseId -> { policies, expiresAt } */
+  private policyCache = new Map<string, { policies: RuleDefinition[]; expiresAt: number }>();
+  private readonly policyCacheTtlMs = parseInt(process.env.POLICY_CACHE_TTL_MS, 10) || 30_000;
 
   constructor(
     @InjectRepository(ReleaseEntity)
@@ -105,6 +123,7 @@ export class OfferingService implements OnModuleInit {
     private readonly uploadClient: MicroserviceClient,
 
     private readonly policyService: OfferingTreePolicyService,
+    private readonly hierarchyCache: HierarchyCacheService,
     private readonly config: ConfigService,
   ) { }
 
@@ -361,8 +380,9 @@ export class OfferingService implements OnModuleInit {
 
   /**
    * Fetches policies for all releases (including dependencies at any depth) and attaches them.
-   * All IDs are collected in a single tree-walk, then fetched in ONE bulk Kafka call —
-   * replacing the previous N concurrent calls that saturated the Kafka consumer group.
+   * Uses a batching + caching strategy:
+   * - Concurrent callers within the same event-loop tick are coalesced into a SINGLE Kafka call
+   * - Results are cached with a short TTL to avoid repeated calls for the same IDs
    */
   private async enrichReleasesWithPolicies(
     releases: ComponentV2Dto[],
@@ -373,20 +393,126 @@ export class OfferingService implements OnModuleInit {
 
     // Walk the entire dependency tree once to get all unique IDs
     const allIds = Array.from(this.collectReleaseIds(releases));
-    this.logger.debug(`Fetching policies for ${allIds.length} unique releases (bulk)`);
+    this.logger.debug(`Fetching policies for ${allIds.length} unique releases (batched)`);
 
-    // Single Kafka call returning Record<catalogId, policy[]>
-    const policiesMap: Record<string, RuleDefinition[]> = await lastValueFrom(
-      this.uploadClient.send<Record<string, RuleDefinition[]>>(UploadTopics.GET_POLICIES_FOR_RELEASES, allIds),
-    ).catch((err) => {
-      this.logger.error(`Failed to bulk-fetch policies: ${err}`);
-      return {};
-    });
+    const policiesMap = await this.batchGetPolicies(allIds);
 
     // Assign policies to every node in the tree from the pre-built map
-    this.assignPoliciesFromMap(releases, new Map(Object.entries(policiesMap)));
+    this.assignPoliciesFromMap(releases, policiesMap);
 
     this.logger.debug(`Successfully attached policies to ${allIds.length} releases`);
+  }
+
+  /**
+   * Enqueues release IDs into the current batch. All callers within the same
+   * event-loop tick share a single Kafka request. Results are also cached
+   * with a short TTL so back-to-back calls skip Kafka entirely.
+   */
+  private async batchGetPolicies(ids: string[]): Promise<Map<string, RuleDefinition[]>> {
+    const now = Date.now();
+    const uncachedIds: string[] = [];
+    const result = new Map<string, RuleDefinition[]>();
+
+    // Serve what we can from cache
+    for (const id of ids) {
+      const cached = this.policyCache.get(id);
+      if (cached && cached.expiresAt > now) {
+        result.set(id, cached.policies);
+      } else {
+        uncachedIds.push(id);
+      }
+    }
+
+    if (uncachedIds.length === 0) {
+      this.logger.debug(`All ${ids.length} policies served from cache`);
+      return result;
+    }
+
+    // Add uncached IDs to the pending batch
+    for (const id of uncachedIds) {
+      this.policyBatchIds.add(id);
+    }
+
+    // Create a promise that will be resolved when the batch flushes
+    const batchResult = await new Promise<Map<string, RuleDefinition[]>>((resolve, reject) => {
+      this.policyBatchWaiters.push({ ids: uncachedIds, resolve, reject });
+
+      if (!this.policyBatchScheduled) {
+        this.policyBatchScheduled = true;
+        // Schedule flush on next tick so concurrent callers within
+        // the same event-loop iteration are coalesced
+        setTimeout(() => this.flushPolicyBatch(), 0);
+      }
+    });
+
+    // Merge cached + freshly fetched
+    for (const [k, v] of batchResult) {
+      result.set(k, v);
+    }
+    return result;
+  }
+
+  /**
+   * Fires a single Kafka call for ALL accumulated IDs and resolves every waiter.
+   */
+  private async flushPolicyBatch(): Promise<void> {
+    // Grab and reset state atomically
+    const batchIds = Array.from(this.policyBatchIds);
+    const waiters = this.policyBatchWaiters;
+    this.policyBatchIds = new Set();
+    this.policyBatchWaiters = [];
+    this.policyBatchScheduled = false;
+
+    this.logger.debug(
+      `Flushing policy batch: ${batchIds.length} unique IDs for ${waiters.length} caller(s)`,
+    );
+
+    try {
+      const startTime = Date.now();
+      const raw: Record<string, RuleDefinition[]> = await lastValueFrom(
+        this.uploadClient.send<Record<string, RuleDefinition[]>>(
+          UploadTopics.GET_POLICIES_FOR_RELEASES,
+          batchIds,
+        ),
+      ).catch((err) => {
+        this.logger.error(`Failed to bulk-fetch policies: ${err}`);
+        return {};
+      });
+      const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+      this.logger.log(
+        `Policy batch fetch completed in ${elapsedSeconds}s for ${batchIds.length} IDs`,
+      );
+
+      const fullMap = new Map(Object.entries(raw));
+
+      // Populate cache
+      const expiresAt = Date.now() + this.policyCacheTtlMs;
+      for (const id of batchIds) {
+        const policies = fullMap.get(id) ?? [];
+        this.policyCache.set(id, { policies, expiresAt });
+      }
+
+      // Evict expired entries periodically (keep cache bounded)
+      if (this.policyCache.size > 5000) {
+        const now = Date.now();
+        for (const [key, val] of this.policyCache) {
+          if (val.expiresAt <= now) this.policyCache.delete(key);
+        }
+      }
+
+      // Resolve each waiter with only the IDs they asked for
+      for (const waiter of waiters) {
+        const waiterMap = new Map<string, RuleDefinition[]>();
+        for (const id of waiter.ids) {
+          waiterMap.set(id, fullMap.get(id) ?? []);
+        }
+        waiter.resolve(waiterMap);
+      }
+    } catch (err) {
+      for (const waiter of waiters) {
+        waiter.reject(err);
+      }
+    }
   }
 
   private async getDevicesInGroup(groups: number[]): Promise<string[]> {
@@ -1031,12 +1157,14 @@ export class OfferingService implements OnModuleInit {
 
     let tree: PlatformHierarchyDto;
     try {
-      tree = await lastValueFrom(
-        this.deviceClient.send(
-          DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
-          { platformId: platformId },
-        ),
-      );
+      tree = params.useHierarchyCache
+        ? await this.hierarchyCache.getPlatformHierarchy(platformId)
+        : await lastValueFrom(
+            this.deviceClient.send(
+              DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
+              { platformId: platformId },
+            ),
+          );
     } catch (e) {
       this.logger.error(
         `get offering for platform: ${params.platformIdentifier} error: ${e}`,
@@ -1116,13 +1244,13 @@ export class OfferingService implements OnModuleInit {
     return platformOffering;
   }
 
-  async getAllPlatformsOffering(options?: { withDependencies?: boolean }): Promise<PlatformOfferingDto[]> {
+  async getAllPlatformsOffering(options?: { withDependencies?: boolean; useHierarchyCache?: boolean }): Promise<PlatformOfferingDto[]> {
     this.logger.log('getAllPlatformsOffering: fetching offering for all platforms');
     const platforms = await this.platformRepo.find();
     const results = await Promise.allSettled(
       platforms.map(p =>
         this.getOfferingForPlatform(
-          { platformIdentifier: p.id, withDependencies: options?.withDependencies ?? true },
+          { platformIdentifier: p.id, withDependencies: options?.withDependencies ?? true, useHierarchyCache: options?.useHierarchyCache },
         ),
       ),
     );
@@ -1131,13 +1259,13 @@ export class OfferingService implements OnModuleInit {
       .map(r => r.value);
   }
 
-  async getAllDeviceTypesOffering(options?: { withDependencies?: boolean }): Promise<DeviceTypeOfferingDto[]> {
+  async getAllDeviceTypesOffering(options?: { withDependencies?: boolean; useHierarchyCache?: boolean }): Promise<DeviceTypeOfferingDto[]> {
     this.logger.log('getAllDeviceTypesOffering: fetching offering for all device types');
     const deviceTypes = await this.deviceTypeRepo.find();
     const results = await Promise.allSettled(
       deviceTypes.map(dt =>
         this.getOfferingForDeviceType(
-          { deviceTypeIdentifier: dt.id, withDependencies: options?.withDependencies ?? true },
+          { deviceTypeIdentifier: dt.id, withDependencies: options?.withDependencies ?? true, useHierarchyCache: options?.useHierarchyCache },
         ),
       ),
     );
@@ -1160,12 +1288,14 @@ export class OfferingService implements OnModuleInit {
       tree =
         query.deviceTypeTree && Object.keys(query.deviceTypeTree).length > 0
           ? query.deviceTypeTree
-          : await lastValueFrom(
-            this.deviceClient.send(
-              DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
-              { deviceTypeId: deviceTypeId },
-            ),
-          );
+          : query.useHierarchyCache
+            ? await this.hierarchyCache.getDeviceTypeHierarchy(deviceTypeId)
+            : await lastValueFrom(
+                this.deviceClient.send(
+                  DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
+                  { deviceTypeId: deviceTypeId },
+                ),
+              );
       delete query.deviceTypeTree;
     } catch (e) {
       this.logger.error(
@@ -1187,12 +1317,14 @@ export class OfferingService implements OnModuleInit {
       this.logger.log(`Get hierarchy tree for platform`);
       let tree: PlatformHierarchyDto;
       try {
-        tree = await lastValueFrom(
-          this.deviceClient.send(
-            DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
-            { platformId: findByQuery.platformId },
-          ),
-        );
+        tree = query.useHierarchyCache
+          ? await this.hierarchyCache.getPlatformHierarchy(findByQuery.platformId)
+          : await lastValueFrom(
+              this.deviceClient.send(
+                DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
+                { platformId: findByQuery.platformId },
+              ),
+            );
       } catch (e) {
         this.logger.error(
           `get offering for platform: ${query.platformIdentifier} error: ${e}`,

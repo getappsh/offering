@@ -28,12 +28,12 @@ export class OfferingController {
   }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_ALL_PLATFORMS)
-  getAllPlatformsOffering(@RpcPayload() query: { withDependencies?: boolean }) {
+  getAllPlatformsOffering(@RpcPayload() query: { withDependencies?: boolean; useHierarchyCache?: boolean }) {
     return this.offeringService.getAllPlatformsOffering(query);
   }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_ALL_DEVICE_TYPES)
-  getAllDeviceTypesOffering(@RpcPayload() query: { withDependencies?: boolean }) {
+  getAllDeviceTypesOffering(@RpcPayload() query: { withDependencies?: boolean; useHierarchyCache?: boolean }) {
     return this.offeringService.getAllDeviceTypesOffering(query);
   }
 
