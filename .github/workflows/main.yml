@@ -76,7 +76,7 @@ jobs:
           context: .
           tags: |
             ${{ secrets.REGISTRY_URL }}/getapp-dev/offering:${{ needs.calculate_new_tag.outputs.tag }}
-            ${{ secrets.REGISTRY_URL }}/getapp-dev/offering:${{ needs.calculate_new_tag.outputs.tag }}
+            ${{ secrets.REGISTRY_URL }}/getapp/offering:${{ needs.calculate_new_tag.outputs.tag }}
           push: true
           build-args: offering_version_tag=${{ needs.calculate_new_tag.outputs.tag }}
 
