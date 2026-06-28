@@ -258,6 +258,17 @@ export class GetConfigMapsForProjectDto {
   projectIdentifier: number | string;
 }
 
+export class ConfigMapAffectedDeviceDto {
+  @ApiProperty({ description: 'Device ID affected by the config map' })
+  deviceId: string;
+
+  @ApiProperty({ description: 'How the device was associated', enum: ['deviceType', 'deviceId'] })
+  associationType: 'deviceType' | 'deviceId';
+
+  @ApiProperty({ description: 'The value of the association (device type ID or device ID)' })
+  associationValue: string;
+}
+
 // ---------------------------------------------------------------------------
 // Agent / device config retrieval
 // ---------------------------------------------------------------------------

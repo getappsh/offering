@@ -58,6 +58,13 @@ export enum DeliveryStatusEnum {
 
 }
 
+export enum DeliveryStateEnum {
+    PREPARE = 'Prepare',
+    DOWNLOAD = 'Download',
+    VALIDATION = 'Validation',
+    DONE = 'Done',
+}
+
 export enum PrepareStatusEnum {
     START = "start",
     IN_PROGRESS = "inProgress",
@@ -211,4 +218,3 @@ export enum NetworkType {
   HOST_ONLY = 'HOST_ONLY',
   CUSTOM = 'CUSTOM',
 }
-

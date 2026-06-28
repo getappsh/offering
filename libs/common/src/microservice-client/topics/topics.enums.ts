@@ -63,6 +63,7 @@ export const UploadTopics = {
     CONFIG_ADD_MAP_ASSOCIATION: `getapp-upload.config.add-map-association${region}`,
     CONFIG_REMOVE_MAP_ASSOCIATION: `getapp-upload.config.remove-map-association${region}`,
     CONFIG_GET_MAP_ASSOCIATIONS: `getapp-upload.config.get-map-associations${region}`,
+    CONFIG_GET_MAP_AFFECTED_DEVICES: `getapp-upload.config.get-map-affected-devices${region}`,
     CONFIG_GET_CONFIG_MAPS_FOR_PROJECT: `getapp-upload.config.get-config-maps-for-project${region}`,
     CONFIG_GET_DEVICE_CONFIG: `getapp-upload.config.get-device-config${region}`,
     CONFIG_GET_DEVICE_CONFIG_BY_VERSION: `getapp-upload.config.get-device-config-by-version${region}`,

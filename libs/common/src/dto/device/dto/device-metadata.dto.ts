@@ -13,7 +13,7 @@ export enum DeliverySource {
 
 /** Mirrors agent BatteryStatus */
 export class BatteryStatusDto {
-  @ApiProperty({ type: Number, description: 'Battery level as a percentage (0–100)' })
+  @ApiProperty({ type: 'integer', format: 'uint16', description: 'Battery level as a percentage (0–100)' })
   @IsNumber()
   level: number;
 
@@ -22,12 +22,12 @@ export class BatteryStatusDto {
   @IsBoolean()
   isPluggedIn?: boolean;
 
-  @ApiProperty({ type: Number, description: 'Battery health as a percentage (0–100)', required: false })
+  @ApiProperty({ type: 'integer', format: 'uint16', description: 'Battery health as a percentage (0–100)', required: false })
   @IsOptional()
   @IsNumber()
   health?: number;
 
-  @ApiProperty({ type: Number, description: 'Estimated time remaining in minutes', required: false })
+  @ApiProperty({ type: 'integer', format: 'uint32', description: 'Estimated time remaining in minutes', required: false })
   @IsOptional()
   @IsNumber()
   timeRemainingMinutes?: number;

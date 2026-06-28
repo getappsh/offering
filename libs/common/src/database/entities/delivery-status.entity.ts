@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, Unique } from "typeorm";
 import { BaseEntity } from "./base.entity";
-import { DeliveryStatusEnum, ItemTypeEnum } from "./enums.entity";
+import { DeliveryStatusEnum, DeliveryStateEnum, ItemTypeEnum } from "./enums.entity";
 import { UploadVersionEntity } from "./upload-version.entity";
 import { DeviceEntity } from "./device.entity";
 
@@ -28,6 +28,8 @@ export class DeliveryStatusEntity extends BaseEntity {
   })
   deliveryStatus: DeliveryStatusEnum
 
+  @Column({ name: 'state', type: 'enum', enum: DeliveryStateEnum, nullable: true })
+  state: DeliveryStateEnum;
 
   @Column({
     name: 'type',
