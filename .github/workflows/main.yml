@@ -51,6 +51,26 @@ jobs:
           #custom_tag: 1.0.46.1-even-v2
           tag_prefix: ""
 
+  create_github_release:
+    needs:
+      - tag_the_commit
+      - calculate_new_tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.calculate_new_tag.outputs.tag }}
+          name: v${{ needs.calculate_new_tag.outputs.tag }}
+          body: |
+            Release v${{ needs.calculate_new_tag.outputs.tag }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.SECRET_GITHUB_TOKEN }}
+
   build_and_push_image:
     needs: calculate_new_tag
     runs-on: ubuntu-latest
