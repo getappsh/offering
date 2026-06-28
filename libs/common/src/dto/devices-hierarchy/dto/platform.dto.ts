@@ -9,7 +9,7 @@ export class CreatePlatformDto {
   @IsString()
   @IsNotEmpty()
   @Transform(({ value }) =>
-    value.toLowerCase().trim().replace(/\s+/g, "-")
+    value.trim().replace(/\s+/g, "-")
   )
   name: string;
 

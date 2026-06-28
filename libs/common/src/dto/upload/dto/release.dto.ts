@@ -1,8 +1,8 @@
 import { ProjectType, ReleaseEntity, ReleaseStatusEnum } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNotEmpty, IsOptional, IsSemVer, IsString, IsBoolean } from "class-validator";
+import { IsEnum, IsNotEmpty, IsOptional, IsSemVer, IsString, IsBoolean, ValidateNested, IsInt, IsNumber } from "class-validator";
 import { ReleaseArtifactDto } from "./release-artifact.dto";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import { ProjectIdentifierParams } from "@app/common/dto/project-management";
 import { RuleType } from "@app/common/rules/enums/rule.enums";
 
@@ -81,12 +81,17 @@ export enum PostInstallActionType {
  */
 export class PostInstallAction {
   @ApiProperty({ enum: PostInstallActionType, description: 'Action type: NONE (no action), WEB (open URL), or EXE (run executable)' })
+  @IsEnum(PostInstallActionType)
   type: PostInstallActionType;
 
   @ApiProperty({ required: false, description: 'URL to open (required when type is WEB)' })
+  @IsOptional()
+  @IsString()
   url?: string;
 
   @ApiProperty({ required: false, description: 'Executable path to run (required when type is EXE)' })
+  @IsOptional()
+  @IsString()
   exePath?: string;
 }
 
@@ -98,16 +103,49 @@ export class PostInstallAction {
  */
 export class ReleaseMetadata {
   @ApiProperty({ required: false, description: 'Enable automatic deployment of this release' })
+  @IsOptional()
+  @IsBoolean()
   autoDeploy?: boolean;
 
   @ApiProperty({ required: false, type: PostInstallAction, description: 'Post-installation action configuration' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PostInstallAction)
   postInstallAction?: PostInstallAction;
 
   @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Installation size in bytes - disk space required after installation (user-specified)' })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => value != null ? Number(value) : undefined)
   installationSize?: number;
 
   @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Total size in bytes - automatically calculated as installationSize + artifactsSize' })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => value != null ? Number(value) : undefined)
   totalSize?: number;
+
+  @ApiProperty({ required: false, description: 'Hide this release from agents if the health check URL is not healthy' })
+  @IsOptional()
+  @IsBoolean()
+  hideIfNotHealthy?: boolean;
+
+  @ApiProperty({ required: false, description: 'URL to check for health status. Required when hideIfNotHealthy is true.' })
+  @IsOptional()
+  @IsString()
+  healthCheckUrl?: string;
+
+  @ApiProperty({ required: false, type: 'integer', description: 'Interval in seconds between health check requests. Required when healthCheckUrl is set.' })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => value != null ? Number(value) : undefined)
+  healthCheckIntervalSeconds?: number;
+
+  @ApiProperty({ required: false, type: 'integer', format: 'int64', description: 'Timeout installation in minutes (user-specified)' })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => value != null ? Number(value) : undefined)
+  timeoutInstallation?: number;
 
   //@ApiProperty({ required: false, description: 'Additional user-defined metadata properties (flexible structure)' })
   [key: string]: any;
@@ -137,6 +175,8 @@ export class SetReleaseDto {
 
   @ApiProperty({ required: false, type: ReleaseMetadata, description: 'Release metadata including autoDeploy and postInstallAction configuration. Additional user-defined properties are supported.' })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => ReleaseMetadata)
   metadata?: ReleaseMetadata;
 
   @ApiProperty({ required: false, default: true })

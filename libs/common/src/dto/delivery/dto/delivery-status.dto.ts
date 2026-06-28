@@ -1,4 +1,4 @@
-import { DeliveryStatusEnum, ItemTypeEnum } from "@app/common/database/entities";
+import { DeliveryStatusEnum, DeliveryStateEnum, ItemTypeEnum } from "@app/common/database/entities";
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
@@ -68,6 +68,11 @@ export class DeliveryStatusDto {
   @ApiProperty({ enum: DeliveryStatusEnum })
   @IsEnum(DeliveryStatusEnum)
   deliveryStatus: DeliveryStatusEnum
+
+  @ApiProperty({ required: false, enum: DeliveryStateEnum, description: 'Delivery lifecycle phase. When absent, legacy behavior applies.' })
+  @IsOptional()
+  @IsEnum(DeliveryStateEnum)
+  state?: DeliveryStateEnum;
 
   @ApiProperty({ enum: ItemTypeEnum })
   @IsEnum(ItemTypeEnum)

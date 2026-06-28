@@ -102,6 +102,20 @@ export class ReleaseOfferingDto {
   @IsOptional()
   dependedOnBy?: string[];
 
+  @ApiProperty({ 
+    type: [String], 
+    description: "Array of managed device IDs that this release is pushed to",
+    required: false 
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  pushTo?: string[];
+
+  @ApiProperty({ description: "Indicates whether this release is available for delivery (true when release status is not error)", default: true })
+  @IsBoolean()
+  available: boolean;
+
   toString() {
     return JSON.stringify(this);
   }

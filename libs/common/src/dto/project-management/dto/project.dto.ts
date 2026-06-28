@@ -1,7 +1,7 @@
 import { ApiProperty, OmitType, PartialType } from "@nestjs/swagger";
 import { MemberResDto } from "./member-project-res.dto";
 import { MemberProjectEntity, ProjectEntity, ProjectType, RoleInProject, ApplicationCategory } from "@app/common/database/entities";
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsEnum } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional, IsArray, IsEnum, MaxLength } from "class-validator";
 import { IsValidStringFor } from "@app/common/validators";
 import { Pattern } from "@app/common/validators/regex.validator";
 import { ProjectTokenDto } from "./project-token.dto";
@@ -277,6 +277,7 @@ export class CreateProjectDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(20)
   @ApiProperty({ required: false })
   description?: string;
 
