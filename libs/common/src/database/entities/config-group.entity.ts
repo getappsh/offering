@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ConfigRevisionEntity } from './config-revision.entity';
 
 /**
@@ -19,6 +19,7 @@ import { ConfigRevisionEntity } from './config-revision.entity';
  * plaintext.  The API always masks these values as `***` in responses.
  */
 @Entity('config_group')
+@Index(['revisionId', 'name'])
 export class ConfigGroupEntity {
   @PrimaryGeneratedColumn()
   id: number;

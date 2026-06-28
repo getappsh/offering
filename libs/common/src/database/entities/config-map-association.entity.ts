@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ProjectEntity } from './project.entity';
 import { DeviceTypeEntity } from './device-type.entity';
 import { DeviceEntity } from './device.entity';
@@ -14,6 +14,9 @@ import { DeviceEntity } from './device.entity';
  *  - global:            all three null                                          → applies to all CONFIG projects
  */
 @Entity('config_map_association')
+@Index(['configMapProjectId', 'configProjectId'])
+@Index(['deviceId'])
+@Index(['deviceTypeId'])
 export class ConfigMapAssociationEntity {
   @PrimaryGeneratedColumn()
   id: number;

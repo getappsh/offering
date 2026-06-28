@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { ProjectEntity } from './project.entity';
 import { ConfigGroupEntity } from './config-group.entity';
 import { ConfigRevisionStatus } from './enums.entity';
@@ -17,6 +17,8 @@ import { ConfigRevisionStatus } from './enums.entity';
  *   - A new DRAFT is automatically created (with no groups) for subsequent edits
  */
 @Entity('config_revision')
+@Index(['projectId', 'status'])
+@Index(['projectId', 'revisionNumber'])
 export class ConfigRevisionEntity {
   @PrimaryGeneratedColumn()
   id: number;
