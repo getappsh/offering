@@ -168,7 +168,7 @@ export class OfferingController {
   private readImageVersion() {
     let version = 'unknown'
     try {
-      version = fs.readFileSync('NEW_TAG.txt', 'utf8');
+      version = fs.readFileSync('offering_image_version.txt', 'utf8');
     } catch (error) {
       this.logger.error(`Unable to read image version - error: ${error}`)
     }
