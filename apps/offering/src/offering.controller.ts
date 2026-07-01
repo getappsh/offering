@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import { OfferingService } from './offering.service';
 import { DeviceTypeOfferingFilterQuery, GetProjectsOfferingDto, OfferingParamsCombined, ProjectOfferingFilterQuery } from '@app/common/dto/offering/dto/offering.dto';
 import { OfferingTreePolicyService } from './offering-tree-policy.service';
+import { HierarchyCacheInvalidateEvent, HierarchyCacheService } from './hierarchy-cache.service';
 
 @Controller()
 export class OfferingController {
@@ -20,6 +21,7 @@ export class OfferingController {
   constructor(
     private readonly offeringService: OfferingService,
     private readonly policyService: OfferingTreePolicyService,
+    private readonly hierarchyCacheService: HierarchyCacheService,
   ) { }
 
   @MessagePattern(OfferingTopics.GET_OFFERING_FOR_PLATFORM)
@@ -164,6 +166,11 @@ export class OfferingController {
     return this.policyService.findBy(dto);
   }
 
+
+  @EventPattern(OfferingTopicsEmit.HIERARCHY_CACHE_INVALIDATE)
+  handleHierarchyCacheInvalidate(@RpcPayload() event: HierarchyCacheInvalidateEvent) {
+    this.hierarchyCacheService.handleCacheInvalidateEvent(event);
+  }
 
   private readImageVersion() {
     let version = 'unknown'

@@ -5,6 +5,7 @@ import { OfferingTreePolicyEntity } from '@app/common/database/entities/offering
 import { UpsertOfferingTreePolicyDto, OfferingTreePolicyDto, OfferingTreePolicyParams } from '@app/common/dto/offering';
 import { ReleaseEntity, ReleaseStatusEnum } from '@app/common/database/entities';
 import { ReleaseChangedEventDto, ReleaseEventEnum } from '@app/common/dto/upload';
+import { HierarchyCacheService } from './hierarchy-cache.service';
 
 @Injectable()
 export class OfferingTreePolicyService {
@@ -14,6 +15,7 @@ export class OfferingTreePolicyService {
   constructor(
     @InjectRepository(OfferingTreePolicyEntity) private readonly policyRepository: Repository<OfferingTreePolicyEntity>,
     @InjectRepository(ReleaseEntity) private readonly releaseRepo: Repository<ReleaseEntity>,
+    private readonly hierarchyCache: HierarchyCacheService,
 
   ) {}
 
@@ -42,6 +44,7 @@ export class OfferingTreePolicyService {
       }
       this.policyRepository.remove(existingPolicy);
       existingPolicy.release = null;
+      await this.triggerHierarchyCacheInvalidation(dto);
       return OfferingTreePolicyDto.fromEntity(existingPolicy);
     }
 
@@ -59,6 +62,7 @@ export class OfferingTreePolicyService {
       this.logger.debug(`Policy already exists, updating ID: ${existingPolicy.id}`);
       existingPolicy.release = release;
       await this.policyRepository.save(existingPolicy);
+      await this.triggerHierarchyCacheInvalidation(dto);
       return OfferingTreePolicyDto.fromEntity(existingPolicy);
 
     }else {
@@ -74,6 +78,7 @@ export class OfferingTreePolicyService {
 
       try {
         const savedPolicy = await this.policyRepository.save(policy);
+        await this.triggerHierarchyCacheInvalidation(dto);
         return OfferingTreePolicyDto.fromEntity(savedPolicy);
       } catch (error) {
         if (error.code === '23505') { // Unique violation
@@ -81,6 +86,22 @@ export class OfferingTreePolicyService {
         }
         throw error;
       }
+    }
+  }
+
+  /**
+   * Refresh the affected hierarchy cache entry after a policy change and broadcast to other instances.
+   * When a device type is targeted, invalidate that device type; when a platform is targeted,
+   * invalidate that platform. A project-level policy (no device type / platform) can affect any
+   * hierarchy that includes the project, so the whole cache is refreshed.
+   */
+  private async triggerHierarchyCacheInvalidation(dto: UpsertOfferingTreePolicyDto): Promise<void> {
+    if (dto.deviceTypeId) {
+      await this.hierarchyCache.onDeviceTypesChanged([dto.deviceTypeId]);
+    } else if (dto.platformId) {
+      await this.hierarchyCache.onPlatformsChanged([dto.platformId]);
+    } else {
+      await this.hierarchyCache.onCatalogChanged();
     }
   }
 
