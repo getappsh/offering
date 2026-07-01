@@ -107,9 +107,9 @@ export class HierarchyCacheService implements OnModuleInit {
       return;
     }
 
-    // Evict entities that were removed from the catalog
-    event.removedDeviceTypeIds?.forEach(id => this.deviceTypeCache.delete(id));
-    event.removedPlatformIds?.forEach(id => this.platformCache.delete(id));
+    // Keep serving the previously cached value for removed entities.
+    // The stale entry is only replaced when an actual update is received,
+    // so we intentionally do not evict removedDeviceTypeIds/removedPlatformIds here.
 
     const tasks: Promise<void>[] = [];
     if (event.deviceTypeIds?.length) {
