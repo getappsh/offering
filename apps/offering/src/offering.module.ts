@@ -26,6 +26,11 @@ import { HierarchyCacheService } from './hierarchy-cache.service';
       type: MicroserviceType.UPLOAD,
       id: "offering"
     }),
+    MicroserviceModule.register({
+      name: MicroserviceName.OFFERING_SERVICE,
+      type: MicroserviceType.OFFERING,
+      id: "offering"
+    }),
     ApmModule,
     DatabaseModule,
     TypeOrmModule.forFeature([

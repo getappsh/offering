@@ -127,6 +127,7 @@ export const OfferingTopicsEmit = {
     OFFERING_UNPUSH: `getapp-offering.unpush${region}`,
     DEVICE_SOFTWARE_EVENT: `getapp-offering.device.software-event${region}`,
     DEVICE_MAP_EVENT: `getapp-offering.device.map-event${region}`,
+    HIERARCHY_CACHE_INVALIDATE: `getapp-offering.hierarchy-cache-invalidate${region}`,
 }
 export const DeployTopics = {
     CHECK_HEALTH: `getapp-deploy.check-health${region}`,
