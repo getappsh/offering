@@ -111,7 +111,7 @@ export class HierarchyCacheService implements OnModuleInit {
     // The stale entry is only replaced when an actual update is received,
     // so we intentionally do not evict removedDeviceTypeIds/removedPlatformIds here.
 
-    const tasks: Promise<void>[] = [];
+    const tasks: Promise<unknown>[] = [];
     if (event.deviceTypeIds?.length) {
       tasks.push(this.refreshDeviceTypes(event.deviceTypeIds));
     }
@@ -133,45 +133,10 @@ export class HierarchyCacheService implements OnModuleInit {
       this.platformRepo.find({ select: { id: true } }),
     ]);
 
-    // Refresh device type cache
-    const dtResults = await Promise.allSettled(
-      deviceTypes.map(dt =>
-        lastValueFrom(
-          this.deviceClient.send<DeviceTypeHierarchyDto>(
-            DevicesHierarchyTopics.GET_DEVICE_TYPE_HIERARCHY_TREE,
-            { deviceTypeId: dt.id },
-          ),
-        ).then(tree => ({ id: dt.id, tree })),
-      ),
-    );
-
-    let dtSuccess = 0;
-    for (const result of dtResults) {
-      if (result.status === 'fulfilled') {
-        this.deviceTypeCache.set(result.value.id, result.value.tree);
-        dtSuccess++;
-      }
-    }
-
-    // Refresh platform cache
-    const pResults = await Promise.allSettled(
-      platforms.map(p =>
-        lastValueFrom(
-          this.deviceClient.send<PlatformHierarchyDto>(
-            DevicesHierarchyTopics.GET_PLATFORM_HIERARCHY_TREE,
-            { platformId: p.id },
-          ),
-        ).then(tree => ({ id: p.id, tree })),
-      ),
-    );
-
-    let pSuccess = 0;
-    for (const result of pResults) {
-      if (result.status === 'fulfilled') {
-        this.platformCache.set(result.value.id, result.value.tree);
-        pSuccess++;
-      }
-    }
+    const [dtSuccess, pSuccess] = await Promise.all([
+      this.refreshDeviceTypes(deviceTypes.map(dt => dt.id)),
+      this.refreshPlatforms(platforms.map(p => p.id)),
+    ]);
 
     this.logger.log(
       `Hierarchy cache refreshed: ${dtSuccess}/${deviceTypes.length} device types, ${pSuccess}/${platforms.length} platforms`,
@@ -194,7 +159,7 @@ export class HierarchyCacheService implements OnModuleInit {
     this.platformCache.clear();
   }
 
-  private async refreshDeviceTypes(deviceTypeIds: number[]) {
+  private async refreshDeviceTypes(deviceTypeIds: number[]): Promise<number> {
     const results = await Promise.allSettled(
       deviceTypeIds.map(id =>
         lastValueFrom(
@@ -206,16 +171,19 @@ export class HierarchyCacheService implements OnModuleInit {
       ),
     );
 
+    let success = 0;
     for (const result of results) {
       if (result.status === 'fulfilled') {
         this.deviceTypeCache.set(result.value.id, result.value.tree);
+        success++;
       } else {
         this.logger.warn(`Failed to refresh device type cache for id ${deviceTypeIds}: ${result.reason}`);
       }
     }
+    return success;
   }
 
-  private async refreshPlatforms(platformIds: number[]) {
+  private async refreshPlatforms(platformIds: number[]): Promise<number> {
     const results = await Promise.allSettled(
       platformIds.map(id =>
         lastValueFrom(
@@ -227,13 +195,16 @@ export class HierarchyCacheService implements OnModuleInit {
       ),
     );
 
+    let success = 0;
     for (const result of results) {
       if (result.status === 'fulfilled') {
         this.platformCache.set(result.value.id, result.value.tree);
+        success++;
       } else {
         this.logger.warn(`Failed to refresh platform cache for id ${platformIds}: ${result.reason}`);
       }
     }
+    return success;
   }
 
   private emitCacheInvalidation(params: { deviceTypeIds?: number[]; platformIds?: number[]; all?: boolean }) {
